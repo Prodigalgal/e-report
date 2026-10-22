@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preload" as="image" type="image/svg+xml" href="/e-report-logo.svg?v=0742b1b3c6e0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=0742b1b3c6e0" />
+    <link rel="shortcut icon" type="image/svg+xml" href="/favicon.svg?v=0742b1b3c6e0" />
+    <link rel="apple-touch-icon" href="/icons/pwa-icon-192.png?v=0742b1b3c6e0" />
+    <link rel="manifest" href="/manifest.webmanifest?v=0742b1b3c6e0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#2563EB" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="网络运维管理" />
+    <meta name="application-name" content="网络运维管理" />
+    <title>网络运维管理</title>
+    <style>
+      html,
+      body,
+      #root {
+        min-height: 100%;
+      }
+
+      body {
+        margin: 0;
+        background: #f3f6f9;
+      }
+
+      .app-boot {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        color: #0f172a;
+        font-family: Inter, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      }
+
+      .app-boot__inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .app-boot__logo {
+        width: 72px;
+        height: 72px;
+        filter: drop-shadow(0 12px 24px rgba(37, 99, 235, .22));
+      }
+
+      .app-boot__title {
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+
+      .app-boot__bar {
+        width: 168px;
+        height: 4px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(37, 99, 235, .14);
+      }
+
+      .app-boot__bar::after {
+        content: "";
+        display: block;
+        width: 42%;
+        height: 100%;
+        border-radius: inherit;
+        background: #2563eb;
+        animation: app-boot-slide 1s ease-in-out infinite alternate;
+      }
+
+      @keyframes app-boot-slide {
+        from {
+          transform: translateX(0);
+        }
+
+        to {
+          transform: translateX(140%);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="app-boot" aria-label="应用加载中">
+        <div class="app-boot__inner">
+          <img class="app-boot__logo" src="/e-report-logo.svg?v=0742b1b3c6e0" alt="网络运维管理" />
+          <div class="app-boot__title">网络运维管理</div>
+          <div class="app-boot__bar" aria-hidden="true"></div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

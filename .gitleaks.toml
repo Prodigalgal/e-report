@@ -1,0 +1,22 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Local automation, build, dependency, log and runtime-data directories excluded by repository policy"
+paths = [
+  '''(^|/|\\)\.agents(/|\\)''',
+  '''(^|/|\\)\.codex(/|\\)''',
+  '''(^|/|\\)\.playwright-cli(/|\\)''',
+  '''(^|/|\\)\.playwright-mcp(/|\\)''',
+  '''(^|/|\\)\.gradle(/|\\)''',
+  '''(^|/|\\)node_modules(/|\\)''',
+  '''(^|/|\\)build(/|\\)''',
+  '''(^|/|\\)dist(/|\\)''',
+  '''(^|/|\\)logs(/|\\)''',
+  '''(^|/|\\)output(/|\\)''',
+  '''(^|/|\\)tmp(/|\\)''',
+  '''(^|/|\\)test-results(/|\\)''',
+  '''(^|/|\\)file_transfer_tmp(/|\\)''',
+  '''(^|/|\\)fault_uploads(/|\\)''',
+  '''(^|/|\\)app_releases(/|\\)'''
+]

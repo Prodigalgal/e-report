@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 1,
+  "coordinateFormat": "left,top,right,bottom",
+  "images": [
+    {
+      "fileName": "cmcc-henan-building.jpg",
+      "split": "train",
+      "boxes": [[555, 294, 742, 421]]
+    },
+    {
+      "fileName": "cmcc-emergency-truck.jpg",
+      "split": "train",
+      "boxes": [[670, 245, 805, 285], [1185, 555, 1315, 700], [780, 750, 835, 795]]
+    },
+    {
+      "fileName": "cmcc-xian-building.jpg",
+      "split": "train",
+      "boxes": [[2705, 460, 3340, 680], [2900, 1770, 3205, 2015]]
+    },
+    {
+      "fileName": "cmcc-international-canada.jpg",
+      "split": "train",
+      "boxes": [[1440, 115, 2660, 1360], [785, 1430, 3070, 2080], [820, 2100, 3075, 2590]]
+    },
+    {
+      "fileName": "cmcc-xiangyun-branch.jpg",
+      "split": "train",
+      "boxes": [[2280, 100, 3030, 600], [960, 1450, 1195, 1635]]
+    },
+    {
+      "fileName": "cmcc-lte-sim.jpg",
+      "split": "validation",
+      "boxes": [[1975, 1190, 2440, 1455]]
+    },
+    {
+      "fileName": "cmcc-communications-panoramio.jpg",
+      "split": "validation",
+      "boxes": [[900, 540, 1135, 760]]
+    },
+    {
+      "fileName": "cmcc-building-2022.jpg",
+      "split": "train",
+      "boxes": [[930, 300, 1070, 505]]
+    },
+    {
+      "fileName": "cmcc-5g-store-2024.jpg",
+      "split": "train",
+      "boxes": [[665, 245, 1120, 415], [420, 510, 745, 635]]
+    },
+    {
+      "fileName": "cmcc-store-2024.jpg",
+      "split": "train",
+      "boxes": [[450, 85, 1105, 260], [1620, 220, 1885, 390]]
+    },
+    {
+      "fileName": "cmcc-innovation-building-2025.jpg",
+      "split": "validation",
+      "boxes": [[785, 200, 965, 300]]
+    },
+    {
+      "fileName": "cmcc-mobile-unicom-2020.jpg",
+      "split": "validation",
+      "boxes": [[790, 780, 1165, 965]]
+    },
+    {
+      "fileName": "cmcc-brest-9220.jpg",
+      "split": "train",
+      "boxes": []
+    },
+    {
+      "fileName": "cmcc-brest-9223.jpg",
+      "split": "train",
+      "boxes": []
+    },
+    {
+      "fileName": "cmcc-brest-9224.jpg",
+      "split": "validation",
+      "boxes": []
+    },
+    {
+      "fileName": "cmcc-towers-guangzhou.jpg",
+      "split": "validation",
+      "boxes": []
+    },
+    {
+      "fileName": "cmcc-3g-phones.jpg",
+      "split": "train",
+      "boxes": []
+    }
+  ]
+}

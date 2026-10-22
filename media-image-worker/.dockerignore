@@ -1,0 +1,8 @@
+training/
+tests/
+*.md
+__pycache__/
+.pytest_cache/
+models/*
+!models/cmcc-brand-v2-focused.onnx
+!models/cmcc-brand-v2-focused.json

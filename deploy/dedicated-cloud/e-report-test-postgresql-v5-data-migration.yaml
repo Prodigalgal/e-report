@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e-report-postgresql-v5-data-migration-2
+  namespace: e-report-test
+  labels:
+    app: e-report-database-migration
+    app.kubernetes.io/component: database-migration
+    app.kubernetes.io/version: "5.0.9"
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 3600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: e-report-database-migration
+        app.kubernetes.io/component: database-migration
+        app.kubernetes.io/version: "5.0.9"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: database-migration
+          image: localhost/e-report-database-migration:20260823-v5.0.9-authorization-v4-test-1
+          imagePullPolicy: Never
+          env:
+            - name: MIGRATION_SOURCE_URL
+              value: jdbc:mysql://e-mysql:3306/fault_reporter_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+            - name: MIGRATION_SOURCE_USERNAME
+              value: root
+            - name: MIGRATION_SOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-mysql
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MIGRATION_TARGET_URL
+              value: jdbc:postgresql://e-postgresql-v5:5432/fault_reporter_db
+            - name: MIGRATION_TARGET_USERNAME
+              value: e_report_migrator
+            - name: MIGRATION_TARGET_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: POSTGRES_PASSWORD
+            - name: MIGRATION_BATCH_SIZE
+              value: "500"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 192Mi
+            limits:
+              memory: 768Mi

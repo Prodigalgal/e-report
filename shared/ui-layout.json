@@ -1,0 +1,18 @@
+{
+  "pageGutter": 16,
+  "widePageGutter": 24,
+  "pageGap": 16,
+  "fieldGap": 12,
+  "cardPadding": 16,
+  "controlHeight": 48,
+  "compactControlHeight": 40,
+  "cornerRadius": 10,
+  "pageTitleSize": 24,
+  "pageTitleLineHeight": 32,
+  "labelLineHeight": 20,
+  "bodyLineHeight": 22,
+  "captionLineHeight": 18,
+  "dialogMaxWidth": 720,
+  "pickerMaxWidth": 560,
+  "appContentMaxWidth": 840
+}

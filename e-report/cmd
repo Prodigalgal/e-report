@@ -1,0 +1,5 @@
+docker run -d \
+  --name e-report-frontend \
+  --network e-report-net \
+  -p 5173:80 \
+  e-report-frontend:latest

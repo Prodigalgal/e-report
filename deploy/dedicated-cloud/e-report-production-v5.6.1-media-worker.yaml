@@ -1,0 +1,110 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-media-image-worker
+  namespace: e-report
+  labels:
+    app.kubernetes.io/name: e-report-media-image-worker
+    app.kubernetes.io/component: image-redaction
+    app.kubernetes.io/version: "5.6.1"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-media-image-worker
+  template:
+    metadata:
+      labels:
+        app: e-report-media-image-worker
+        app.kubernetes.io/component: image-redaction
+        app.kubernetes.io/version: "5.6.1"
+    spec:
+      terminationGracePeriodSeconds: 180
+      initContainers:
+        - name: prepare-storage
+          image: localhost/e-report-media-image-worker:20260901-v5.6.1-contact-default-test-1
+          imagePullPolicy: Never
+          command: [sh, -c]
+          args:
+            - install -d -m 0750 -o 10001 -g 10001 /data/uploads/_quarantine /data/uploads/_sanitized
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, FOWNER, DAC_OVERRIDE]
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 96Mi
+      containers:
+        - name: worker
+          image: localhost/e-report-media-image-worker:20260901-v5.6.1-contact-default-test-1
+          imagePullPolicy: Never
+          env:
+            - name: PGHOST
+              value: e-postgresql-v5
+            - name: PGDATABASE
+              value: fault_reporter_db
+            - name: PGUSER
+              value: e_report_app
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: APP_DB_PASSWORD
+            - name: IMAGE_REDACTION_STORAGE_ROOT
+              value: /data/uploads
+            - name: IMAGE_REDACTION_MODEL_PATH
+              value: /app/models/cmcc-brand-v1.onnx
+            - name: IMAGE_REDACTION_MODEL_SHA256
+              value: e887b256b01c696f36574534eaed71d2c774899d6e743c9c202d608891518a0c
+            - name: IMAGE_REDACTION_MODEL_VERSION
+              value: cmcc-brand-v1
+            - name: IMAGE_REDACTION_CONFIDENCE
+              value: "0.65"
+            - name: IMAGE_REDACTION_POLL_SECONDS
+              value: "2"
+            - name: IMAGE_REDACTION_LEASE_SECONDS
+              value: "120"
+            - name: IMAGE_REDACTION_MAX_FILE_BYTES
+              value: "104857600"
+            - name: IMAGE_REDACTION_MAX_PIXELS
+              value: "40000000"
+            - name: IMAGE_REDACTION_MAX_SIDE
+              value: "12000"
+            - name: IMAGE_REDACTION_PADDING_RATIO
+              value: "0.05"
+            - name: IMAGE_REDACTION_MAX_PADDING_PIXELS
+              value: "16"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 750m
+              memory: 512Mi
+      volumes:
+        - name: uploads
+          hostPath:
+            path: /data/e-report/uploads
+            type: DirectoryOrCreate

@@ -1,0 +1,120 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-media-image-worker
+  namespace: e-report
+  labels:
+    app.kubernetes.io/name: e-report-media-image-worker
+    app.kubernetes.io/component: image-redaction
+    app.kubernetes.io/version: "5.6.8"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-media-image-worker
+  template:
+    metadata:
+      labels:
+        app: e-report-media-image-worker
+        app.kubernetes.io/component: image-redaction
+        app.kubernetes.io/version: "5.6.8"
+    spec:
+      terminationGracePeriodSeconds: 180
+      initContainers:
+        - name: prepare-storage
+          image: localhost/e-report-media-image-worker:20260903-v5.6.8-image-redaction-ocr-1
+          imagePullPolicy: Never
+          command: [sh, -c]
+          args:
+            - install -d -m 0750 -o 10001 -g 10001 /data/uploads/_quarantine /data/uploads/_sanitized
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, FOWNER, DAC_OVERRIDE]
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 96Mi
+      containers:
+        - name: worker
+          image: localhost/e-report-media-image-worker:20260903-v5.6.8-image-redaction-ocr-1
+          imagePullPolicy: Never
+          env:
+            - name: PGHOST
+              value: e-postgresql-v5
+            - name: PGDATABASE
+              value: fault_reporter_db
+            - name: PGUSER
+              value: e_report_app
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: APP_DB_PASSWORD
+            - name: IMAGE_REDACTION_STORAGE_ROOT
+              value: /data/uploads
+            - name: IMAGE_REDACTION_MODEL_PATH
+              value: /app/models/cmcc-brand-v2-focused.onnx
+            - name: IMAGE_REDACTION_MODEL_SHA256
+              value: e0e4284e41cb03f67a8bbfff8f7fed0c7aa8c9bb1b4033a1f4948dd2c88d1800
+            - name: IMAGE_REDACTION_MODEL_VERSION
+              value: cmcc-brand-v2-focused
+            - name: IMAGE_REDACTION_CONFIDENCE
+              value: "0.65"
+            - name: IMAGE_REDACTION_POLL_SECONDS
+              value: "2"
+            - name: IMAGE_REDACTION_LEASE_SECONDS
+              value: "120"
+            - name: IMAGE_REDACTION_MAX_FILE_BYTES
+              value: "104857600"
+            - name: IMAGE_REDACTION_MAX_PIXELS
+              value: "40000000"
+            - name: IMAGE_REDACTION_MAX_SIDE
+              value: "12000"
+            - name: IMAGE_REDACTION_PADDING_RATIO
+              value: "0.05"
+            - name: IMAGE_REDACTION_MAX_PADDING_PIXELS
+              value: "16"
+            - name: IMAGE_REDACTION_DENSE_SCAN
+              value: "true"
+            - name: IMAGE_REDACTION_OCR_ENABLED
+              value: "true"
+            - name: IMAGE_REDACTION_OCR_MAX_SIDE
+              value: "2000"
+            - name: IMAGE_REDACTION_OCR_MIN_CONFIDENCE
+              value: "0.65"
+            - name: IMAGE_REDACTION_STANDALONE_MODEL_CONFIDENCE
+              value: "0.90"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 750m
+              memory: 1536Mi
+      volumes:
+        - name: uploads
+          hostPath:
+            path: /data/e-report/uploads
+            type: DirectoryOrCreate

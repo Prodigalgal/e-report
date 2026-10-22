@@ -1,0 +1,9 @@
+[[IgnoredVulns]]
+id = "GHSA-vfj7-8cjw-p6xm"
+ignoreUntil = 2026-11-03
+reason = "Reviewed braces 3.0.3 Metro build-only dependency; exact version and parent constrained by security/npm-audit-exceptions.json. See docs/reports/2026-10-20-build-dependency-review.md."
+
+[[IgnoredVulns]]
+id = "GHSA-86w9-cpqp-85rv"
+ignoreUntil = 2026-11-03
+reason = "Reviewed node-forge 1.4.0 Expo development/iOS tooling; Android releases use Gradle/apksigner. Exact version and parents constrained by security/npm-audit-exceptions.json. See docs/reports/2026-10-20-build-dependency-review.md."

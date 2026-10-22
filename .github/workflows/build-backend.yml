@@ -1,0 +1,82 @@
+name: 构建 Backend 镜像
+
+on:
+  workflow_run:
+    workflows: [供应链安全]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e-report-build-backend-${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.display_title != 'CI 配置校验' && 'main' || github.event.workflow_run.id }}
+  cancel-in-progress: ${{ github.event.workflow_run.event == 'push' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.display_title != 'CI 配置校验' }}
+
+jobs:
+  backend-image:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.display_title != 'CI 配置校验' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.publish.outputs.image }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      AUDIT_CREATED_AT: ${{ github.event.workflow_run.created_at }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: 确认当前 main 与通过审计的源码一致
+        run: |
+          test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)" = "$SOURCE_SHA"
+          node scripts/verify-version-contract.mjs
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+      - name: 构建 Backend JAR
+        working-directory: e-report-backen
+        run: ./gradlew bootJar --no-daemon
+      - name: 发布不可变 Backend 镜像
+        id: publish
+        run: |
+          set -Eeuo pipefail
+          version=$(node -p "require('./e-report/package.json').version")
+          release_date=$(date -u -d "$AUDIT_CREATED_AT" +%Y%m%d)
+          tag="${release_date}-v${version}-gitops-${SOURCE_SHA:0:12}-run${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/e-report-backend"
+          mkdir -p "$RUNNER_TEMP/backend-context"
+          cp "e-report-backen/build/libs/e-report-backen-${version}.jar" "$RUNNER_TEMP/backend-context/app.jar"
+          printf '%s' "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker buildx create --use
+          docker buildx build --platform linux/amd64 --push \
+            --metadata-file "$RUNNER_TEMP/backend-image.json" \
+            -f deploy/dedicated-cloud/Dockerfile.backend-runtime \
+            -t "$image:$tag" "$RUNNER_TEMP/backend-context"
+          digest=$(jq -r '."containerimage.digest"' "$RUNNER_TEMP/backend-image.json")
+          [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+          echo "image=$image@$digest" >> "$GITHUB_OUTPUT"
+          mkdir -p .release-artifacts/backend
+          jq -n --arg sourceSha "$SOURCE_SHA" --arg version "$version" \
+            --arg image "$image@$digest" \
+            '{sourceSha:$sourceSha,version:$version,image:$image}' \
+            > .release-artifacts/backend/release-manifest.json
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e-report-backend-manifest
+          path: .release-artifacts/backend/release-manifest.json
+          if-no-files-found: error
+          retention-days: 30

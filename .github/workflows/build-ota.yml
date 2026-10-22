@@ -1,0 +1,55 @@
+name: 构建 Expo OTA
+
+on:
+  workflow_run:
+    workflows: [供应链安全]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e-report-build-ota-main
+  cancel-in-progress: true
+
+jobs:
+  expo-export:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.display_title != 'CI 配置校验' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: 确认已审计源码仍为 main
+        run: test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.19.0
+          cache: npm
+          cache-dependency-path: e-report-app/package-lock.json
+      - name: 导出与原生运行时兼容的不可变功能资源
+        working-directory: e-report-app
+        run: |
+          npm ci --ignore-scripts --registry=https://registry.npmjs.org
+          node scripts/native-fingerprint.mjs
+          npx expo export --platform android --output-dir dist/ota
+          npx expo config --type public --json > dist/ota/expoConfig.json
+          node scripts/ota-export-manifest.mjs --export-root dist/ota --source-sha "$SOURCE_SHA"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e-report-ota-${{ github.event.workflow_run.head_sha }}
+          path: e-report-app/dist/ota/
+          if-no-files-found: error
+          retention-days: 30

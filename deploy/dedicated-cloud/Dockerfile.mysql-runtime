@@ -1,0 +1,12 @@
+ARG MYSQL_BASE_IMAGE=docker.m.daocloud.io/library/mysql:8.4@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+FROM ${MYSQL_BASE_IMAGE}
+
+# The upstream Oracle Linux image is rebuilt less frequently than its package
+# repository. Apply security errata at image-build time and keep the resulting
+# runtime as an immutable, separately scanned release artifact.
+RUN microdnf \
+      --disablerepo=mysql8.4-server-minimal \
+      --disablerepo=mysql-tools-community \
+      --disablerepo=ol9_appstream \
+      upgrade -y curl libcurl \
+    && microdnf clean all

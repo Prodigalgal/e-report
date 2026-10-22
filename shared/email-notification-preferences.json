@@ -1,0 +1,18 @@
+{
+  "workOrderCreated": {
+    "title": "新工单报单通知",
+    "description": "接收职责范围内的新工单报单邮件。"
+  },
+  "workOrderSlaBreached": {
+    "title": "工单阶段超时提醒",
+    "description": "工单当前阶段超过配置时限时接收提醒。"
+  },
+  "workOrderAssigned": {
+    "title": "派单、调单到本人",
+    "description": "工单派给或调给本人时接收邮件。"
+  },
+  "dailyOutstandingReport": {
+    "title": "每日未闭环工单汇总",
+    "description": "按组织设定时间接收未闭环工单汇总表。"
+  }
+}
