@@ -181,7 +181,7 @@ dependencyLocking {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    implementation("com.amap.api:location:11.2.100")
+    implementation("com.amap.api:location:11.3.000")
     // AMap 11.2.100 invokes FastMath directly but does not declare it in the published POM.
     implementation("net.jafama:jafama:2.3.2")
     constraints {
