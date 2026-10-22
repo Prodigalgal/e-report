@@ -1,0 +1,162 @@
+buildscript {
+    configurations.classpath {
+        resolutionStrategy.force(
+                'org.apache.httpcomponents.client5:httpclient5:5.6.4',
+                'org.apache.httpcomponents.core5:httpcore5:5.4.3',
+                'org.apache.httpcomponents.core5:httpcore5-h2:5.4.3',
+                'tools.jackson:jackson-base:3.1.7',
+                'tools.jackson:jackson-bom:3.1.7',
+                'tools.jackson.core:jackson-core:3.1.7',
+                'tools.jackson.core:jackson-databind:3.1.7'
+        )
+    }
+}
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.1.0'
+    id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.pro'
+version = '6.8.1'
+
+ext['jackson-2-bom.version'] = '2.22.3'
+ext['jackson-bom.version'] = '3.1.7'
+ext['log4j2.version'] = '2.25.5'
+ext['netty.version'] = '4.2.17.Final'
+ext['postgresql.version'] = '42.7.13'
+ext['spring-framework.version'] = '7.0.9'
+// Spring Boot 4.1.0 manages Tomcat 11.0.22, which is affected by the
+// DIGEST/FORM authentication and constraint-bypass advisories. Keep the
+// embedded servlet container on the patched 11.0.25 line until the Boot BOM
+// picks it up itself.
+ext['tomcat.version'] = '11.0.25'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(25)
+    }
+}
+
+sourceSets {
+    migration {
+        java.srcDir 'src/migration/java'
+        resources.srcDir 'src/migration/resources'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+
+    configureEach {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+
+    migrationImplementation.extendsFrom implementation
+    migrationRuntimeOnly.extendsFrom runtimeOnly
+    migrationBundle
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyLocking {
+    lockAllConfigurations()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-cache'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-liquibase'
+    implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
+	implementation 'org.apache.poi:poi-ooxml:5.5.1'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.3'
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'
+	implementation 'com.github.houbb:pinyin:0.4.0'
+
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    compileOnly 'org.projectlombok:lombok'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation sourceSets.migration.output
+    testRuntimeOnly 'com.h2database:h2'
+    testRuntimeOnly 'com.mysql:mysql-connector-j'
+    migrationRuntimeOnly 'com.mysql:mysql-connector-j'
+    migrationBundle 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
+    migrationBundle 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.3'
+    migrationBundle 'org.postgresql:postgresql'
+    migrationBundle 'com.mysql:mysql-connector-j'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    jvmArgs '-Duser.timezone=UTC'
+}
+
+tasks.named('bootRun') {
+    jvmArgs '-Duser.timezone=UTC'
+}
+
+tasks.register('migrateMySqlToPostgreSql', JavaExec) {
+    group = 'database migration'
+    description = 'Migrate a frozen MySQL e-report database into the PostgreSQL 5.0.9 baseline.'
+    classpath = sourceSets.migration.runtimeClasspath
+    mainClass = 'com.pro.ereportbacken.migration.MySqlToPostgreSqlMigrationApplication'
+}
+
+tasks.register('databaseMigrationJar', Jar) {
+    group = 'database migration'
+    description = 'Build a standalone, auditable MySQL-to-PostgreSQL migration artifact.'
+    archiveClassifier = 'database-migration'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    dependsOn tasks.named('migrationClasses')
+    manifest {
+        attributes 'Main-Class': 'com.pro.ereportbacken.migration.MySqlToPostgreSqlMigrationApplication'
+    }
+    from sourceSets.migration.output
+    from {
+        configurations.migrationBundle.collect { dependency ->
+            dependency.isDirectory() ? dependency : zipTree(dependency)
+        }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+}
+
+tasks.register('databaseAdminJar', Jar) {
+    group = 'database migration'
+    description = 'Build a standalone Liquibase admin artifact with MySQL and PostgreSQL drivers.'
+    archiveClassifier = 'database-admin'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    zip64 = true
+    dependsOn tasks.named('classes')
+    manifest {
+        attributes 'Main-Class': 'com.pro.ereportbacken.migration.LiquibaseMigrationMain'
+    }
+    from(sourceSets.main.output.classesDirs) {
+        include 'com/pro/ereportbacken/migration/LiquibaseMigrationMain*.class'
+    }
+    from sourceSets.main.output.resourcesDir
+    from {
+        files(configurations.runtimeClasspath, configurations.migrationBundle).collect { dependency ->
+            dependency.isDirectory() ? dependency : zipTree(dependency)
+        }
+    }
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+}

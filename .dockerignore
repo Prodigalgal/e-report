@@ -1,0 +1,10 @@
+*
+!e-report/
+!e-report/**
+!shared/
+!shared/**
+e-report/node_modules
+e-report/dist
+e-report/build
+e-report/.playwright-cli
+e-report/.vite

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "modelVersion": "cmcc-brand-v1",
+  "architecture": "MobileNetV3-Small ImageNet transfer learning with an anchor-free detection head",
+  "input": {
+    "name": "image",
+    "shape": [
+      1,
+      3,
+      384,
+      384
+    ],
+    "color": "RGB",
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "output": {
+    "name": "detections",
+    "shape": [
+      1,
+      5,
+      24,
+      24
+    ]
+  },
+  "sha256": "e887b256b01c696f36574534eaed71d2c774899d6e743c9c202d608891518a0c",
+  "bytes": 3971065,
+  "validation": {
+    "precision": 0.218900675024108,
+    "recall": 0.5703517587939698,
+    "f1": 0.31637630662020905
+  },
+  "trainingSources": "training/source-lock.json",
+  "acceptance": {
+    "confidenceThreshold": 0.65,
+    "cpuBenchmark": {
+      "medianMs": 86.37,
+      "p95Ms": 90.75,
+      "maximumAllowedMs": 500.0
+    },
+    "samples": [
+      {
+        "name": "current-logo-composite",
+        "expectedPositive": true,
+        "bestIou": 0.6232,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 1
+      },
+      {
+        "name": "legacy-logo-real-photo",
+        "expectedPositive": true,
+        "bestIou": 0.5253,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 1
+      },
+      {
+        "name": "legacy-storefront-held-out",
+        "expectedPositive": true,
+        "bestIou": 0.7613,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 1
+      },
+      {
+        "name": "negative-network-centre",
+        "expectedPositive": false,
+        "bestIou": 0.0,
+        "matchedCount": 0,
+        "expectedCount": 0,
+        "detectionCount": 0
+      }
+    ]
+  }
+}

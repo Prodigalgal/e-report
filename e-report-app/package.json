@@ -1,0 +1,88 @@
+{
+  "name": "e-report-app",
+  "version": "6.8.1",
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@react-native-community/datetimepicker": "9.1.0",
+    "@react-native-community/netinfo": "12.0.1",
+    "@tanstack/react-query": "^5.104.0",
+    "expo": "~57.0.30",
+    "expo-application": "~57.0.3",
+    "expo-clipboard": "~57.0.2",
+    "expo-constants": "~57.0.20",
+    "expo-crypto": "~57.0.4",
+    "expo-file-system": "~57.0.5",
+    "expo-image": "~57.0.5",
+    "expo-image-picker": "~57.0.20",
+    "expo-intent-launcher": "~57.0.1",
+    "expo-linking": "~57.0.13",
+    "expo-location": "~57.0.21",
+    "expo-media-library": "~57.0.5",
+    "expo-router": "~57.0.28",
+    "expo-secure-store": "~57.0.4",
+    "expo-sqlite": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.4",
+    "expo-updates": "~57.0.26",
+    "expo-video": "~57.0.5",
+    "js-sha256": "^1.0.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "^4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "~4.26.0",
+    "react-native-worklets": "^0.10.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "expo-doctor": "1.20.1",
+    "fflate": "0.8.3",
+    "typescript": "~6.0.3"
+  },
+  "overrides": {
+    "browserslist": "4.28.8",
+    "decode-uri-component": "0.5.0",
+    "metro": "0.84.5",
+    "metro-babel-transformer": "0.84.5",
+    "metro-cache": "0.84.5",
+    "metro-cache-key": "0.84.5",
+    "metro-config": "0.84.5",
+    "metro-core": "0.84.5",
+    "metro-file-map": "0.84.5",
+    "metro-minify-terser": "0.84.5",
+    "metro-resolver": "0.84.5",
+    "metro-runtime": "0.84.5",
+    "metro-source-map": "0.84.5",
+    "metro-symbolicate": "0.84.5",
+    "metro-transform-plugins": "0.84.5",
+    "metro-transform-worker": "0.84.5",
+    "nanoid": "3.3.18",
+    "ob1": "0.84.5",
+    "uuid": "11.1.1"
+  },
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "web": "expo start --web",
+    "test": "node --experimental-strip-types --test tests/admin-access.test.mjs tests/api-token-workflow.test.mjs tests/app-release-policy.test.mjs tests/attachment-media.test.mjs tests/attachment-image-transform.test.mjs tests/attachment-policy.test.mjs tests/auth-refresh-policy.test.mjs tests/auth-return-path.test.mjs tests/authorization-editor-workflow.test.mjs tests/build-asset-policy.test.mjs tests/multi-select.test.mjs tests/native-module-locks.test.mjs tests/operation-sampling.test.mjs tests/organization-move-workflow.test.mjs tests/password-policy.test.mjs tests/proof-of-work.test.mjs tests/public-endpoints.test.mjs tests/release-publisher-contract.test.mjs tests/request-signature-body.test.mjs tests/request-signature-canonical.test.mjs tests/resource-attributes.test.mjs tests/telemetry-api-policy.test.mjs tests/telemetry-delivery-policy.test.mjs tests/telemetry-sanitizer.test.mjs tests/timezone-format.test.mjs tests/trace-context.test.mjs tests/version-contract.test.mjs tests/work-order-presentation.test.mjs tests/work-order-timeline.test.mjs tests/ota-archive.test.mjs",
+    "native:contract": "node scripts/verify-native-module-locks.mjs",
+    "security:assets": "node scripts/verify-build-assets.mjs",
+    "version:contract": "node scripts/verify-version-contract.mjs",
+    "typecheck": "tsc --noEmit",
+    "doctor": "expo-doctor",
+    "prebuild:android": "expo prebuild --platform android",
+    "build:android:local": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android-release.ps1",
+    "publish:android:release": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/publish-app-release.ps1"
+  },
+  "expo": {
+    "doctor": {
+      "appConfigFieldsNotSyncedCheck": {
+        "enabled": false
+      }
+    }
+  },
+  "private": true
+}

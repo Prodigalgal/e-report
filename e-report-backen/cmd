@@ -1,0 +1,7 @@
+docker run -d \
+  --name e-report-backend \
+  --network e-report-net \
+  --network-alias e-report-backend \
+  -p 8083:8083 \
+  -v e_backend_uploads:/app/fault_uploads \
+  e-report-backend:latest

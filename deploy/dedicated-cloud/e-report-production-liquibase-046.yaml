@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e-report-liquibase-production-v233-1
+  namespace: e-report
+spec:
+  activeDeadlineSeconds: 900
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: liquibase
+          image: localhost/e-report-backend:20260818-v2.3.3-work-order-export-test-1
+          imagePullPolicy: Never
+          command:
+            - java
+            - -Dloader.main=com.pro.ereportbacken.migration.LiquibaseMigrationMain
+            - -cp
+            - /app/app.jar
+            - org.springframework.boot.loader.launch.PropertiesLauncher
+          env:
+            - name: E_REPORT_MIGRATION_URL
+              value: jdbc:mysql://e-mysql:3306/fault_reporter_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+            - name: E_REPORT_MIGRATION_USERNAME
+              value: root
+            - name: E_REPORT_MIGRATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-mysql
+                  key: MYSQL_ROOT_PASSWORD
+            - name: DEFAULT_TENANT_GROUP_CODE
+              value: FUJIAN_PROVINCE
+            - name: DEFAULT_TENANT_GROUP_NAME
+              value: 福建省公司
+            - name: DEFAULT_TENANT_CODE
+              value: DEFAULT_CITY
+            - name: DEFAULT_TENANT_NAME
+              value: 漳州市公司
+            - name: DEFAULT_TENANT_ROOT_ORG_NAME
+              value: 漳州市公司本部
+            - name: DEFAULT_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_USERNAME
+            - name: E_REPORT_MIGRATION_TAG
+              value: 20260818-v2.3.3-work-order-export-production-1

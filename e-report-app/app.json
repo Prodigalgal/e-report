@@ -1,0 +1,86 @@
+{
+  "expo": {
+    "name": "网络运维管理",
+    "slug": "e-report-app",
+    "version": "6.8.1",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "runtimeVersion": "android-6.8.0-native5008000",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mnnu.ereport"
+    },
+    "android": {
+      "package": "com.mnnu.ereport",
+      "versionCode": 5008000,
+      "permissions": [
+        "CAMERA",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE",
+        "CHANGE_WIFI_STATE",
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_VIDEO",
+        "REQUEST_INSTALL_PACKAGES"
+      ],
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW"
+      ],
+      "adaptiveIcon": {
+        "backgroundColor": "#2563EB",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-image",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "网络运维管理需要读取定位，用于自动填写工单经纬度和现场地址。"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "网络运维管理需要读取照片或视频，用于上传工单现场材料。",
+          "cameraPermission": "网络运维管理需要使用相机，用于拍摄工单现场材料。"
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "网络运维管理需要读取系统相册，用于管理工单现场材料。",
+          "savePhotosPermission": "网络运维管理需要保存权限，用于将工单附件写入系统相册。",
+          "granularPermissions": [
+            "photo",
+            "video"
+          ]
+        }
+      ],
+      "expo-video",
+      "@react-native-community/datetimepicker"
+    ],
+    "updates": {
+      "enabled": true,
+      "url": "https://e-report.fantong.eu.org:60443/api/app-updates/ota",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0,
+      "codeSigningCertificate": "./ota/certificate.crt",
+      "codeSigningMetadata": {
+        "keyid": "main",
+        "alg": "rsa-v1_5-sha256"
+      }
+    }
+  }
+}

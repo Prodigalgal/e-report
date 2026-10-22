@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+echo "deploy-local-via-port-forward.sh is deprecated; using local containerd import instead." >&2
+exec "$SCRIPT_DIR/deploy-local-import-containerd.sh" "${1:-/tmp/e-report-deploy.env}"

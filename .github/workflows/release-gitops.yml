@@ -1,0 +1,239 @@
+name: 自动测试部署与验收后生产发布
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('发布 {0} {1}', inputs.environment, inputs.source_sha) || format('测试部署 {0}', github.event.workflow_run.head_sha) }}
+
+on:
+  workflow_run:
+    workflows: [构建 Android APK]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 制品提升目标环境
+        required: true
+        default: production
+        type: choice
+        options: [production, test]
+      source_sha:
+        description: 已构建的 40 位源码 SHA；生产需已通过测试验收
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: e-report-release-${{ github.event_name == 'workflow_run' && github.event.workflow_run.conclusion != 'success' && format('ignored-{0}', github.run_id) || inputs.environment || 'test' }}
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           github.event.workflow_run.head_branch == 'main' &&
+           github.event.workflow_run.head_repository.full_name == github.repository) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      ready: ${{ steps.collect.outputs.ready }}
+      source_sha: ${{ steps.collect.outputs.source_sha }}
+      backend_image: ${{ steps.collect.outputs.backend_image }}
+      frontend_image: ${{ steps.collect.outputs.frontend_image }}
+      android_run_id: ${{ steps.collect.outputs.android_run_id }}
+      lite_run_id: ${{ steps.collect.outputs.lite_run_id }}
+      ota_run_id: ${{ steps.collect.outputs.ota_run_id }}
+      android_sha256: ${{ steps.collect.outputs.android_sha256 }}
+      lite_sha256: ${{ steps.collect.outputs.lite_sha256 }}
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha || inputs.source_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || inputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.19.0
+      - name: 等待并核对五条构建流水线的不可变制品
+        id: collect
+        run: node scripts/release/collect-release.mjs
+
+  promote-test:
+    needs: collect
+    if: needs.collect.outputs.ready == 'true' && (github.event_name == 'workflow_run' || inputs.environment == 'test')
+    concurrency:
+      group: e-report-config-main
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ needs.collect.outputs.source_sha }}
+      BACKEND_IMAGE: ${{ needs.collect.outputs.backend_image }}
+      FRONTEND_IMAGE: ${{ needs.collect.outputs.frontend_image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.collect.outputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Prodigalgal/e-report-config
+          ref: main
+          path: config
+          ssh-key: ${{ secrets.CONFIG_REPO_DEPLOY_KEY }}
+      - name: 更新测试环境并验证
+        run: |
+          set -Eeuo pipefail
+          git -C config config user.name 'e-report release bot'
+          git -C config config user.email 'release-bot@users.noreply.github.com'
+
+          update_config() {
+            local environment="$1"
+            node scripts/release/update-gitops-images.mjs \
+              --config-root config --environment "$environment" \
+              --backend-image "$BACKEND_IMAGE" --frontend-image "$FRONTEND_IMAGE"
+            git -C config add "environments/$environment/e-report-backend.yaml" \
+              "environments/$environment/e-report-frontend.yaml" \
+              "environments/$environment/kustomization.yaml" \
+              "environments/$environment/patches/e-report-database-migration.yaml"
+            if ! git -C config diff --cached --quiet; then
+              git -C config commit -m "Promote $environment $SOURCE_SHA"
+              git -C config push origin HEAD:main
+            fi
+          }
+
+          wait_for_release() {
+            local base_url="$1"
+            local observed_sha csrf_status native_edition lite_edition
+            for attempt in {1..40}; do
+              observed_sha=$(curl -fsS --max-time 8 -H 'Cache-Control: no-cache' \
+                "$base_url/release.json?source=$SOURCE_SHA" 2>/dev/null | jq -r '.sourceSha // empty' 2>/dev/null || true)
+              csrf_status=$(curl -ksS --max-time 8 -o /dev/null -w '%{http_code}' \
+                "$base_url/api/auth/csrf" || true)
+              native_edition=$(curl -fsS --max-time 8 "$base_url/api/app-updates/latest?edition=NATIVE" | jq -r '.edition // empty' || true)
+              lite_edition=$(curl -fsS --max-time 8 "$base_url/api/app-updates/latest?edition=LITE" | jq -r '.edition // empty' || true)
+              if [[ "$observed_sha" == "$SOURCE_SHA" && "$csrf_status" == '200' && "$native_edition" == NATIVE && "$lite_edition" == LITE ]]; then
+                echo "RELEASE_SMOKE_OK base=$base_url sha=$SOURCE_SHA"
+                return 0
+              fi
+              echo "RELEASE_SMOKE_WAIT base=$base_url attempt=$attempt observed=$observed_sha csrf=$csrf_status"
+              sleep 10
+            done
+            echo "RELEASE_SMOKE_FAILED base=$base_url expected=$SOURCE_SHA observed=$observed_sha csrf=$csrf_status" >&2
+            return 1
+          }
+
+          if [[ "$GITHUB_EVENT_NAME" == workflow_run ]]; then
+            test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)" = "$SOURCE_SHA"
+          fi
+          update_config test
+          wait_for_release 'https://e-report-test.fantong.eu.org:60443'
+
+  publish-test-android:
+    needs: [collect, promote-test]
+    if: needs.collect.outputs.ready == 'true' && (github.event_name == 'workflow_run' || inputs.environment == 'test')
+    uses: ./.github/workflows/release-clients.yml
+    with:
+      environment: test
+      source_sha: ${{ needs.collect.outputs.source_sha }}
+      android_run_id: ${{ needs.collect.outputs.android_run_id }}
+      lite_run_id: ${{ needs.collect.outputs.lite_run_id }}
+      ota_run_id: ${{ needs.collect.outputs.ota_run_id }}
+    secrets: inherit
+
+  promote-production:
+    needs: collect
+    if: needs.collect.outputs.ready == 'true' && github.event_name == 'workflow_dispatch' && inputs.environment == 'production'
+    concurrency:
+      group: e-report-config-main
+      cancel-in-progress: false
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ needs.collect.outputs.source_sha }}
+      BACKEND_IMAGE: ${{ needs.collect.outputs.backend_image }}
+      FRONTEND_IMAGE: ${{ needs.collect.outputs.frontend_image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.collect.outputs.source_sha }}
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Prodigalgal/e-report-config
+          ref: main
+          path: config
+          ssh-key: ${{ secrets.CONFIG_REPO_DEPLOY_KEY }}
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.19.0
+      - name: 确认测试候选的两款 APK 和签名 OTA 完整一致
+        env:
+          ANDROID_SHA256: ${{ needs.collect.outputs.android_sha256 }}
+          LITE_SHA256: ${{ needs.collect.outputs.lite_sha256 }}
+        run: node scripts/release/verify-test-candidate.mjs
+      - name: 更新生产 GitOps 并验证
+        run: |
+          set -Eeuo pipefail
+          cp config/environments/production/e-report-backend.yaml "$RUNNER_TEMP/backend-previous.yaml"
+          cp config/environments/production/e-report-frontend.yaml "$RUNNER_TEMP/frontend-previous.yaml"
+          git -C config config user.name 'e-report release bot'
+          git -C config config user.email 'release-bot@users.noreply.github.com'
+          node scripts/release/update-gitops-images.mjs \
+            --config-root config --environment production \
+            --backend-image "$BACKEND_IMAGE" --frontend-image "$FRONTEND_IMAGE"
+          git -C config add environments/production/e-report-backend.yaml \
+            environments/production/e-report-frontend.yaml \
+            environments/production/kustomization.yaml \
+            environments/production/patches/e-report-database-migration.yaml
+          if ! git -C config diff --cached --quiet; then
+            git -C config commit -m "Promote production $SOURCE_SHA"
+            git -C config push origin HEAD:main
+          fi
+
+          wait_for_release() {
+            local base_url="$1"
+            local observed_sha csrf_status native_edition lite_edition
+            for attempt in {1..40}; do
+              observed_sha=$(curl -fsS --max-time 8 -H 'Cache-Control: no-cache' \
+                "$base_url/release.json?source=$SOURCE_SHA" 2>/dev/null | jq -r '.sourceSha // empty' 2>/dev/null || true)
+              csrf_status=$(curl -ksS --max-time 8 -o /dev/null -w '%{http_code}' \
+                "$base_url/api/auth/csrf" || true)
+              native_edition=$(curl -fsS --max-time 8 "$base_url/api/app-updates/latest?edition=NATIVE" | jq -r '.edition // empty' || true)
+              lite_edition=$(curl -fsS --max-time 8 "$base_url/api/app-updates/latest?edition=LITE" | jq -r '.edition // empty' || true)
+              if [[ "$observed_sha" == "$SOURCE_SHA" && "$csrf_status" == '200' && "$native_edition" == NATIVE && "$lite_edition" == LITE ]]; then
+                echo "RELEASE_SMOKE_OK base=$base_url sha=$SOURCE_SHA"
+                return 0
+              fi
+              echo "RELEASE_SMOKE_WAIT base=$base_url attempt=$attempt observed=$observed_sha csrf=$csrf_status"
+              sleep 10
+            done
+            echo "RELEASE_SMOKE_FAILED base=$base_url expected=$SOURCE_SHA observed=$observed_sha csrf=$csrf_status" >&2
+            return 1
+          }
+
+          if ! wait_for_release 'https://e-report.fantong.eu.org:60443'; then
+            cp "$RUNNER_TEMP/backend-previous.yaml" config/environments/production/e-report-backend.yaml
+            cp "$RUNNER_TEMP/frontend-previous.yaml" config/environments/production/e-report-frontend.yaml
+            git -C config add environments/production/e-report-backend.yaml \
+              environments/production/e-report-frontend.yaml
+            git -C config commit -m "Rollback production after failed smoke for $SOURCE_SHA"
+            git -C config push origin HEAD:main
+            exit 1
+          fi
+  publish-android:
+    needs: [collect, promote-production]
+    if: needs.collect.outputs.ready == 'true' && github.event_name == 'workflow_dispatch' && inputs.environment == 'production'
+    uses: ./.github/workflows/release-clients.yml
+    with:
+      environment: production
+      source_sha: ${{ needs.collect.outputs.source_sha }}
+      android_run_id: ${{ needs.collect.outputs.android_run_id }}
+      lite_run_id: ${{ needs.collect.outputs.lite_run_id }}
+      ota_run_id: ${{ needs.collect.outputs.ota_run_id }}
+    secrets: inherit

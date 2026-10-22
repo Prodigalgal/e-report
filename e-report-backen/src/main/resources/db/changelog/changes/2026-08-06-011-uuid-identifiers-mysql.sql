@@ -1,0 +1,114 @@
+--liquibase formatted sql
+
+--changeset e-report:2026-08-06-011-uuid-identifiers-prepare-mysql dbms:mysql
+--preconditions onFail:HALT onError:HALT
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM file_transfer_upload_sessions WHERE id IS NULL OR id NOT REGEXP '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$'
+--precondition-sql-check expectedResult:0 SELECT COUNT(*) FROM outbox_events WHERE aggregate_type <> 'WORK_ORDER'
+
+ALTER TABLE app_config ADD COLUMN id_uuid BINARY(16);
+ALTER TABLE app_releases ADD COLUMN id_uuid BINARY(16);
+ALTER TABLE permissions ADD COLUMN id_uuid BINARY(16);
+ALTER TABLE roles ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16);
+ALTER TABLE users ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN org_unit_id_uuid BINARY(16);
+ALTER TABLE role_permissions ADD COLUMN role_id_uuid BINARY(16), ADD COLUMN permission_id_uuid BINARY(16);
+ALTER TABLE user_roles ADD COLUMN user_id_uuid BINARY(16), ADD COLUMN role_id_uuid BINARY(16);
+ALTER TABLE fault_reports ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN reporting_org_id_uuid BINARY(16), ADD COLUMN responsible_org_id_uuid BINARY(16), ADD COLUMN reported_by_user_id_uuid BINARY(16), ADD COLUMN resolved_by_user_id_uuid BINARY(16), ADD COLUMN closed_by_user_id_uuid BINARY(16), ADD COLUMN current_assignment_id_uuid BINARY(16), ADD COLUMN pending_assignment_id_uuid BINARY(16), ADD COLUMN current_response_id_uuid BINARY(16);
+ALTER TABLE attachments ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN fault_report_id_uuid BINARY(16), ADD COLUMN response_id_uuid BINARY(16);
+ALTER TABLE work_order_material_usages ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN fault_report_id_uuid BINARY(16), ADD COLUMN response_id_uuid BINARY(16);
+ALTER TABLE file_transfer_upload_sessions ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN created_by_membership_id_uuid BINARY(16);
+ALTER TABLE tenant_groups ADD COLUMN id_uuid BINARY(16);
+ALTER TABLE tenants ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_group_id_uuid BINARY(16);
+ALTER TABLE org_units ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN parent_id_uuid BINARY(16);
+ALTER TABLE membership_role_grants ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN membership_id_uuid BINARY(16), ADD COLUMN role_id_uuid BINARY(16), ADD COLUMN scope_org_id_uuid BINARY(16);
+ALTER TABLE work_order_assignments ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN work_order_id_uuid BINARY(16), ADD COLUMN assignee_membership_id_uuid BINARY(16), ADD COLUMN responsible_org_id_uuid BINARY(16), ADD COLUMN assigned_by_membership_id_uuid BINARY(16);
+ALTER TABLE work_order_responses ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN work_order_id_uuid BINARY(16), ADD COLUMN assignment_id_uuid BINARY(16), ADD COLUMN submitted_by_membership_id_uuid BINARY(16);
+ALTER TABLE work_order_verifications ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN work_order_id_uuid BINARY(16), ADD COLUMN response_id_uuid BINARY(16), ADD COLUMN verified_by_membership_id_uuid BINARY(16);
+ALTER TABLE work_order_events ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN work_order_id_uuid BINARY(16), ADD COLUMN assignment_id_uuid BINARY(16), ADD COLUMN response_id_uuid BINARY(16), ADD COLUMN verification_id_uuid BINARY(16), ADD COLUMN operator_membership_id_uuid BINARY(16);
+ALTER TABLE tenant_app_config ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16);
+ALTER TABLE command_idempotency_records ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN membership_id_uuid BINARY(16);
+ALTER TABLE outbox_events ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN aggregate_id_uuid BINARY(16);
+ALTER TABLE org_app_config ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16), ADD COLUMN org_unit_id_uuid BINARY(16);
+ALTER TABLE work_order_sla_policies ADD COLUMN id_uuid BINARY(16), ADD COLUMN tenant_id_uuid BINARY(16);
+
+UPDATE app_config SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE app_releases SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE permissions SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE roles SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE users SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE fault_reports SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE attachments SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE work_order_material_usages SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE file_transfer_upload_sessions SET id_uuid = UUID_TO_BIN(id);
+UPDATE tenant_groups SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE tenants SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE org_units SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE membership_role_grants SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE work_order_assignments SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE work_order_responses SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE work_order_verifications SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE work_order_events SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE tenant_app_config SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE command_idempotency_records SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE outbox_events SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE org_app_config SET id_uuid = UUID_TO_BIN(UUID());
+UPDATE work_order_sla_policies SET id_uuid = UUID_TO_BIN(UUID());
+
+UPDATE roles child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE users child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE users child JOIN org_units parent ON parent.id = child.org_unit_id SET child.org_unit_id_uuid = parent.id_uuid WHERE child.org_unit_id IS NOT NULL;
+UPDATE role_permissions child JOIN roles parent ON parent.id = child.role_id SET child.role_id_uuid = parent.id_uuid WHERE child.role_id IS NOT NULL;
+UPDATE role_permissions child JOIN permissions parent ON parent.id = child.permission_id SET child.permission_id_uuid = parent.id_uuid WHERE child.permission_id IS NOT NULL;
+UPDATE user_roles child JOIN users parent ON parent.id = child.user_id SET child.user_id_uuid = parent.id_uuid WHERE child.user_id IS NOT NULL;
+UPDATE user_roles child JOIN roles parent ON parent.id = child.role_id SET child.role_id_uuid = parent.id_uuid WHERE child.role_id IS NOT NULL;
+UPDATE fault_reports child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE fault_reports child JOIN org_units parent ON parent.id = child.reporting_org_id SET child.reporting_org_id_uuid = parent.id_uuid WHERE child.reporting_org_id IS NOT NULL;
+UPDATE fault_reports child JOIN org_units parent ON parent.id = child.responsible_org_id SET child.responsible_org_id_uuid = parent.id_uuid WHERE child.responsible_org_id IS NOT NULL;
+UPDATE fault_reports child JOIN users parent ON parent.id = child.reported_by_user_id SET child.reported_by_user_id_uuid = parent.id_uuid WHERE child.reported_by_user_id IS NOT NULL;
+UPDATE fault_reports child JOIN users parent ON parent.id = child.resolved_by_user_id SET child.resolved_by_user_id_uuid = parent.id_uuid WHERE child.resolved_by_user_id IS NOT NULL;
+UPDATE fault_reports child JOIN users parent ON parent.id = child.closed_by_user_id SET child.closed_by_user_id_uuid = parent.id_uuid WHERE child.closed_by_user_id IS NOT NULL;
+UPDATE fault_reports child JOIN work_order_assignments parent ON parent.id = child.current_assignment_id SET child.current_assignment_id_uuid = parent.id_uuid WHERE child.current_assignment_id IS NOT NULL;
+UPDATE fault_reports child JOIN work_order_assignments parent ON parent.id = child.pending_assignment_id SET child.pending_assignment_id_uuid = parent.id_uuid WHERE child.pending_assignment_id IS NOT NULL;
+UPDATE fault_reports child JOIN work_order_responses parent ON parent.id = child.current_response_id SET child.current_response_id_uuid = parent.id_uuid WHERE child.current_response_id IS NOT NULL;
+UPDATE attachments child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE attachments child JOIN fault_reports parent ON parent.id = child.fault_report_id SET child.fault_report_id_uuid = parent.id_uuid WHERE child.fault_report_id IS NOT NULL;
+UPDATE attachments child JOIN work_order_responses parent ON parent.id = child.response_id SET child.response_id_uuid = parent.id_uuid WHERE child.response_id IS NOT NULL;
+UPDATE work_order_material_usages child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE work_order_material_usages child JOIN fault_reports parent ON parent.id = child.fault_report_id SET child.fault_report_id_uuid = parent.id_uuid WHERE child.fault_report_id IS NOT NULL;
+UPDATE work_order_material_usages child JOIN work_order_responses parent ON parent.id = child.response_id SET child.response_id_uuid = parent.id_uuid WHERE child.response_id IS NOT NULL;
+UPDATE file_transfer_upload_sessions child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE file_transfer_upload_sessions child JOIN users parent ON parent.id = child.created_by_membership_id SET child.created_by_membership_id_uuid = parent.id_uuid WHERE child.created_by_membership_id IS NOT NULL;
+UPDATE tenants child JOIN tenant_groups parent ON parent.id = child.tenant_group_id SET child.tenant_group_id_uuid = parent.id_uuid WHERE child.tenant_group_id IS NOT NULL;
+UPDATE org_units child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE org_units child JOIN org_units parent ON parent.id = child.parent_id SET child.parent_id_uuid = parent.id_uuid WHERE child.parent_id IS NOT NULL;
+UPDATE membership_role_grants child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE membership_role_grants child JOIN users parent ON parent.id = child.membership_id SET child.membership_id_uuid = parent.id_uuid WHERE child.membership_id IS NOT NULL;
+UPDATE membership_role_grants child JOIN roles parent ON parent.id = child.role_id SET child.role_id_uuid = parent.id_uuid WHERE child.role_id IS NOT NULL;
+UPDATE membership_role_grants child JOIN org_units parent ON parent.id = child.scope_org_id SET child.scope_org_id_uuid = parent.id_uuid WHERE child.scope_org_id IS NOT NULL;
+UPDATE work_order_assignments child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE work_order_assignments child JOIN fault_reports parent ON parent.id = child.work_order_id SET child.work_order_id_uuid = parent.id_uuid WHERE child.work_order_id IS NOT NULL;
+UPDATE work_order_assignments child JOIN users parent ON parent.id = child.assignee_membership_id SET child.assignee_membership_id_uuid = parent.id_uuid WHERE child.assignee_membership_id IS NOT NULL;
+UPDATE work_order_assignments child JOIN org_units parent ON parent.id = child.responsible_org_id SET child.responsible_org_id_uuid = parent.id_uuid WHERE child.responsible_org_id IS NOT NULL;
+UPDATE work_order_assignments child JOIN users parent ON parent.id = child.assigned_by_membership_id SET child.assigned_by_membership_id_uuid = parent.id_uuid WHERE child.assigned_by_membership_id IS NOT NULL;
+UPDATE work_order_responses child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE work_order_responses child JOIN fault_reports parent ON parent.id = child.work_order_id SET child.work_order_id_uuid = parent.id_uuid WHERE child.work_order_id IS NOT NULL;
+UPDATE work_order_responses child JOIN work_order_assignments parent ON parent.id = child.assignment_id SET child.assignment_id_uuid = parent.id_uuid WHERE child.assignment_id IS NOT NULL;
+UPDATE work_order_responses child JOIN users parent ON parent.id = child.submitted_by_membership_id SET child.submitted_by_membership_id_uuid = parent.id_uuid WHERE child.submitted_by_membership_id IS NOT NULL;
+UPDATE work_order_verifications child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE work_order_verifications child JOIN fault_reports parent ON parent.id = child.work_order_id SET child.work_order_id_uuid = parent.id_uuid WHERE child.work_order_id IS NOT NULL;
+UPDATE work_order_verifications child JOIN work_order_responses parent ON parent.id = child.response_id SET child.response_id_uuid = parent.id_uuid WHERE child.response_id IS NOT NULL;
+UPDATE work_order_verifications child JOIN users parent ON parent.id = child.verified_by_membership_id SET child.verified_by_membership_id_uuid = parent.id_uuid WHERE child.verified_by_membership_id IS NOT NULL;
+UPDATE work_order_events child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE work_order_events child JOIN fault_reports parent ON parent.id = child.work_order_id SET child.work_order_id_uuid = parent.id_uuid WHERE child.work_order_id IS NOT NULL;
+UPDATE work_order_events child JOIN work_order_assignments parent ON parent.id = child.assignment_id SET child.assignment_id_uuid = parent.id_uuid WHERE child.assignment_id IS NOT NULL;
+UPDATE work_order_events child JOIN work_order_responses parent ON parent.id = child.response_id SET child.response_id_uuid = parent.id_uuid WHERE child.response_id IS NOT NULL;
+UPDATE work_order_events child JOIN work_order_verifications parent ON parent.id = child.verification_id SET child.verification_id_uuid = parent.id_uuid WHERE child.verification_id IS NOT NULL;
+UPDATE work_order_events child JOIN users parent ON parent.id = child.operator_membership_id SET child.operator_membership_id_uuid = parent.id_uuid WHERE child.operator_membership_id IS NOT NULL;
+UPDATE tenant_app_config child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE command_idempotency_records child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE command_idempotency_records child JOIN users parent ON parent.id = child.membership_id SET child.membership_id_uuid = parent.id_uuid WHERE child.membership_id IS NOT NULL;
+UPDATE outbox_events child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE outbox_events child JOIN fault_reports parent ON parent.id = child.aggregate_id SET child.aggregate_id_uuid = parent.id_uuid WHERE child.aggregate_id IS NOT NULL;
+UPDATE org_app_config child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+UPDATE org_app_config child JOIN org_units parent ON parent.id = child.org_unit_id SET child.org_unit_id_uuid = parent.id_uuid WHERE child.org_unit_id IS NOT NULL;
+UPDATE work_order_sla_policies child JOIN tenants parent ON parent.id = child.tenant_id SET child.tenant_id_uuid = parent.id_uuid WHERE child.tenant_id IS NOT NULL;
+

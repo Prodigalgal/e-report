@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- status="WARN" 表示 Log4j2 自身的日志级别 -->
+<Configuration status="WARN" monitorInterval="30"> <!-- monitorInterval 用于自动重新加载配置文件的间隔（秒） -->
+
+    <!-- 定义属性，方便在配置中复用 -->
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</Property>
+        <Property name="LOG_DIR">./logs</Property> <!-- 日志文件存储目录 -->
+        <Property name="APP_NAME">e-report-backend</Property>
+    </Properties>
+
+    <!-- Appenders 定义日志输出的目的地 -->
+    <Appenders>
+        <!-- 控制台输出 Appender -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <!-- 定义输出格式 -->
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <!-- 滚动文件输出 Appender (按天和大小滚动) -->
+        <RollingFile name="RollingFileAppender"
+                     fileName="${LOG_DIR}/${APP_NAME}.log"
+                     filePattern="${LOG_DIR}/${APP_NAME}-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <!-- 按时间滚动：每天创建一个新文件 -->
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <!-- 按大小滚动：文件达到 10MB 时滚动 -->
+                <SizeBasedTriggeringPolicy size="10 MB"/>
+            </Policies>
+            <!-- 最多保留 10 个归档文件 -->
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <!-- 错误日志文件 Appender (只记录 ERROR 级别及以上的日志) -->
+        <RollingFile name="ErrorFileAppender"
+                     fileName="${LOG_DIR}/${APP_NAME}-error.log"
+                     filePattern="${LOG_DIR}/${APP_NAME}-error-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <!-- 只接受 ERROR 级别的日志 -->
+            <Filters>
+                <ThresholdFilter level="ERROR" onMatch="ACCEPT" onMismatch="DENY"/>
+            </Filters>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="5 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="5"/>
+        </RollingFile>
+
+    </Appenders>
+
+    <!-- Loggers 定义特定包或类的日志级别和使用的 Appender -->
+    <Loggers>
+        <!-- Spring框架的日志级别 -->
+        <Logger name="org.springframework.web" level="INFO"/>
+        <Logger name="org.springframework.security" level="INFO"/> <!-- 如果使用Spring Security -->
+        <Logger name="org.hibernate.SQL" level="WARN"/>
+        <Logger name="org.hibernate.orm.jdbc.bind" level="WARN"/>
+
+
+        <!-- 你的应用程序的默认日志级别 -->
+        <Logger name="com.pro.ereportbacken" level="INFO" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFileAppender"/>
+            <AppenderRef ref="ErrorFileAppender"/>
+        </Logger>
+
+        <!-- Root logger 定义全局默认的日志级别和 Appender -->
+        <Root level="INFO"> <!-- 全局默认级别 -->
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFileAppender"/>
+            <AppenderRef ref="ErrorFileAppender"/>
+        </Root>
+    </Loggers>
+
+</Configuration>

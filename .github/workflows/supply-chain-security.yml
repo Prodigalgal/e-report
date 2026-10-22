@@ -1,0 +1,107 @@
+name: 供应链安全
+run-name: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, 'ci-only:') && 'CI 配置校验' || '供应链安全' }}
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: '0 22 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supply-chain-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: 检出不可变源码
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 校验 CI 维护提交范围
+        id: scope
+        env:
+          CI_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+          CI_BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/security/verify-ci-maintenance-scope.mjs
+
+      - name: 配置 Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.19.0
+          cache: npm
+          cache-dependency-path: |
+            e-report/package-lock.json
+            e-report-app/package-lock.json
+
+      - name: 配置 Java
+        if: steps.scope.outputs.maintenance != 'true'
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: gradle
+
+      - name: 校验统一版本契约
+        run: node scripts/verify-version-contract.mjs
+
+      - name: 验证 WEB 锁文件与构建
+        if: steps.scope.outputs.maintenance != 'true'
+        working-directory: e-report
+        run: |
+          npm ci --ignore-scripts --registry=https://registry.npmjs.org
+          npm test
+          npm run lint
+          npm run build
+
+      - name: 验证 APP 锁文件与静态测试
+        if: steps.scope.outputs.maintenance != 'true'
+        working-directory: e-report-app
+        run: |
+          npm ci --ignore-scripts --registry=https://registry.npmjs.org
+          npm run native:contract
+          npm test
+          npm run typecheck
+          npm run security:assets
+
+      - name: 验证后端锁文件与测试
+        if: steps.scope.outputs.maintenance != 'true'
+        working-directory: e-report-backen
+        run: ./gradlew test bootJar --no-daemon
+
+      - name: 验证供应链策略门禁
+        run: |
+          node --test scripts/security/test/*.test.mjs
+          node --test scripts/release/*.test.mjs
+          node scripts/security/validate-supply-chain-contract.mjs --repoRoot .
+
+      - name: 执行依赖、密钥与 SBOM 审计
+        if: steps.scope.outputs.maintenance != 'true'
+        shell: pwsh
+        env:
+          CONTAINER_SCAN_SCOPE: ${{ github.event_name == 'schedule' && 'Inventory' || 'Release' }}
+        run: ./scripts/security/run-supply-chain-audit.ps1 -OutputDirectory output/security -ContainerScanScope $env:CONTAINER_SCAN_SCOPE
+
+      - name: 保存 CycloneDX SBOM
+        if: always() && hashFiles('output/security/*.json') != ''
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e-report-supply-chain-evidence
+          path: |
+            output/security/e-report-source.cdx.json
+            output/security/osv-release.json
+            output/security/osv-build-tooling.json
+            output/security/*-npm-audit.json
+            output/security/gitleaks-*.json
+            output/security/trivy-images/*.json
+          if-no-files-found: error
+          retention-days: 30
