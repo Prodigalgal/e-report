@@ -81,7 +81,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-opentelemetry'
 	implementation 'org.apache.poi:poi-ooxml:5.5.1'
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
-	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.3'
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.4'
     implementation 'org.bouncycastle:bcprov-jdk18on:1.85.2'
 	implementation 'com.github.houbb:pinyin:0.4.0'
 
@@ -99,7 +99,7 @@ dependencies {
     testRuntimeOnly 'com.mysql:mysql-connector-j'
     migrationRuntimeOnly 'com.mysql:mysql-connector-j'
     migrationBundle 'com.fasterxml.jackson.core:jackson-databind:2.22.3'
-    migrationBundle 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.3'
+    migrationBundle 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.22.4'
     migrationBundle 'org.postgresql:postgresql'
     migrationBundle 'com.mysql:mysql-connector-j'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
