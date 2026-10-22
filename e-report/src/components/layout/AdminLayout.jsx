@@ -133,7 +133,7 @@ function AdminLayout() {
                     pt: 'env(safe-area-inset-top)',
                 }}
             >
-                <Toolbar variant="dense" sx={{ minHeight: 64, px: pageGutters }}>
+                <Toolbar variant="dense" sx={{ minHeight: 56, px: pageGutters }}>
                     <IconButton
                         color="inherit"
                         aria-label={open ? '收起导航菜单' : '展开导航菜单'}
@@ -220,7 +220,7 @@ function AdminLayout() {
                         display: 'flex',
                         alignItems: 'center',
                         position: 'relative',
-                        minHeight: 64,
+                        minHeight: 56,
                         pt: 'env(safe-area-inset-top)',
                         boxSizing: 'content-box',
                         px: 0,
@@ -275,9 +275,9 @@ function AdminLayout() {
                                 component="div"
                                 variant="overline"
                                 sx={{
-                                    height: open ? 36 : 12,
+                                    height: open ? 28 : 8,
                                     px: open ? 1.25 : 0,
-                                    lineHeight: '36px',
+                                    lineHeight: '28px',
                                     fontSize: 11,
                                     letterSpacing: '0.04em',
                                     color: 'text.secondary',
@@ -303,7 +303,7 @@ function AdminLayout() {
                                         onClick={handleDrawerNavClick}
                                         aria-label={!open ? item.text : undefined}
                                         sx={{
-                                            minHeight: 44,
+                                            minHeight: { xs: 48, md: 40 },
                                             px: open ? 1.25 : 1.5,
                                             py: 0.5,
                                             mb: 0.5,
@@ -356,15 +356,15 @@ function AdminLayout() {
                 sx={{
                     flexGrow: 1,
                     bgcolor: 'background.default',
-                    px: { ...pageGutters, lg: 4 },
-                    py: { xs: `${uiLayout.pageGutter}px`, sm: 3, lg: 4 },
-                    mt: 'calc(64px + env(safe-area-inset-top))',
+                    px: pageGutters,
+                    py: `${uiLayout.pageGutter}px`,
+                    mt: 'calc(56px + env(safe-area-inset-top))',
                     width: { xs: '100%', md: 0 },
                     flexBasis: { xs: 'auto', md: 0 },
                     minWidth: 0,
                 }}
             >
-                <Box sx={{ maxWidth: 1600, mx: 'auto', minWidth: 0 }}><Outlet /></Box>
+                <Box sx={{ minWidth: 0 }}><Outlet /></Box>
             </Box>
         </Box>
     );

@@ -131,7 +131,7 @@ function AppHeader() {
     return (
         <AppBar position="sticky" sx={{ pt: 'env(safe-area-inset-top)' }}>
             <Container maxWidth={false} disableGutters sx={{ px: pageGutters }}>
-                <Toolbar disableGutters sx={{ minHeight: { xs: 56, sm: 64 } }}>
+                <Toolbar disableGutters sx={{ minHeight: 56 }}>
                     {/* Logo */}
                     <BrandLogo sx={{ mr: 1.5, display: { xs: 'none', md: 'flex' } }} />
                     <Typography

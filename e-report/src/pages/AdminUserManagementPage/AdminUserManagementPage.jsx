@@ -879,7 +879,7 @@ function AdminUserManagementPage() {
 
     return (
         <Container maxWidth={false} disableGutters sx={{ mt: 0, mb: 2 }}>
-            <Paper elevation={1} sx={{ p: { xs: 1.5, md: 2 } }}>
+            <Paper elevation={1} sx={{ p: 1.5 }}>
                 <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1.5, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, mb: 1.5 }}>
                     <PageTitle>用户管理</PageTitle>
                     <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>

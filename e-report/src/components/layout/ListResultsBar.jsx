@@ -18,7 +18,7 @@ export function ListPagination({ showFirstButton = false, showLastButton = false
 
 export default function ListResultsBar({ summary, children, sx }) {
     return (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1, minWidth: 0, py: 0.75, ...sx }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: 1, minWidth: 0, py: 0.5, ...sx }}>
             <Typography component="div" variant="body2" color="text.secondary" aria-live="polite" sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 1, minWidth: 0 }}>
                 {summary}
             </Typography>

@@ -16,7 +16,7 @@ export function PageHeader({
   const { width } = useWindowDimensions();
   const narrow = width < 480;
   return (
-    <View style={{ flexDirection: narrow ? 'column' : 'row', alignItems: narrow ? 'stretch' : 'center', gap: 12, minWidth: 0 }}>
+    <View style={{ flexDirection: narrow ? 'column' : 'row', alignItems: narrow ? 'stretch' : 'center', gap: 8, minWidth: 0 }}>
       <View style={{ flex: narrow ? undefined : 1, minWidth: 0, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 12, rowGap: 4 }}>
         <Text style={{ color: accentColor, fontSize: uiLayout.pageTitleSize, lineHeight: uiLayout.pageTitleLineHeight,
           fontWeight: '700', letterSpacing: -0.5, includeFontPadding: false }}>{title}</Text>

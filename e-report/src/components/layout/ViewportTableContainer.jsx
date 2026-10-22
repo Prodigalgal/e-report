@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react';
 import { TableContainer } from '@mui/material';
+import { uiLayout } from '../../ui/layout';
 
 export default function ViewportTableContainer({ sx, ...props }) {
     const containerRef = useRef(null);
@@ -11,7 +12,7 @@ export default function ViewportTableContainer({ sx, ...props }) {
         const updateHeight = () => {
             if (!container.getClientRects().length) return;
             const documentTop = container.getBoundingClientRect().top + window.scrollY;
-            const availableHeight = Math.max(280, Math.floor(window.innerHeight - documentTop - 24));
+            const availableHeight = Math.max(280, Math.floor(window.innerHeight - documentTop - uiLayout.pageGutter));
             container.style.setProperty('--table-viewport-height', `${availableHeight}px`);
         };
         const scheduleUpdate = () => {

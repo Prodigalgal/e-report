@@ -153,11 +153,11 @@ const TypeMetricCard = React.memo(function TypeMetricCard({ item }) {
         <Card variant="outlined" sx={{ height: '100%', borderRadius: '14px' }}>
             <CardContent
                 sx={{
-                    p: 2.5,
+                    p: 1.5,
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: 2,
-                    '&:last-child': { pb: 2.5 },
+                    gap: 1.5,
+                    '&:last-child': { pb: 1.5 },
                 }}
             >
                 <Box
@@ -255,9 +255,9 @@ function SlaDurationSection({ statistics }) {
         { label: '最长未闭环', value: formatDuration(statistics?.longestActiveElapsedSeconds), tone: neutralTone },
     ];
     return (
-        <Paper variant="outlined" sx={{ p: 2.5, mb: 2.5, borderRadius: '14px' }}>
+        <Paper variant="outlined" sx={{ p: 1.5, mb: 1.5, borderRadius: '14px' }}>
             <Typography variant="subtitle1" component="h2" sx={{ fontWeight: 600, mb: 2.5 }}>故障历时与处理时限</Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 2.5 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>
                 {metrics.map(metric => (
                     <Box key={metric.label} sx={{ minWidth: 0 }}>
                         <Typography variant="caption" color="text.secondary">{metric.label}</Typography>
@@ -278,7 +278,7 @@ const ChartPanel = React.memo(function ChartPanel({ title, subtitle, children })
             sx={{
                 height: '100%',
                 minHeight: { xs: 210, sm: 220 },
-                p: 2.5,
+                p: 1.5,
                 borderRadius: '14px',
                 display: 'flex',
                 flexDirection: 'column',
@@ -536,7 +536,7 @@ function StatisticsSection({ statistics, loading, error, onCountySelect }) {
         <Box sx={{ width: '100%', minWidth: 0 }}>
             {error && <Alert severity="warning" sx={{ mb: 2 }}>{error}</Alert>}
             <SlaDurationSection statistics={statistics} />
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2.5, mb: 2.5, width: '100%' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5, mb: 1.5, width: '100%' }}>
                 {typeStatistics.map(item => (
                     <Box key={item.reportType} sx={{ minWidth: 0, width: '100%' }}>
                         <TypeMetricCard item={item} />
@@ -548,7 +548,7 @@ function StatisticsSection({ statistics, loading, error, onCountySelect }) {
                 sx={{
                     display: 'grid',
                     gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
-                    gap: 2.5,
+                    gap: 1.5,
                     width: '100%',
                 }}
             >

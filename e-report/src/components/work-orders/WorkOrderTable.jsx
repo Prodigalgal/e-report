@@ -53,7 +53,7 @@ function WorkOrderMobileCard({ workOrder, onOpen, onDownloadZip, selectionEnable
             variant="outlined"
             onClick={() => onOpen(workOrder)}
             sx={{
-                p: 2,
+                p: 1.5,
                 borderRadius: '14px',
                 cursor: 'pointer',
                 transition: (muiTheme) => muiTheme.transitions.create(['border-color', 'box-shadow', 'transform'], {
@@ -230,7 +230,7 @@ function WorkOrderTable({ workOrders, isLoading, onRowClick, selectedWorkOrderId
 
     if (isCompact) {
         return (
-            <Box sx={{ display: 'grid', gap: 1.5 }}>
+            <Box sx={{ display: 'grid', gap: 1 }}>
                 {workOrders.map((workOrder) => (
                     <WorkOrderMobileCard
                         key={workOrder.id}
@@ -253,12 +253,12 @@ function WorkOrderTable({ workOrders, isLoading, onRowClick, selectedWorkOrderId
                     {selectionEnabled && <col style={{ width: 52 }} />}
                     <col style={{ width: 210 }} />
                     <col />
-                    <col style={{ width: 180 }} />
+                    <col style={{ width: 204 }} />
                     <col style={{ width: 174 }} />
                     <col style={{ width: 100 }} />
                 </colgroup>
                 <TableHead>
-                    <TableRow sx={{ '& th': { height: 48, bgcolor: 'background.default', color: 'text.secondary', fontWeight: 800 } }}>
+                    <TableRow sx={{ '& th': { height: 40, bgcolor: 'background.default', color: 'text.secondary', fontWeight: 800 } }}>
                         {selectionEnabled && (
                             <TableCell padding="checkbox" sx={{ width: 52, p: 0, textAlign: 'center' }}>
                                 <Checkbox
@@ -271,7 +271,7 @@ function WorkOrderTable({ workOrders, isLoading, onRowClick, selectedWorkOrderId
                         )}
                         <TableCell sx={{ width: 210 }}>工单 / 上报时间</TableCell>
                         <TableCell>位置与内容</TableCell>
-                        <TableCell sx={{ width: 180 }}>联系与责任</TableCell>
+                        <TableCell sx={{ width: 204 }}>联系与责任</TableCell>
                         <TableCell align="center" sx={{ width: 174 }}>流程与时限</TableCell>
                         <TableCell align="center" sx={{ width: 100 }}>操作</TableCell>
                     </TableRow>
@@ -300,7 +300,7 @@ function WorkOrderTable({ workOrders, isLoading, onRowClick, selectedWorkOrderId
                                 </TableCell>
                             )}
                             <TableCell component="th" scope="row" sx={{ borderLeft: '4px solid', borderLeftColor: priorityPresentation(workOrder.priority).rail }}>
-                                <Typography variant="body2" sx={{ fontWeight: 800, mb: 0.75, whiteSpace: 'nowrap' }}>{workOrder.workOrderNo || `#${workOrder.id}`}</Typography>
+                                <Typography variant="body2" sx={{ fontWeight: 800, mb: 0.5, whiteSpace: 'nowrap' }}>{workOrder.workOrderNo || `#${workOrder.id}`}</Typography>
                                 <Stack
  direction="row"
  spacing={0.5}
@@ -321,11 +321,11 @@ function WorkOrderTable({ workOrders, isLoading, onRowClick, selectedWorkOrderId
                                     />
                                 </Stack>
                                 {workOrder.boxQuantity ? (
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
                                         箱体 {workOrder.boxQuantity}
                                     </Typography>
                                 ) : null}
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.75 }}>{formatDate(workOrder.reportTime)}</Typography>
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>{formatDate(workOrder.reportTime)}</Typography>
                             </TableCell>
                             <TableCell>
                                 <Tooltip title={workOrder.location || ''}>
@@ -342,13 +342,15 @@ function WorkOrderTable({ workOrders, isLoading, onRowClick, selectedWorkOrderId
                                 </Tooltip>
                             </TableCell>
                             <TableCell>
-                                <Typography variant="body2" noWrap title={workOrder.contactPerson || '-'} sx={{ fontWeight: 700 }}>{workOrder.contactPerson || '-'}</Typography>
-                                <Typography variant="caption" color="text.secondary">{workOrder.phone || '-'}</Typography>
+                                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', columnGap: 0.75 }}>
+                                    <Typography variant="body2" title={workOrder.contactPerson || '-'} sx={{ fontWeight: 700 }}>{workOrder.contactPerson || '-'}</Typography>
+                                    <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>{workOrder.phone || '-'}</Typography>
+                                </Box>
                                 <Typography variant="body2" noWrap title={`报单：${workOrder.reportedBy?.name || workOrder.reportedBy?.username || '-'}`}>
                                     <Box component="span" sx={{ color: 'text.secondary' }}>报单：</Box>
                                     {workOrder.reportedBy?.name || workOrder.reportedBy?.username || '-'}
                                 </Typography>
-                                <Typography variant="body2" noWrap title={`${workOrder.handlerStateName || '处理'}：${getHandlerName(workOrder)}`} sx={{ mt: 0.5 }}>
+                                <Typography variant="body2" noWrap title={`${workOrder.handlerStateName || '处理'}：${getHandlerName(workOrder)}`}>
                                     <Box component="span" sx={{ color: 'text.secondary' }}>{workOrder.handlerStateName || '处理'}：</Box>
                                     {getHandlerName(workOrder)}
                                 </Typography>

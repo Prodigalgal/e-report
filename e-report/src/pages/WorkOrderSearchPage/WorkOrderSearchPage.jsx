@@ -108,7 +108,7 @@ function WorkOrderSearchPage() {
     const selectedCount = selectedWorkOrderIds.size;
 
     return (
-        <Container maxWidth={isAdminRoute ? false : 'xl'} disableGutters sx={{ mb: 2 }}>
+        <Container maxWidth={false} disableGutters sx={{ mb: 1.5 }}>
             <PageHeading title="工单查询" description={hasManagementScope ? '集中查询本人上报及职责范围内的工单' : '集中查看本人提交的工单与处理进度'} sx={{ mb: 1.5 }} />
 
             {exportProgress && (
@@ -123,7 +123,7 @@ function WorkOrderSearchPage() {
                 </Box>
             )}
 
-            <Paper elevation={0} variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, mb: 0.5, borderRadius: '14px' }}>
+            <Paper elevation={0} variant="outlined" sx={{ p: 1.5, mb: 0.5, borderRadius: '14px' }}>
                 <WorkOrderSearchFilters
                     onSearch={handleSearchWithUrl}
                     isLoading={isLoading}
@@ -138,7 +138,7 @@ function WorkOrderSearchPage() {
                             disabled={isLoading || exportProgress !== null || selectedCount < 1}
                             aria-label={`导出已选${selectedCount > 0 ? ` (${selectedCount})` : ''}`}
                             title="导出已选工单"
-                            sx={{ whiteSpace: 'nowrap', minHeight: { xs: 44, md: 40 }, minWidth: { xs: 44, sm: 'auto' }, px: { xs: 1, sm: 2 }, '& .MuiButton-startIcon': { m: { xs: 0, sm: undefined }, mr: { sm: 1 } }, gridArea: 'export' }}
+                            sx={{ whiteSpace: 'nowrap', minWidth: { xs: 48, sm: 'auto' }, px: { xs: 1, sm: 1.5 }, '& .MuiButton-startIcon': { m: { xs: 0, sm: undefined }, mr: { sm: 1 } }, gridArea: 'export' }}
                         >
                             <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>导出已选{selectedCount > 0 ? ` (${selectedCount})` : ''}</Box>
                         </Button>

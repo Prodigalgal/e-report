@@ -30,7 +30,7 @@ export function Screen({
             flexGrow: 1,
             paddingHorizontal: horizontalPadding,
             paddingTop: uiLayout.pageGutter,
-            paddingBottom: 36,
+            paddingBottom: 24,
             gap: uiLayout.pageGap,
           },
           contentStyle,

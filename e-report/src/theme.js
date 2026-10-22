@@ -7,6 +7,7 @@ const actionTone = color => actionColors[{
     primary: 'primary', secondary: 'primary',
 }[color] || 'neutral'];
 const focusRing = { outline: '3px solid rgba(37, 99, 235, 0.28)', outlineOffset: 2 };
+const touchMedia = muiTheme => `${muiTheme.breakpoints.down('sm')}, (pointer: coarse)`;
 
 const theme = createTheme({
     palette: {
@@ -69,7 +70,7 @@ const theme = createTheme({
                             borderColor: 'transparent',
                         },
                         '&.Mui-focusVisible': focusRing,
-                        [muiTheme.breakpoints.down('sm')]: { minHeight: uiLayout.controlHeight },
+                        [touchMedia(muiTheme)]: { minHeight: uiLayout.controlHeight },
                     };
                 },
                 sizeLarge: { minHeight: uiLayout.controlHeight },
@@ -78,13 +79,13 @@ const theme = createTheme({
         MuiIconButton: {
             styleOverrides: {
                 root: ({ theme: muiTheme, ownerState }) => ({
-                    minWidth: 40, minHeight: 40, borderRadius: uiLayout.cornerRadius,
+                    minWidth: uiLayout.compactControlHeight, minHeight: uiLayout.compactControlHeight, borderRadius: uiLayout.cornerRadius,
                     color: ownerState.color === 'inherit' ? 'inherit' : actionTone(ownerState.color).foreground,
                     backgroundColor: 'transparent',
                     '&:hover': { backgroundColor: '#F0F2F6' },
                     '&.Mui-disabled': { color: actionColors.disabled.foreground },
                     '&.Mui-focusVisible': focusRing,
-                    [muiTheme.breakpoints.down('sm')]: { minWidth: uiLayout.controlHeight, minHeight: uiLayout.controlHeight },
+                    [touchMedia(muiTheme)]: { minWidth: uiLayout.controlHeight, minHeight: uiLayout.controlHeight },
                 }),
             },
         },
@@ -96,25 +97,26 @@ const theme = createTheme({
                     '&:hover': { backgroundColor: '#F5F5F7' },
                     '&.Mui-selected, &.Mui-selected:hover': { backgroundColor: '#EEF3FF', color: '#1D4ED8' },
                     '&.Mui-focusVisible': focusRing,
-                    [muiTheme.breakpoints.down('sm')]: { minHeight: uiLayout.controlHeight },
+                    [touchMedia(muiTheme)]: { minHeight: uiLayout.controlHeight },
                 }),
             },
         },
         MuiTabs: {
             styleOverrides: {
-                root: { minHeight: 48 },
+                root: ({ theme: muiTheme }) => ({ minHeight: 40, [touchMedia(muiTheme)]: { minHeight: uiLayout.controlHeight } }),
                 indicator: { height: 2, borderRadius: 2 },
             },
         },
         MuiTab: {
             styleOverrides: {
-                root: {
-                    minHeight: 48, padding: '12px 20px', minWidth: 88,
+                root: ({ theme: muiTheme }) => ({
+                    minHeight: 40, padding: '8px 16px', minWidth: 88,
                     color: '#656B76', fontSize: 14, fontWeight: 600, textTransform: 'none',
                     '&:hover': { color: '#202124', backgroundColor: '#FAFAFB' },
                     '&.Mui-selected': { color: '#2563EB' },
                     '&.Mui-focusVisible': { ...focusRing, outlineOffset: -3 },
-                },
+                    [touchMedia(muiTheme)]: { minHeight: uiLayout.controlHeight },
+                }),
             },
         },
         MuiTabScrollButton: { styleOverrides: { root: { color: '#656B76', width: 32 } } },
@@ -129,15 +131,16 @@ const theme = createTheme({
         },
         MuiAccordionSummary: {
             styleOverrides: {
-                root: {
-                    minHeight: 56, padding: '0 20px',
+                root: ({ theme: muiTheme }) => ({
+                    minHeight: 44, padding: '0 16px',
                     '&:hover': { backgroundColor: '#FAFAFB' },
                     '&.Mui-focusVisible': { ...focusRing, outlineOffset: -3 },
-                },
-                content: { margin: '14px 0' },
+                    [touchMedia(muiTheme)]: { minHeight: uiLayout.controlHeight },
+                }),
+                content: { margin: '10px 0' },
             },
         },
-        MuiAccordionDetails: { styleOverrides: { root: { padding: '0 20px 20px' } } },
+        MuiAccordionDetails: { styleOverrides: { root: { padding: '0 16px 16px' } } },
         MuiPaginationItem: {
             styleOverrides: {
                 root: ({ theme: muiTheme }) => ({
@@ -177,13 +180,13 @@ const theme = createTheme({
         MuiOutlinedInput: {
             styleOverrides: {
                 root: ({ theme: muiTheme }) => ({
-                    minWidth: 0, lineHeight: '23px', backgroundColor: '#FFFFFF',
+                    minWidth: 0, lineHeight: `${uiLayout.bodyLineHeight}px`, backgroundColor: '#FFFFFF',
                     '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D9DCE3' },
                     '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#A9AFBB' },
                     '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.10)' },
                     '&.MuiInputBase-sizeSmall .MuiOutlinedInput-input': {
-                        paddingTop: 8.5, paddingBottom: 8.5,
-                        [muiTheme.breakpoints.down('sm')]: { paddingTop: 12.5, paddingBottom: 12.5 },
+                        paddingTop: 6, paddingBottom: 6,
+                        [touchMedia(muiTheme)]: { paddingTop: 12, paddingBottom: 12 },
                     },
                     '&.MuiInputBase-multiline .MuiOutlinedInput-input': { padding: 0 },
                 }),
@@ -195,8 +198,8 @@ const theme = createTheme({
                 outlined: ({ theme: muiTheme }) => ({
                     '&:not(.MuiInputLabel-shrink)': { transform: 'translate(14px, 13px) scale(1)' },
                     '&.MuiInputLabel-sizeSmall:not(.MuiInputLabel-shrink)': {
-                        transform: 'translate(14px, 9px) scale(1)',
-                        [muiTheme.breakpoints.down('sm')]: { transform: 'translate(14px, 13px) scale(1)' },
+                        transform: 'translate(14px, 7px) scale(1)',
+                        [touchMedia(muiTheme)]: { transform: 'translate(14px, 13px) scale(1)' },
                     },
                 }),
             },
@@ -208,7 +211,7 @@ const theme = createTheme({
             },
         },
         MuiCard: { styleOverrides: { root: { borderRadius: 14, boxShadow: 'none', border: '1px solid #E7E8EC' } } },
-        MuiCardContent: { styleOverrides: { root: { padding: 20, '&:last-child': { paddingBottom: 20 } } } },
+        MuiCardContent: { styleOverrides: { root: { padding: uiLayout.cardPadding, '&:last-child': { paddingBottom: uiLayout.cardPadding } } } },
         MuiChip: {
             styleOverrides: {
                 root: ({ ownerState }) => ({
@@ -229,8 +232,8 @@ const theme = createTheme({
         MuiTableContainer: { styleOverrides: { root: { maxWidth: '100%', minWidth: 0, overflowX: 'auto' } } },
         MuiTableCell: {
             styleOverrides: {
-                root: { padding: '14px 20px', verticalAlign: 'middle', borderColor: '#EDEEF2', fontSize: 14 },
-                sizeSmall: { padding: '12px 16px' },
+                root: { padding: '10px 16px', verticalAlign: 'middle', borderColor: '#EDEEF2', fontSize: 14 },
+                sizeSmall: { padding: '8px 12px' },
                 head: { backgroundColor: '#FAFAFB', color: '#656B76', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' },
             },
         },

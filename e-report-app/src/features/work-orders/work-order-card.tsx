@@ -20,7 +20,7 @@ export function WorkOrderCard({ workOrder }: { workOrder: WorkOrderListItem }) {
   const slaSummary = formatSlaSummary(workOrder);
   const handlerName = workOrder.handler?.name || workOrder.handler?.username || '暂未分配';
   return (
-    <Card style={{ gap: 12 }}>
+    <Card style={{ gap: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Text style={{ color: typeTone.foreground, fontSize: 12, lineHeight: uiLayout.captionLineHeight, includeFontPadding: false, fontWeight: '500' }}>
@@ -36,10 +36,10 @@ export function WorkOrderCard({ workOrder }: { workOrder: WorkOrderListItem }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, minHeight: 28 }}>
         <PresentationBadge label={workOrder.priorityName || priorityTone.label} tone={priorityTone} />
         {slaSummary && <PresentationBadge label={slaSummary} tone={slaTone} />}
+        <Text numberOfLines={1} style={{ flexShrink: 1, color: colors.muted, fontSize: 13, lineHeight: uiLayout.captionLineHeight, includeFontPadding: false }}>
+          {workOrder.handlerStateName || '处理人员'}：{handlerName}
+        </Text>
       </View>
-      <Text numberOfLines={1} style={{ color: colors.muted, fontSize: 13, lineHeight: uiLayout.captionLineHeight, includeFontPadding: false }}>
-        {workOrder.handlerStateName || '处理人员'}：{handlerName}
-      </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Text style={{ flex: 1, minWidth: 0, flexShrink: 1, color: colors.muted, fontSize: 13, lineHeight: uiLayout.captionLineHeight, includeFontPadding: false }}>{formatDateTime(workOrder.reportTime)}</Text>
         <Text style={{ color: colors.muted, fontSize: 13, lineHeight: uiLayout.captionLineHeight, includeFontPadding: false }}>附件 {workOrder.attachmentCount || 0}</Text>

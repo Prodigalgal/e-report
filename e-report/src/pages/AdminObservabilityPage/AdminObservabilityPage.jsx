@@ -229,7 +229,7 @@ export default function AdminObservabilityPage() {
                 </Tabs>
               </Box>
 
-              <Box component="form" onSubmit={submitSearch} sx={{ p: { xs: 1.5, sm: 2 }, borderBottom: 1, borderColor: 'divider' }}>
+              <Box component="form" onSubmit={submitSearch} sx={{ p: 1.5, borderBottom: 1, borderColor: 'divider' }}>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'minmax(180px, 2fr) minmax(140px, 1.2fr) 148px auto auto' }, gap: 1.5, alignItems: 'start' }}>
                     <TextField
                         size="small"

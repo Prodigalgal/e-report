@@ -226,7 +226,7 @@ function WorkOrderSearchFilters({ onSearch, isLoading, initialFilters: initialFi
                 <Box
                     sx={{
                         display: { xs: 'grid', sm: 'flex' },
-                        gridTemplateColumns: actions ? 'minmax(48px, 1fr) minmax(64px, 1.3fr) 44px 48px' : 'minmax(48px, 1fr) minmax(64px, 1.3fr) 48px',
+                        gridTemplateColumns: actions ? 'minmax(48px, 1fr) minmax(64px, 1.3fr) 48px 48px' : 'minmax(48px, 1fr) minmax(64px, 1.3fr) 48px',
                         gridTemplateAreas: actions ? '"search more export reset"' : '"search more reset"',
                         gap: 1,
                         alignItems: 'center',
@@ -242,7 +242,7 @@ function WorkOrderSearchFilters({ onSearch, isLoading, initialFilters: initialFi
                         variant="contained"
                         startIcon={<SearchIcon />}
                         disabled={isLoading}
-                        sx={{ minHeight: { xs: 44, md: 40 }, minWidth: 0, px: { xs: 1, sm: 2 }, whiteSpace: 'nowrap', '& .MuiButton-startIcon': { display: { xs: 'none', sm: 'inherit' } }, flexShrink: 0, gridArea: 'search' }}
+                        sx={{ minWidth: 0, px: { xs: 1, sm: 1.5 }, whiteSpace: 'nowrap', '& .MuiButton-startIcon': { display: { xs: 'none', sm: 'inherit' } }, flexShrink: 0, gridArea: 'search' }}
                     >
                         查询
                     </Button>
@@ -254,7 +254,7 @@ function WorkOrderSearchFilters({ onSearch, isLoading, initialFilters: initialFi
                         disabled={isLoading}
                         aria-expanded={isCompactLayout ? mobileOpen : advancedOpen}
                         aria-label={`${isCompactLayout ? '筛选条件' : '更多条件'}${activeFilterCount > 0 ? `，已选 ${activeFilterCount} 项` : ''}`}
-                        sx={{ minHeight: { xs: 44, md: 40 }, minWidth: 0, px: { xs: 1, sm: 2 }, whiteSpace: 'nowrap', '& .MuiButton-startIcon': { display: { xs: 'none', sm: 'inherit' } }, flexShrink: 0, gridArea: 'more' }}
+                        sx={{ minWidth: 0, px: { xs: 1, sm: 1.5 }, whiteSpace: 'nowrap', '& .MuiButton-startIcon': { display: { xs: 'none', sm: 'inherit' } }, flexShrink: 0, gridArea: 'more' }}
                     >
                         <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>筛选</Box>
                         <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{isCompactLayout ? '筛选条件' : '更多条件'}</Box>
@@ -262,7 +262,7 @@ function WorkOrderSearchFilters({ onSearch, isLoading, initialFilters: initialFi
                     </Button>
                     {actions}
                     <Tooltip title="重置查询条件"><Box component="span" sx={{ gridArea: 'reset', flexShrink: 0 }}>
-                        <IconButton aria-label="重置查询条件" onClick={handleReset} disabled={isLoading} sx={{ height: { xs: 48, md: 40 }, width: { xs: 48, md: 40 }, border: '1px solid', borderColor: 'divider' }}>
+                        <IconButton aria-label="重置查询条件" onClick={handleReset} disabled={isLoading} sx={{ height: { xs: 48, sm: 36 }, width: { xs: 48, sm: 36 }, border: '1px solid', borderColor: 'divider' }}>
                             <RotateLeftIcon />
                         </IconButton>
                     </Box></Tooltip>

@@ -464,14 +464,14 @@ function AdminSystemConfigPage() {
                     )}
                 </Box>
 
-            <Paper variant="outlined" sx={{ p: { xs: 1.5, md: 2 }, borderRadius: '14px' }}>
+            <Paper variant="outlined" sx={{ p: 1.5, borderRadius: '14px' }}>
                 <PageTabs id="configuration" label="配置分类" value={activeTab} onChange={handleTabChange}
                     options={[
                         ...(canViewSystemConfig ? [{ value: 0, label: '系统参数' }, { value: 2, label: '密码策略' }] : []),
                         ...(canViewNotificationConfig ? [{ value: 1, label: '通知与汇总' }, { value: 3, label: '邮件发件池' }] : []),
                     ]} />
 
-                <Box sx={{ display: 'grid', gridTemplateColumns: activeTab === 0 ? { xs: '1fr', md: 'minmax(220px, 320px) 1fr' } : 'minmax(0, 320px)', gap: 2, mb: 3 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: activeTab === 0 ? { xs: '1fr', md: 'minmax(220px, 320px) 1fr' } : 'minmax(0, 320px)', gap: 1.5, mb: 1.5 }}>
                     <SearchableSelectField label="配置作用域" value={selectedScope || ''} onChange={handleScopeChange}
                         disabled={isLoadingScopes || isSubmitting || selectedScope === null}
                         options={[

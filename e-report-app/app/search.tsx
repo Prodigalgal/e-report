@@ -91,40 +91,22 @@ export default function WorkOrderSearchScreen() {
       />
 
       <Card style={{ padding: 12, gap: 8 }}>
-        <SearchField
-          label="关键词"
-          value={searchTerm}
-          onChangeText={setSearchTerm}
-          placeholder="#工单号、地点、联系人、原因、报单人"
-          isSearching={query.isFetching}
-        />
-
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          <Pressable
-            accessibilityRole="button"
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <SearchField
+              label="关键词"
+              value={searchTerm}
+              onChangeText={setSearchTerm}
+              placeholder="#工单号、地点、联系人、原因、报单人"
+              isSearching={query.isFetching}
+            />
+          </View>
+          <AppButton
+            title={`筛选${activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}`}
+            variant="secondary"
             accessibilityLabel={`打开筛选条件，${filterSummary}`}
             onPress={() => setFilterPanelOpen(true)}
-            style={({ pressed }) => ({
-              minHeight: uiLayout.controlHeight,
-              flex: 1,
-              borderWidth: 1,
-              borderColor: activeFilterCount > 0 ? colors.primary : colors.controlBorder,
-              borderRadius: 8,
-              backgroundColor: activeFilterCount > 0 ? colors.controlSelectedSurface : colors.controlSurface,
-              paddingHorizontal: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              opacity: pressed ? 0.72 : 1,
-            })}
-          >
-            <Text style={{ color: activeFilterCount > 0 ? colors.controlSelectedText : colors.text, fontSize: 16, fontWeight: '700' }}>
-              筛选条件
-            </Text>
-            <Text style={{ color: activeFilterCount > 0 ? colors.controlSelectedText : colors.muted, fontSize: 14, fontWeight: '700' }}>
-              {filterSummary}
-            </Text>
-          </Pressable>
+          />
         </View>
       </Card>
 

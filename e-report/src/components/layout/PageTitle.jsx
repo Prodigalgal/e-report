@@ -10,8 +10,8 @@ export default function PageTitle({ children, sx, ...props }) {
             {...props}
             sx={{
                 minWidth: 0,
-                fontSize: { xs: uiLayout.pageTitleSize, sm: 28 },
-                lineHeight: { xs: `${uiLayout.pageTitleLineHeight}px`, sm: '38px' },
+                fontSize: uiLayout.pageTitleSize,
+                lineHeight: `${uiLayout.pageTitleLineHeight}px`,
                 fontWeight: 650,
                 letterSpacing: '-0.03em',
                 overflowWrap: 'anywhere',

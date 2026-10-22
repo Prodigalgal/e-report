@@ -4,13 +4,14 @@ import { actionColors, uiLayout } from '@/ui/theme';
 
 type AppButtonProps = {
   title: string;
+  accessibilityLabel?: string;
   onPress: () => void;
   disabled?: boolean;
   loading?: boolean;
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger';
 };
 
-export function AppButton({ title, onPress, disabled, loading = false, variant = 'primary' }: AppButtonProps) {
+export function AppButton({ title, accessibilityLabel = title, onPress, disabled, loading = false, variant = 'primary' }: AppButtonProps) {
   const blocked = Boolean(disabled || loading);
   const tone = variant === 'danger' ? actionColors.danger : variant === 'ghost' ? actionColors.neutral : actionColors.primary;
   const backgroundColor = variant === 'ghost' ? 'transparent' : blocked ? actionColors.disabled.surface : variant === 'primary' ? tone.solid : tone.surface;
@@ -18,7 +19,7 @@ export function AppButton({ title, onPress, disabled, loading = false, variant =
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={title}
+      accessibilityLabel={accessibilityLabel}
       accessibilityState={{ busy: loading, disabled: Boolean(disabled || loading) }}
       disabled={disabled || loading}
       onPress={onPress}

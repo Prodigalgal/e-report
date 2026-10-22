@@ -31,7 +31,7 @@ export function PageTabs({ id, label, value, onChange, options }) {
             aria-label={label}
             variant="scrollable"
             scrollButtons="auto"
-            sx={{ borderBottom: 1, borderColor: 'divider', minWidth: 0, mb: 2 }}
+            sx={{ borderBottom: 1, borderColor: 'divider', minWidth: 0, mb: 1.5 }}
         >
             {options.map(option => (
                 <Tab key={option.value} value={option.value} label={option.label} ref={value === option.value ? selectedTabRef : undefined}
