@@ -2,6 +2,9 @@ package com.pro.ereportbacken.reporting;
 
 import com.pro.ereportbacken.notification.ConfiguredMailSenderFactory;
 import com.pro.ereportbacken.notification.EmailNotificationRecipientResolver;
+import com.pro.ereportbacken.notification.delivery.EmailDeliveryCategory;
+import com.pro.ereportbacken.notification.delivery.EmailDeliveryContext;
+import com.pro.ereportbacken.notification.delivery.EmailDeliveryTracker;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.log4j.Log4j2;
@@ -27,9 +30,12 @@ public class DailyOutstandingWorkOrderReportEmailSender {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy年MM月dd日");
 
     private final ConfiguredMailSenderFactory mailSenderFactory;
+    private final EmailDeliveryTracker deliveryTracker;
 
-    public DailyOutstandingWorkOrderReportEmailSender(ConfiguredMailSenderFactory mailSenderFactory) {
+    public DailyOutstandingWorkOrderReportEmailSender(ConfiguredMailSenderFactory mailSenderFactory,
+                                                     EmailDeliveryTracker deliveryTracker) {
         this.mailSenderFactory = mailSenderFactory;
+        this.deliveryTracker = deliveryTracker;
     }
 
     public DeliveryResult send(OutstandingWorkOrderReport report,
@@ -41,15 +47,18 @@ public class DailyOutstandingWorkOrderReportEmailSender {
         try {
             mailContext = mailSenderFactory.next();
         } catch (RuntimeException exception) {
-            recipients.forEach(recipient -> failures.add(
-                    new DeliveryFailure(recipient.userId(), conciseReason(exception))));
+            recipients.forEach(recipient -> {
+                deliveryTracker.configurationFailed(deliveryContext(report, recipient));
+                failures.add(new DeliveryFailure(recipient.userId(), conciseReason(exception)));
+            });
             return new DeliveryResult(0, failures);
         }
 
         String fileName = report.countyName() + "_未处理工单_" + report.reportDate() + ".xlsx";
         for (EmailNotificationRecipientResolver.EmailRecipient recipient : recipients) {
             try {
-                sendToRecipient(mailContext, report, workbook, fileName, recipient);
+                deliveryTracker.send(deliveryContext(report, recipient), mailContext.fromAddress(),
+                        () -> sendToRecipient(mailContext, report, workbook, fileName, recipient));
                 successCount++;
             } catch (MessagingException | MailException exception) {
                 failures.add(new DeliveryFailure(recipient.userId(), conciseReason(exception)));
@@ -59,6 +68,13 @@ public class DailyOutstandingWorkOrderReportEmailSender {
             }
         }
         return new DeliveryResult(successCount, failures);
+    }
+
+    private EmailDeliveryContext deliveryContext(OutstandingWorkOrderReport report,
+                                                 EmailNotificationRecipientResolver.EmailRecipient recipient) {
+        return new EmailDeliveryContext(report.tenantId(), report.countyOrgUnitId(),
+                EmailDeliveryCategory.DAILY_OUTSTANDING_REPORT, null, recipient.userId(), recipient.address(),
+                "【每日工单汇总】" + report.countyName() + "未处理工单 " + report.rows().size() + " 单");
     }
 
     private void sendToRecipient(ConfiguredMailSenderFactory.MailSenderContext mailContext,

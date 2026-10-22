@@ -69,6 +69,7 @@ public final class PermissionCatalog {
     public static final String SYSTEM_CONFIG_DELETE = "system:config:delete";
 
     public static final String NOTIFICATION_CONFIG_VIEW = "notification:config:view";
+    public static final String EMAIL_DELIVERY_VIEW = "notification:email-delivery:view";
     public static final String NOTIFICATION_CHANNEL_UPDATE = "notification:channel:update";
     public static final String NOTIFICATION_SCHEDULE_UPDATE = "notification:schedule:update";
     public static final String NOTIFICATION_SENDER_UPDATE = "notification:sender:update";
@@ -385,6 +386,7 @@ public final class PermissionCatalog {
         entries.add(writeEntry(SYSTEM_CONFIG_UPDATE, "系统配置修改", "更新授权组织范围内的系统配置项", PermissionRiskLevel.HIGH));
         entries.add(writeEntry(SYSTEM_CONFIG_DELETE, "系统配置删除", "删除授权组织范围内的系统配置项", PermissionRiskLevel.CRITICAL));
         entries.add(readEntry(NOTIFICATION_CONFIG_VIEW, "通知配置查看", "查看授权组织范围内的通知渠道和定时通知配置"));
+        entries.add(readEntry(EMAIL_DELIVERY_VIEW, "邮件发送台账查看", "查看职责组织范围内的邮件发送结果和脱敏详情，默认仅超级管理员持有"));
         entries.add(writeEntry(NOTIFICATION_CHANNEL_UPDATE, "通知渠道开关修改", "单独开启或关闭授权组织范围内的通知渠道", PermissionRiskLevel.HIGH));
         entries.add(writeEntry(NOTIFICATION_SCHEDULE_UPDATE, "通知计划修改", "修改授权组织范围内的未闭环工单日报计划", PermissionRiskLevel.HIGH));
         entries.add(writeEntry(NOTIFICATION_SENDER_UPDATE, "邮件发件方修改", "配置授权组织范围内的邮件服务器、发件账号和授权码", PermissionRiskLevel.CRITICAL));

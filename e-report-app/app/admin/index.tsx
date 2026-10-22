@@ -222,6 +222,9 @@ export default function AdminDashboardScreen() {
             {hasPermission(ADMIN_PERMISSIONS.OBSERVABILITY_VIEW) && (
               <AdminNavButton title="运行诊断" onPress={() => router.push('/admin/observability')} />
             )}
+            {hasPermission(ADMIN_PERMISSIONS.EMAIL_DELIVERY_VIEW) && (
+              <AdminNavButton title="邮件发送台账" onPress={() => router.push('/admin/email-deliveries')} />
+            )}
           </View>
         </View>
       </SectionContent>

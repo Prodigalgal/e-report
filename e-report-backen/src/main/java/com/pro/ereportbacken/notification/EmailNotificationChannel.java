@@ -3,6 +3,9 @@ package com.pro.ereportbacken.notification;
 import com.pro.ereportbacken.service.FileStorageService;
 import com.pro.ereportbacken.service.MapKeyPoolService;
 import com.pro.ereportbacken.service.MapService;
+import com.pro.ereportbacken.notification.delivery.EmailDeliveryCategory;
+import com.pro.ereportbacken.notification.delivery.EmailDeliveryContext;
+import com.pro.ereportbacken.notification.delivery.EmailDeliveryTracker;
 import com.pro.ereportbacken.time.DisplayTime;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -46,17 +49,20 @@ public class EmailNotificationChannel implements NotificationChannel {
     private final MapService mapService;
     private final MapKeyPoolService mapKeyPoolService;
     private final EmailNotificationRecipientResolver recipientResolver;
+    private final EmailDeliveryTracker deliveryTracker;
 
     public EmailNotificationChannel(ConfiguredMailSenderFactory mailSenderFactory,
                                     FileStorageService fileStorageService,
                                     MapService mapService,
                                     MapKeyPoolService mapKeyPoolService,
-                                    EmailNotificationRecipientResolver recipientResolver) {
+                                    EmailNotificationRecipientResolver recipientResolver,
+                                    EmailDeliveryTracker deliveryTracker) {
         this.mailSenderFactory = mailSenderFactory;
         this.fileStorageService = fileStorageService;
         this.mapService = mapService;
         this.mapKeyPoolService = mapKeyPoolService;
         this.recipientResolver = recipientResolver;
+        this.deliveryTracker = deliveryTracker;
     }
 
     @Override
@@ -78,23 +84,29 @@ public class EmailNotificationChannel implements NotificationChannel {
             throw new IllegalStateException("邮件通知已启用，但" + recipientType + "没有可用的收件地址。");
         }
 
-        ConfiguredMailSenderFactory.MailSenderContext mailContext = mailSenderFactory.next();
+        ConfiguredMailSenderFactory.MailSenderContext mailContext;
+        try {
+            mailContext = mailSenderFactory.next();
+        } catch (RuntimeException failure) {
+            recipients.forEach(recipient -> deliveryTracker.configurationFailed(deliveryContext(notification, recipient)));
+            throw failure;
+        }
         JavaMailSender configuredMailSender = mailContext.mailSender();
         String mailFrom = mailContext.fromAddress();
 
         int successCount = 0;
         List<Exception> failures = new java.util.ArrayList<>();
         for (EmailNotificationRecipientResolver.EmailRecipient recipient : recipients) {
-            MimeMessage mimeMessage = configuredMailSender.createMimeMessage();
             try {
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-            helper.setFrom(mailFrom);
-            helper.setSubject(subject(notification));
-
-            String htmlContent = buildHtmlContent(helper, notification);
-            helper.setText(htmlContent, true);
-                helper.setTo(recipient.address());
-                configuredMailSender.send(mimeMessage);
+                deliveryTracker.send(deliveryContext(notification, recipient), mailFrom, () -> {
+                    MimeMessage mimeMessage = configuredMailSender.createMimeMessage();
+                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+                    helper.setFrom(mailFrom);
+                    helper.setSubject(subject(notification));
+                    helper.setText(buildHtmlContent(helper, notification), true);
+                    helper.setTo(recipient.address());
+                    configuredMailSender.send(mimeMessage);
+                });
                 successCount++;
             } catch (MessagingException | MailException e) {
                 failures.add(e);
@@ -113,6 +125,12 @@ public class EmailNotificationChannel implements NotificationChannel {
             failures.forEach(deliveryFailure::addSuppressed);
             throw deliveryFailure;
         }
+    }
+
+    private EmailDeliveryContext deliveryContext(WorkOrderNotification notification,
+                                                 EmailNotificationRecipientResolver.EmailRecipient recipient) {
+        return deliveryTracker.context(EmailDeliveryCategory.valueOf(notification.kind().name()),
+                notification.reportingOrgUnitId(), notification.id(), recipient.userId(), recipient.address(), subject(notification));
     }
 
     private String buildHtmlContent(MimeMessageHelper helper, WorkOrderNotification notification) {

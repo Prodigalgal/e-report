@@ -20,6 +20,7 @@ export const routeModuleLoaders = {
     adminTenants: () => import('../pages/AdminTenantPage/AdminTenantPage'),
     adminSlaPolicies: () => import('../pages/AdminSlaPolicyPage/AdminSlaPolicyPage'),
     adminObservability: () => import('../pages/AdminObservabilityPage/AdminObservabilityPage'),
+    adminEmailDeliveries: () => import('../pages/AdminEmailDeliveryPage/AdminEmailDeliveryPage'),
 };
 
 const exactRouteLoaders = new Map([
@@ -39,6 +40,7 @@ const exactRouteLoaders = new Map([
     ['/admin', routeModuleLoaders.adminLayout],
     ['/admin/dashboard', routeModuleLoaders.adminDashboard],
     ['/admin/observability', routeModuleLoaders.adminObservability],
+    ['/admin/email-deliveries', routeModuleLoaders.adminEmailDeliveries],
     ['/admin/work-orders/search', routeModuleLoaders.workOrderSearch],
     ['/admin/user-management', routeModuleLoaders.adminUserManagement],
     ['/admin/settings', routeModuleLoaders.adminSystemConfig],

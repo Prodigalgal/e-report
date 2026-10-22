@@ -1,0 +1,15 @@
+{
+  "categories": {
+    "CREATED": "新工单通知",
+    "ASSIGNMENT_RECEIVED": "派单与调单",
+    "SLA_BREACHED": "处理时限超时",
+    "DAILY_OUTSTANDING_REPORT": "每日工单汇总",
+    "CONFIGURATION_TEST": "发件配置测试"
+  },
+  "statuses": {
+    "SENDING": { "label": "发送中", "color": "info" },
+    "SMTP_ACCEPTED": { "label": "SMTP 已接受", "color": "success" },
+    "FAILED": { "label": "发送失败", "color": "error" },
+    "UNKNOWN": { "label": "结果未确认", "color": "warning" }
+  }
+}

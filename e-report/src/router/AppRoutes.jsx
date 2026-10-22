@@ -44,6 +44,7 @@ const AdminOrgUnitPage = lazy(routeModuleLoaders.adminOrgUnits);
 const AdminTenantPage = lazy(routeModuleLoaders.adminTenants);
 const AdminSlaPolicyPage = lazy(routeModuleLoaders.adminSlaPolicies);
 const AdminObservabilityPage = lazy(routeModuleLoaders.adminObservability);
+const AdminEmailDeliveryPage = lazy(routeModuleLoaders.adminEmailDeliveries);
 
 function LazyRoute({ children }) {
     return (
@@ -142,6 +143,11 @@ function AppRoutes() {
                         <LazyRoute>
                             <WorkOrderSearchPage />
                         </LazyRoute>
+                    </ProtectedRoute>
+                } />
+                <Route path="email-deliveries" element={
+                    <ProtectedRoute requiredAnyPermissions={[PERMISSIONS.EMAIL_DELIVERY_VIEW]}>
+                        <LazyRoute><AdminEmailDeliveryPage /></LazyRoute>
                     </ProtectedRoute>
                 } />
                 <Route path="observability" element={

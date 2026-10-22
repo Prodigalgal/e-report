@@ -1,5 +1,7 @@
 package com.pro.ereportbacken.notification;
 
+import static com.pro.ereportbacken.notification.delivery.EmailDeliveryTestSupport.tracker;
+
 import com.pro.ereportbacken.service.FileStorageService;
 import com.pro.ereportbacken.service.MapKeyPoolService;
 import com.pro.ereportbacken.service.MapService;
@@ -24,7 +26,7 @@ class EmailNotificationChannelTests {
         when(resolver.resolve(notification)).thenReturn(
                 new EmailNotificationRecipientResolver.RecipientSelection(List.of(), 0, 2));
 
-        new EmailNotificationChannel(factory, files, map, keys, resolver).send(notification);
+        new EmailNotificationChannel(factory, files, map, keys, resolver, tracker()).send(notification);
 
         verifyNoInteractions(factory, files, map, keys);
     }
@@ -37,7 +39,7 @@ class EmailNotificationChannelTests {
         when(resolver.resolve(notification)).thenReturn(
                 new EmailNotificationRecipientResolver.RecipientSelection(List.of(), 1, 0));
         var channel = new EmailNotificationChannel(factory, mock(FileStorageService.class),
-                mock(MapService.class), mock(MapKeyPoolService.class), resolver);
+                mock(MapService.class), mock(MapKeyPoolService.class), resolver, tracker());
 
         assertThatThrownBy(() -> channel.send(notification)).isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("没有可用的收件地址");

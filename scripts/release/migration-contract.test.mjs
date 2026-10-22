@@ -11,3 +11,11 @@ test('both runtime PostgreSQL and H2 changelogs include the edition and OTA migr
     assert.ok(edition > 0 && ota > edition && tag > ota, `${root} must migrate both clients before tagging 6.8.0`);
   }
 });
+
+test('both database paths create the email ledger before the 6.9.0 tag', () => {
+  for (const root of ['db/changelog/db.changelog-master.yaml', 'db/changelog/postgresql/db.changelog-master.yaml']) {
+    const changelog = readFileSync(new URL(`../../e-report-backen/src/main/resources/${root}`, import.meta.url), 'utf8');
+    const ledger = changelog.indexOf('2026-10-22-077-email-deliveries.sql');
+    assert.ok(ledger > 0 && changelog.indexOf('tag: e-report-6.9.0') > ledger, `${root} must include the email ledger`);
+  }
+});

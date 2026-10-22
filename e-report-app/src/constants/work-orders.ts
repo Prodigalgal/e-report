@@ -46,6 +46,7 @@ export const ADMIN_PERMISSIONS = {
   SLA_POLICY_VIEW: 'sla-policy:view',
   SLA_POLICY_UPDATE: 'sla-policy:update',
   OBSERVABILITY_VIEW: 'observability:view',
+  EMAIL_DELIVERY_VIEW: 'notification:email-delivery:view',
 } as const;
 
 type WorkOrderCatalogEntry = {
@@ -129,6 +130,7 @@ export const ADMIN_SETTINGS_PERMISSIONS = [
   ADMIN_PERMISSIONS.TENANT_MANAGE_VIEW,
   ADMIN_PERMISSIONS.SLA_POLICY_VIEW,
   ADMIN_PERMISSIONS.OBSERVABILITY_VIEW,
+  ADMIN_PERMISSIONS.EMAIL_DELIVERY_VIEW,
 ];
 
 export const DASHBOARD_STATISTICS_PERMISSIONS = [

@@ -20,6 +20,7 @@ export const ADMIN_ROUTE_ACCESS_RULES = [
     { path: '/admin/dashboard', requiredAnyPermissions: DASHBOARD_STATISTICS_PERMISSIONS },
     { path: '/admin/work-orders/search', requiredAnyPermissions: WORK_ORDER_MANAGEMENT_PERMISSIONS },
     { path: '/admin/observability', requiredAnyPermissions: OBSERVABILITY_VIEW_PERMISSIONS },
+    { path: '/admin/email-deliveries', requiredAnyPermissions: [PERMISSIONS.EMAIL_DELIVERY_VIEW] },
     { path: '/admin/user-management', requiredAnyPermissions: [PERMISSIONS.USER_MANAGE_VIEW] },
     { path: '/admin/settings/configs', requiredAnyPermissions: [
         PERMISSIONS.SYSTEM_CONFIG_VIEW,

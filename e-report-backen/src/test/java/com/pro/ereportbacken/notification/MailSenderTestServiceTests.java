@@ -1,5 +1,7 @@
 package com.pro.ereportbacken.notification;
 
+import static com.pro.ereportbacken.notification.delivery.EmailDeliveryTestSupport.tracker;
+
 import com.pro.ereportbacken.model.dto.MailSenderAccountUpdateRequestDTO;
 import com.pro.ereportbacken.model.dto.MailSenderTestRequestDTO;
 import com.pro.ereportbacken.notification.MailSenderConfigurationService.MailSenderAccountConfiguration;
@@ -39,7 +41,7 @@ class MailSenderTestServiceTests {
                 mailSender, "parent@example.com"));
         when(mailSender.createMimeMessage()).thenReturn(message);
 
-        var result = new MailSenderTestService(configurationService, factory).send(
+        var result = new MailSenderTestService(configurationService, factory, tracker()).send(
                 new MailSenderTestRequestDTO(null, "test@example.com", senderId), countyId);
 
         assertThat(result.success()).isTrue();
@@ -52,7 +54,7 @@ class MailSenderTestServiceTests {
     void rejectsMissingSenderSelectionBeforeAnySmtpAttempt() {
         var configurationService = mock(MailSenderConfigurationService.class);
         var factory = mock(ConfiguredMailSenderFactory.class);
-        assertThatThrownBy(() -> new MailSenderTestService(configurationService, factory).send(
+        assertThatThrownBy(() -> new MailSenderTestService(configurationService, factory, tracker()).send(
                 new MailSenderTestRequestDTO(null, "test@example.com", null), UUID.randomUUID()))
                 .isInstanceOf(IllegalArgumentException.class);
         org.mockito.Mockito.verifyNoInteractions(configurationService, factory);
@@ -79,7 +81,7 @@ class MailSenderTestServiceTests {
                 new ConfiguredMailSenderFactory.MailSenderContext(javaMailSender, "sender@example.com"));
         when(javaMailSender.createMimeMessage()).thenReturn(message);
 
-        MailSenderTestService service = new MailSenderTestService(configurationService, factory);
+        MailSenderTestService service = new MailSenderTestService(configurationService, factory, tracker());
         var result = service.send(new MailSenderTestRequestDTO(request, "test@example.com", null), orgUnitId);
 
         assertThat(result.success()).isTrue();
@@ -112,7 +114,7 @@ class MailSenderTestServiceTests {
         org.mockito.Mockito.doThrow(new MailSendException("private-secret was rejected"))
                 .when(javaMailSender).send(message);
 
-        var result = new MailSenderTestService(configurationService, factory)
+        var result = new MailSenderTestService(configurationService, factory, tracker())
                 .send(new MailSenderTestRequestDTO(request, "test@example.com", null), orgUnitId);
 
         assertThat(result.success()).isFalse();
