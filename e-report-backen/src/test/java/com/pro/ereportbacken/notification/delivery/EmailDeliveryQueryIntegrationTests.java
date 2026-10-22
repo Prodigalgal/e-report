@@ -6,6 +6,8 @@ import com.pro.ereportbacken.security.*;
 import com.pro.ereportbacken.time.DisplayTime;
 import com.pro.ereportbacken.time.UtcTime;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +45,7 @@ class EmailDeliveryQueryIntegrationTests {
     private final UserRepository users;
     private final EmailDeliveryQueryService service;
     private final WebApplicationContext web;
+    private final EntityManagerFactory entityManagerFactory;
     private OrgUnit root;
     private OrgUnit county;
     private OrgUnit sibling;
@@ -51,9 +54,11 @@ class EmailDeliveryQueryIntegrationTests {
 
     EmailDeliveryQueryIntegrationTests(EmailDeliveryRepository deliveries, OrgUnitRepository organizations,
                                         TenantRepository tenants, UserRepository users,
-                                        EmailDeliveryQueryService service, WebApplicationContext web) {
+                                        EmailDeliveryQueryService service, WebApplicationContext web,
+                                        EntityManagerFactory entityManagerFactory) {
         this.deliveries = deliveries; this.organizations = organizations; this.tenants = tenants;
         this.users = users; this.service = service; this.web = web;
+        this.entityManagerFactory = entityManagerFactory;
     }
 
     @BeforeEach
@@ -131,6 +136,25 @@ class EmailDeliveryQueryIntegrationTests {
     void permissionIsNotInAnyDefaultAdministratorOrPositionTemplate() {
         assertThat(BuiltInAuthorizationProfileCatalog.templates(true)).allSatisfy(template ->
                 assertThat(template.rules()).extracting(rule -> rule.permissionName()).doesNotContain(PermissionCatalog.EMAIL_DELIVERY_VIEW));
+    }
+
+    @Test
+    void warmOrganizationDirectoryKeepsPaginatedQueriesToListAndCountStatements() {
+        delivery(county, EmailDeliveryStatus.SMTP_ACCEPTED, "性能验证一");
+        delivery(county, EmailDeliveryStatus.FAILED, "性能验证二");
+        service.scopes();
+        var statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
+        boolean originallyEnabled = statistics.isStatisticsEnabled();
+        statistics.setStatisticsEnabled(true);
+        statistics.clear();
+        try {
+            var page = service.search(null, null, "", null, null, null, PageRequest.of(0, 1));
+            assertThat(page.getTotalElements()).isEqualTo(2);
+            assertThat(page.getContent()).hasSize(1);
+            assertThat(statistics.getPrepareStatementCount()).isEqualTo(2);
+        } finally {
+            statistics.setStatisticsEnabled(originallyEnabled);
+        }
     }
 
     private EmailDelivery delivery(OrgUnit organization, EmailDeliveryStatus status, String subject) {

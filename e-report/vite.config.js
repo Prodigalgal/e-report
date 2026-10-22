@@ -10,6 +10,17 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(packageVersion),
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (/[/\\]node_modules[/\\](?:react|react-dom|scheduler|react-router|react-router-dom)[/\\]/.test(id)) {
+            return 'react-runtime'
+          }
+        },
+      },
+    },
+  },
   server: {
     host: '0.0.0.0',
     port: 5173,

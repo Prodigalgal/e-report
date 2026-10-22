@@ -2,9 +2,8 @@ package com.pro.ereportbacken.notification.delivery;
 
 import com.pro.ereportbacken.model.dto.EmailDeliveryDTO;
 import com.pro.ereportbacken.model.pojo.EmailDelivery;
-import com.pro.ereportbacken.model.pojo.OrgUnit;
 import com.pro.ereportbacken.repository.EmailDeliveryRepository;
-import com.pro.ereportbacken.repository.OrgUnitRepository;
+import com.pro.ereportbacken.service.OrganizationHierarchyService;
 import com.pro.ereportbacken.security.OrganizationScopeAuthorizationService;
 import com.pro.ereportbacken.security.PermissionCatalog;
 import com.pro.ereportbacken.security.TenantContext;
@@ -39,11 +38,11 @@ public class EmailDeliveryQueryService {
     private static final int MAX_QUERY_DAYS = 93;
     private static final int UNCONFIRMED_AFTER_MINUTES = 15;
     private final EmailDeliveryRepository repository;
-    private final OrgUnitRepository organizations;
+    private final OrganizationHierarchyService organizations;
     private final TenantContext tenantContext;
     private final OrganizationScopeAuthorizationService authorization;
 
-    public EmailDeliveryQueryService(EmailDeliveryRepository repository, OrgUnitRepository organizations,
+    public EmailDeliveryQueryService(EmailDeliveryRepository repository, OrganizationHierarchyService organizations,
                                      TenantContext tenantContext, OrganizationScopeAuthorizationService authorization) {
         this.repository = repository;
         this.organizations = organizations;
@@ -135,9 +134,7 @@ public class EmailDeliveryQueryService {
     }
 
     private Map<UUID, String> organizationNames(UUID tenantId, Set<UUID> ids) {
-        if (ids.isEmpty()) return Map.of();
-        return organizations.findAllById(ids).stream().filter(org -> tenantId.equals(org.getTenantId()))
-                .collect(Collectors.toMap(OrgUnit::getId, OrgUnit::getName));
+        return organizations.namesById(tenantId, ids);
     }
 
     private EmailDeliveryDTO toDto(EmailDelivery delivery, Map<UUID, String> names, LocalDateTime cutoff) {

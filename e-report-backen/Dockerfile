@@ -22,7 +22,7 @@ ARG ALPINE_REPOSITORY
 RUN sed -i "s#https://dl-cdn.alpinelinux.org/alpine#${ALPINE_REPOSITORY}#g" /etc/apk/repositories
 RUN apk upgrade --no-cache
 ARG APP_NAME=e-report-backen
-ARG APP_VERSION=6.9.0
+ARG APP_VERSION=6.9.1
 ARG JAR_FILE_PATH_IN_BUILDER=/app/build/libs/${APP_NAME}-${APP_VERSION}.jar
 WORKDIR /app
 COPY --from=builder ${JAR_FILE_PATH_IN_BUILDER} app.jar
