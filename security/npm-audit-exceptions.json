@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "projects": {
+    "e-report-app": {
+      "exceptions": [
+        {
+          "id": "GHSA-vfj7-8cjw-p6xm",
+          "package": "braces",
+          "versions": [
+            "3.0.3"
+          ],
+          "allowedParents": [
+            "micromatch"
+          ],
+          "ignoreUntil": "2026-11-03",
+          "reason": "Reviewed 2026-10-20: Metro/Expo build tooling only; patterns come from repository-controlled Metro/config files, never API or uploaded work-order data. No upstream patched release. CI builds immutable reviewed source with a bounded job timeout. See docs/reports/2026-10-20-build-dependency-review.md."
+        },
+        {
+          "id": "GHSA-86w9-cpqp-85rv",
+          "package": "node-forge",
+          "versions": [
+            "1.4.0"
+          ],
+          "allowedParents": [
+            "@expo/cli",
+            "@expo/code-signing-certificates"
+          ],
+          "ignoreUntil": "2026-11-03",
+          "reason": "Reviewed 2026-10-21: Expo CLI certificate tooling only; OTA archives are signed with Node crypto and verified by Backend Java Signature and Android JCA, never node-forge. Expo configuration and certificates are repository-controlled, with no untrusted certificate or signature inputs passed to CLI verification. No node-forge import in app/shared runtime source and no upstream patched release. Existing exact version, parent and expiry restrictions remain. See docs/reports/2026-10-20-build-dependency-review.md."
+        }
+      ]
+    }
+  }
+}

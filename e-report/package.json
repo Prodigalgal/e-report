@@ -1,0 +1,38 @@
+{
+  "name": "e-report",
+  "private": true,
+  "version": "6.8.2",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "test": "node --test src/utils/mailSenderConfig.test.js src/rootPathContract.test.js src/components/Admin/authorizationEditorWorkflow.test.js src/components/work-orders/workOrderTimeline.test.js src/constants/attachmentLimits.test.js src/constants/workOrderPresentation.test.js src/observability/telemetry.test.js src/observability/trace-context.test.js src/pages/AdminOrgUnitPage/hierarchyTree.test.js src/pages/AdminUserDetailPage/organizationMoveWorkflow.test.js src/pages/AdminUserManagementPage/userTransferWorkflow.test.js src/security/proofOfWork.test.js src/security/webEnvironment.test.js src/services/fileTransferServices.test.js src/utils/adminAccess.test.js src/utils/authRedirects.test.js src/utils/appReleasePolicy.test.js src/utils/appReleaseVersion.test.js src/utils/formatApiErrorMessage.test.js src/utils/formatDate.test.js src/utils/notificationConfig.test.js src/utils/passwordPolicy.test.js src/utils/userProfileValidation.test.js src/utils/workOrderAttachmentPaths.test.js src/utils/workOrderSearchParams.test.js src/utils/workOrderSelection.test.js src/utils/workOrderVerification.test.js src/security/loginChallengeState.test.js src/ui/actionColors.test.js src/services/liteBridge.test.js",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.5.0",
+    "@mui/material": "^9.2.0",
+    "axios": "^1.20.0",
+    "js-sha256": "^1.0.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.25.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^4.4.1",
+    "eslint": "^9.25.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-refresh": "^0.4.19",
+    "globals": "^16.0.0",
+    "vite": "^6.4.4"
+  },
+  "overrides": {
+    "@humanfs/node": "0.16.8"
+  }
+}

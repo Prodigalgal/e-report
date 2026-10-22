@@ -1,0 +1,59 @@
+# Local agent and browser state
+.agents/
+.codex/
+.playwright-cli/
+.playwright-mcp/
+test-results/
+output/
+e-report-production-*.png
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Java and Gradle
+**/.gradle/
+**/build/
+**/out/
+**/logs/
+*.log
+
+# Node, Expo and frontend builds
+**/node_modules/
+**/dist/
+**/.expo/
+**/.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android local and generated files
+**/local.properties
+**/.cxx/
+**/.kotlin/
+**/debug.keystore
+**/*.keystore
+**/*.jks
+**/*.p12
+**/*.pfx
+**/*.hprof
+**/*.jsbundle
+e-report-app/android/app/src/main/java/inline/
+
+# Runtime data and local secrets
+**/.env
+**/.env.*
+!**/.env.example
+**/*.pem
+**/*.key
+fault_uploads/
+app_releases/
+**/file_transfer_tmp/
+*.part
+tmp/
+**/.cxx-stale*/
+__pycache__/
+*.py[cod]

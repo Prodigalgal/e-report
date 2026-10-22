@@ -1,0 +1,9 @@
+{
+  "primary": { "solid": "#2563EB", "surface": "#EFF4FF", "foreground": "#1D4ED8", "border": "#CDDCFC", "hover": "#E0EAFF" },
+  "neutral": { "solid": "#475569", "surface": "#F0F1F4", "foreground": "#414654", "border": "#DCDFE5", "hover": "#E6E8ED" },
+  "danger": { "solid": "#B91C1C", "surface": "#FFF1F1", "foreground": "#991B1B", "border": "#F3D0D0", "hover": "#FFE3E3" },
+  "success": { "solid": "#15803D", "surface": "#EDF8F0", "foreground": "#166534", "border": "#CBE7D3", "hover": "#DBF2E2" },
+  "warning": { "solid": "#A8540D", "surface": "#FFF6E5", "foreground": "#92400E", "border": "#F1DDB3", "hover": "#FDECC8" },
+  "info": { "solid": "#0369A1", "surface": "#EEF7FC", "foreground": "#075985", "border": "#CFE5F2", "hover": "#DDEFF9" },
+  "disabled": { "surface": "#F0F1F4", "foreground": "#9298A3", "border": "#E5E7EB" }
+}

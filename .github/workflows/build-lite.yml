@@ -1,0 +1,79 @@
+name: 构建 Lite APK
+
+on:
+  workflow_run:
+    workflows: [供应链安全]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: e-report-build-lite-main
+  cancel-in-progress: true
+
+jobs:
+  lite-apk:
+    if: >-
+      ${{ github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.display_title != 'CI 配置校验' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main' &&
+          github.event.workflow_run.head_repository.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+      ANDROID_UPLOAD_KEYSTORE_BASE64: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+      E_REPORT_UPLOAD_STORE_PASSWORD: ${{ secrets.ANDROID_UPLOAD_STORE_PASSWORD }}
+      E_REPORT_UPLOAD_KEY_ALIAS: ${{ secrets.ANDROID_UPLOAD_KEY_ALIAS }}
+      E_REPORT_UPLOAD_KEY_PASSWORD: ${{ secrets.ANDROID_UPLOAD_KEY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - name: 确认已审计源码仍为 main
+        run: test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)" = "$SOURCE_SHA"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.19.0
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - name: 校验 Lite 基础包契约与指纹
+        run: |
+          node scripts/verify-version-contract.mjs
+          node e-report-lite/scripts/verify-version-contract.mjs
+          node scripts/release/lite-fingerprint.mjs
+      - name: 查找不可变 Lite 基础包
+        id: foundation
+        run: node scripts/release/native-artifact.mjs prepare --edition LITE --source-sha "$SOURCE_SHA" --output-dir .release-artifacts/lite
+      - name: 准备签名文件
+        if: steps.foundation.outputs.reuse != 'true'
+        run: |
+          test -n "$ANDROID_UPLOAD_KEYSTORE_BASE64"
+          printf '%s' "$ANDROID_UPLOAD_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/e-report-upload.keystore"
+          chmod 600 "$RUNNER_TEMP/e-report-upload.keystore"
+          echo "E_REPORT_UPLOAD_STORE_FILE=$RUNNER_TEMP/e-report-upload.keystore" >> "$GITHUB_ENV"
+      - name: 构建测试并封存 Lite APK
+        if: steps.foundation.outputs.reuse != 'true'
+        working-directory: e-report-lite
+        run: |
+          chmod +x gradlew
+          ./gradlew testDebugUnitTest lintRelease assembleRelease --no-daemon --console=plain
+          cd ..
+          node scripts/release/native-artifact.mjs seal --edition LITE --source-sha "$SOURCE_SHA" \
+            --apk e-report-lite/app/build/outputs/apk/release/app-release.apk --output-dir .release-artifacts/lite
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: e-report-lite-${{ github.event.workflow_run.head_sha }}
+          path: |
+            .release-artifacts/lite/app-release.apk
+            .release-artifacts/lite/release-manifest.json
+          if-no-files-found: error
+          retention-days: 30

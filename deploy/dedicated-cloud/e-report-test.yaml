@@ -1,0 +1,863 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-report-test
+  labels:
+    app.kubernetes.io/name: e-report
+    app.kubernetes.io/part-of: e-report-test
+    app.e-report/data-class: replicated-test
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: e-report-test-sync
+  namespace: e-report-test
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: e-report-test-sync
+  namespace: e-report-test
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    resourceNames: [e-report-backend, e-report-media-image-worker]
+    verbs: [get, list, watch, patch, update]
+  - apiGroups: [apps]
+    resources: [deployments/scale]
+    resourceNames: [e-report-backend, e-report-media-image-worker]
+    verbs: [get, patch, update]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: e-report-test-sync
+  namespace: e-report-test
+subjects:
+  - kind: ServiceAccount
+    name: e-report-test-sync
+    namespace: e-report-test
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: e-report-test-sync
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-mysql
+  namespace: e-report-test
+spec:
+  # PostgreSQL 已成为唯一业务数据库；保留旧 MySQL 数据卷用于冷回退，禁止部署清单重新拉起实例。
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-mysql
+  template:
+    metadata:
+      labels:
+        app: e-mysql
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: mysql
+          image: localhost/e-report-mysql:20260821-v3.1.0-pinyin-search-test-1
+          imagePullPolicy: Never
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: fault_reporter_db
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-mysql
+                  key: MYSQL_ROOT_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          startupProbe:
+            exec:
+              command: [sh, -c, 'mysqladmin ping -uroot -p"$MYSQL_ROOT_PASSWORD" --silent']
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command: [sh, -c, 'mysqladmin ping -uroot -p"$MYSQL_ROOT_PASSWORD" --silent']
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/e-report-test/mysql
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-mysql
+  namespace: e-report-test
+spec:
+  selector:
+    app: e-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-redis
+  namespace: e-report-test
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-redis
+  template:
+    metadata:
+      labels:
+        app: e-report-redis
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: redis
+          image: docker.m.daocloud.io/library/redis:7.4-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+          imagePullPolicy: IfNotPresent
+          args:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --appendfsync
+            - everysec
+            - --aof-use-rdb-preamble
+            - "yes"
+            - --auto-aof-rewrite-percentage
+            - "100"
+            - --auto-aof-rewrite-min-size
+            - 64mb
+            - --save
+            - "60"
+            - "1000"
+            - --stop-writes-on-bgsave-error
+            - "yes"
+            - --tcp-keepalive
+            - "60"
+            - --maxmemory
+            - 192mb
+            - --maxmemory-policy
+            - noeviction
+            - --requirepass
+            - $(REDIS_PASSWORD)
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+            - name: REDISCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 25m
+              memory: 48Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command: [redis-cli, ping]
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          startupProbe:
+            exec:
+              command: [redis-cli, ping]
+            periodSeconds: 2
+            timeoutSeconds: 3
+            failureThreshold: 30
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/e-report-test/redis
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-redis
+  namespace: e-report-test
+spec:
+  selector:
+    app: e-report-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-backend
+  namespace: e-report-test
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-backend
+  template:
+    metadata:
+      labels:
+        app: e-report-backend
+    spec:
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: backend
+          image: localhost/e-report-backend:20260906-v5.7.0-core-image-submit-1
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: e2e
+            - name: DEPLOYMENT_ENVIRONMENT
+              value: test
+            - name: SPRING_LIQUIBASE_ENABLED
+              value: "false"
+            - name: DEFAULT_TENANT_GROUP_CODE
+              value: FUJIAN_PROVINCE
+            - name: DEFAULT_TENANT_GROUP_NAME
+              value: 福建省公司
+            - name: DEFAULT_TENANT_CODE
+              value: DEFAULT_CITY
+            - name: DEFAULT_TENANT_NAME
+              value: 漳州市公司
+            - name: DEFAULT_TENANT_ROOT_ORG_NAME
+              value: 漳州市公司本部
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://e-postgresql-v5:5432/fault_reporter_db
+            - name: SPRING_DATASOURCE_USERNAME
+              value: e_report_app
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: APP_DB_PASSWORD
+            - name: SPRING_DATASOURCE_DRIVER_CLASS_NAME
+              value: org.postgresql.Driver
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: validate
+            - name: APP_DATA_INITIALIZER_ENABLED
+              value: "false"
+            - name: SPRING_CACHE_TYPE
+              value: redis
+            - name: SPRING_DATA_REDIS_HOST
+              value: e-report-redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+            - name: DEFAULT_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_USERNAME
+            - name: DEFAULT_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_PASSWORD
+            - name: DEFAULT_ADMIN_PHONE
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_PHONE
+                  optional: true
+            - name: SUPER_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_USERNAME
+                  optional: true
+            - name: SUPER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_PASSWORD
+                  optional: true
+            - name: SUPER_ADMIN_PHONE
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_PHONE
+                  optional: true
+            - name: AUTH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-auth
+                  key: AUTH_TOKEN_SECRET
+            - name: AUTH_CONTEXT_PEPPER
+              value: e-report-e2e-isolated-context-pepper-2026-08-11
+            - name: ANDROID_EXPECTED_SIGNATURE_SHA256
+              value: ""
+            - name: AUTH_COOKIE_SECURE
+              value: "true"
+            - name: NOTIFICATION_CENTER_ENABLED
+              value: "false"
+            - name: NOTIFICATION_DELIVERY_ENABLED
+              value: "false"
+            - name: NOTIFICATION_EMAIL_ENABLED
+              value: "false"
+            - name: NOTIFICATION_WECOM_ENABLED
+              value: "false"
+            - name: NOTIFICATION_DINGTALK_ENABLED
+              value: "false"
+            - name: NOTIFICATION_DAILY_OUTSTANDING_REPORT_ENABLED
+              value: "false"
+            - name: DAILY_OUTSTANDING_REPORT_SCHEDULER_ENABLED
+              value: "false"
+            - name: APP_OUTBOX_ENQUEUE_ENABLED
+              value: "false"
+            - name: APP_OUTBOX_ENABLED
+              value: "false"
+            - name: IMAGE_REDACTION_RECONCILER_ENABLED
+              value: "true"
+            - name: IMAGE_REDACTION_RECONCILER_INITIAL_DELAY_MS
+              value: "120000"
+            - name: IMAGE_REDACTION_RECONCILER_INTERVAL_MS
+              value: "300000"
+            - name: IMAGE_REDACTION_RECONCILER_BATCH_SIZE
+              value: "50"
+            - name: IMAGE_REDACTION_RECONCILER_MAX_BATCHES_PER_RUN
+              value: "2"
+            - name: APP_UPDATE_R2_ENABLED
+              value: "false"
+            - name: APP_UPDATE_R2_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_ACCOUNT_ID
+            - name: APP_UPDATE_R2_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_BUCKET
+            - name: APP_UPDATE_R2_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_API_TOKEN
+            - name: APP_UPDATE_R2_PUBLIC_BASE_URL
+              value: https://e-report-test.fantong.eu.org:60443
+            - name: APP_UPDATE_R2_OBJECT_PREFIX
+              value: e-report-test
+            - name: AMAP_API_KEY
+              value: ""
+            - name: APP_PUBLIC_BASE_URL
+              value: https://e-report-test.fantong.eu.org:60443/api
+            - name: APP_UPDATE_STABLE_DOWNLOAD_URL
+              value: https://e-report-test.fantong.eu.org:60443/download/android
+            - name: APP_UPDATE_RELEASE_DIR
+              value: /app/app_releases
+            - name: APP_UPDATE_MAX_APK_SIZE
+              value: 300MB
+            - name: APP_MULTIPART_MAX_FILE_SIZE
+              value: 300MB
+            - name: APP_MULTIPART_MAX_REQUEST_SIZE
+              value: 300MB
+            - name: API_CORS_ALLOWED_ORIGINS
+              value: https://e-report-test.fantong.eu.org:60443
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 768Mi
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/fault_uploads
+            - name: app-releases
+              mountPath: /app/app_releases
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+      volumes:
+        - name: uploads
+          hostPath:
+            path: /data/e-report-test/uploads
+            type: DirectoryOrCreate
+        - name: app-releases
+          hostPath:
+            path: /data/e-report-test/app-releases
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-backend
+  namespace: e-report-test
+spec:
+  selector:
+    app: e-report-backend
+  ports:
+    - name: http
+      port: 8083
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-media-image-worker
+  namespace: e-report-test
+  labels:
+    app.kubernetes.io/name: e-report-media-image-worker
+    app.kubernetes.io/component: image-redaction
+    app.kubernetes.io/version: "5.6.8"
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-media-image-worker
+  template:
+    metadata:
+      labels:
+        app: e-report-media-image-worker
+        app.kubernetes.io/component: image-redaction
+        app.kubernetes.io/version: "5.6.8"
+    spec:
+      terminationGracePeriodSeconds: 180
+      initContainers:
+        - name: prepare-storage
+          image: localhost/e-report-media-image-worker:20260903-v5.6.8-image-redaction-ocr-1
+          imagePullPolicy: Never
+          command: [sh, -c]
+          args:
+            - install -d -m 0750 -o 10001 -g 10001 /data/uploads/_quarantine /data/uploads/_sanitized
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 0
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, FOWNER, DAC_OVERRIDE]
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+            limits:
+              memory: 96Mi
+      containers:
+        - name: worker
+          image: localhost/e-report-media-image-worker:20260903-v5.6.8-image-redaction-ocr-1
+          imagePullPolicy: Never
+          env:
+            - name: PGHOST
+              value: e-postgresql-v5
+            - name: PGDATABASE
+              value: fault_reporter_db
+            - name: PGUSER
+              value: e_report_app
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: APP_DB_PASSWORD
+            - name: IMAGE_REDACTION_STORAGE_ROOT
+              value: /data/uploads
+            - name: IMAGE_REDACTION_MODEL_PATH
+              value: /app/models/cmcc-brand-v2-focused.onnx
+            - name: IMAGE_REDACTION_MODEL_SHA256
+              value: e0e4284e41cb03f67a8bbfff8f7fed0c7aa8c9bb1b4033a1f4948dd2c88d1800
+            - name: IMAGE_REDACTION_MODEL_VERSION
+              value: cmcc-brand-v2-focused
+            - name: IMAGE_REDACTION_CONFIDENCE
+              value: "0.65"
+            - name: IMAGE_REDACTION_POLL_SECONDS
+              value: "2"
+            - name: IMAGE_REDACTION_LEASE_SECONDS
+              value: "120"
+            - name: IMAGE_REDACTION_MAX_FILE_BYTES
+              value: "104857600"
+            - name: IMAGE_REDACTION_MAX_PIXELS
+              value: "40000000"
+            - name: IMAGE_REDACTION_MAX_SIDE
+              value: "12000"
+            - name: IMAGE_REDACTION_PADDING_RATIO
+              value: "0.05"
+            - name: IMAGE_REDACTION_MAX_PADDING_PIXELS
+              value: "16"
+            - name: IMAGE_REDACTION_DENSE_SCAN
+              value: "true"
+            - name: IMAGE_REDACTION_OCR_ENABLED
+              value: "true"
+            - name: IMAGE_REDACTION_OCR_MAX_SIDE
+              value: "2000"
+            - name: IMAGE_REDACTION_OCR_MIN_CONFIDENCE
+              value: "0.65"
+            - name: IMAGE_REDACTION_STANDALONE_MODEL_CONFIDENCE
+              value: "0.90"
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: uploads
+              mountPath: /data/uploads
+          resources:
+            requests:
+              cpu: 25m
+              memory: 256Mi
+            limits:
+              cpu: 750m
+              memory: 1536Mi
+      volumes:
+        - name: uploads
+          hostPath:
+            path: /data/e-report-test/uploads
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-frontend
+  namespace: e-report-test
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-frontend
+  template:
+    metadata:
+      labels:
+        app: e-report-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: localhost/e-report-frontend:20260906-v5.7.0-core-image-submit-1
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-frontend
+  namespace: e-report-test
+spec:
+  selector:
+    app: e-report-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: e-report-test
+  namespace: e-report-test
+spec:
+  parentRefs:
+    - name: platform-gateway
+      namespace: gateway-system
+      sectionName: http
+    - name: platform-gateway
+      namespace: gateway-system
+      sectionName: https-fantong-test
+  hostnames:
+    - e-report-test.fantong.eu.org
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: e-report-frontend
+          port: 80
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: e-report-test-data-sync
+  namespace: e-report-test
+spec:
+  suspend: true
+  schedule: "30 3 * * *"
+  timeZone: Asia/Shanghai
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 1
+      activeDeadlineSeconds: 3600
+      template:
+        spec:
+          serviceAccountName: e-report-test-sync
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1001
+          volumes:
+            - name: sync
+              emptyDir: {}
+            - name: production-postgresql-backups
+              hostPath:
+                path: /data/e-report/postgresql-backups
+                type: Directory
+            - name: production-uploads
+              hostPath:
+                path: /data/e-report/uploads
+                type: Directory
+            - name: test-uploads
+              hostPath:
+                path: /data/e-report-test/uploads
+                type: DirectoryOrCreate
+          containers:
+            - name: controller
+              image: localhost/e-report-test-sync-kubectl:20260810-v1.0.42-ui-test-1
+              imagePullPolicy: IfNotPresent
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  backend_replicas="$(kubectl -n e-report-test get deployment/e-report-backend -o jsonpath='{.spec.replicas}')"
+                  printf '%s' "$backend_replicas" > /sync/backend-replicas
+                  if kubectl -n e-report-test get deployment/e-report-media-image-worker >/dev/null 2>&1; then
+                    worker_replicas="$(kubectl -n e-report-test get deployment/e-report-media-image-worker -o jsonpath='{.spec.replicas}')"
+                    printf '%s' "$worker_replicas" > /sync/worker-replicas
+                    kubectl -n e-report-test scale deployment/e-report-media-image-worker --replicas=0
+                  fi
+                  kubectl -n e-report-test scale deployment/e-report-backend --replicas=0
+                  touch /sync/backend-stopped
+                  while [ ! -f /sync/data-complete ] && [ ! -f /sync/data-failed ]; do sleep 2; done
+                  while [ ! -f /sync/cache-complete ] && [ ! -f /sync/cache-failed ]; do sleep 2; done
+                  while [ ! -f /sync/uploads-complete ] && [ ! -f /sync/uploads-failed ]; do sleep 2; done
+                  kubectl -n e-report-test scale deployment/e-report-backend --replicas="$(cat /sync/backend-replicas)"
+                  if [ -f /sync/worker-replicas ]; then
+                    kubectl -n e-report-test scale deployment/e-report-media-image-worker --replicas="$(cat /sync/worker-replicas)"
+                  fi
+                  if [ "$(cat /sync/backend-replicas)" -gt 0 ]; then
+                    kubectl -n e-report-test rollout status deployment/e-report-backend --timeout=300s
+                  fi
+                  if [ -f /sync/worker-replicas ] && [ "$(cat /sync/worker-replicas)" -gt 0 ]; then
+                    kubectl -n e-report-test rollout status deployment/e-report-media-image-worker --timeout=300s
+                  fi
+                  touch /sync/backend-ready
+                  test ! -f /sync/data-failed
+                  test ! -f /sync/cache-failed
+                  test ! -f /sync/uploads-failed
+              volumeMounts:
+                - name: sync
+                  mountPath: /sync
+              resources:
+                requests: {cpu: 10m, memory: 32Mi}
+                limits: {memory: 128Mi}
+            - name: postgresql-sync
+              image: docker.m.daocloud.io/library/postgres:18.6-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+              imagePullPolicy: IfNotPresent
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  trap 'touch /sync/data-failed' EXIT
+                  while [ ! -f /sync/backend-stopped ]; do sleep 2; done
+                  latest_dump="$(ls -1t /production-backups/fault_reporter_db-*.dump 2>/dev/null | head -n 1)"
+                  test -n "$latest_dump"
+                  test -s "$latest_dump"
+                  if [ -f "$latest_dump.sha256" ]; then
+                    (cd /production-backups && sha256sum -c "$(basename "$latest_dump.sha256")")
+                  fi
+                  pg_dump --format=custom --data-only \
+                    --table=public.app_config \
+                    --table=public.tenant_app_config \
+                    --table=public.org_app_config \
+                    --file=/sync/test-environment-config.dump
+                  dropdb --maintenance-db=postgres --if-exists --force fault_reporter_db
+                  createdb --maintenance-db=postgres --owner=e_report_migrator fault_reporter_db
+                  pg_restore --exit-on-error --no-owner --no-acl \
+                    --dbname=fault_reporter_db "$latest_dump"
+                  touch /sync/import-complete
+                  while [ ! -f /sync/schema-complete ] && [ ! -f /sync/schema-failed ]; do sleep 2; done
+                  test ! -f /sync/schema-failed
+                  psql --set=ON_ERROR_STOP=1 --dbname=fault_reporter_db <<'SQL'
+                  TRUNCATE TABLE org_app_config, tenant_app_config, app_config RESTART IDENTITY;
+                  TRUNCATE TABLE api_token_permissions, api_tokens, auth_sessions, trusted_devices,
+                    outbox_events, daily_work_order_report_dispatches, client_observation_events,
+                    command_idempotency_records RESTART IDENTITY CASCADE;
+                  SQL
+                  pg_restore --exit-on-error --no-owner --no-acl --data-only \
+                    --dbname=fault_reporter_db /sync/test-environment-config.dump
+                  rm -f /sync/test-environment-config.dump
+                  rm -f /sync/data-failed
+                  touch /sync/data-complete
+                  trap - EXIT
+              env:
+                - name: PGHOST
+                  value: e-postgresql-v5
+                - name: PGPORT
+                  value: "5432"
+                - name: PGDATABASE
+                  value: fault_reporter_db
+                - name: PGUSER
+                  value: e_report_migrator
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: e-report-postgresql
+                      key: POSTGRES_PASSWORD
+              volumeMounts:
+                - name: sync
+                  mountPath: /sync
+                - name: production-postgresql-backups
+                  mountPath: /production-backups
+                  readOnly: true
+              resources:
+                requests: {cpu: 25m, memory: 64Mi}
+                limits: {memory: 512Mi}
+            - name: schema-migration
+              image: localhost/e-report-database-migration:20260906-v5.7.0-core-image-submit-1
+              imagePullPolicy: Never
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  trap 'touch /sync/schema-failed' EXIT
+                  while [ ! -f /sync/import-complete ] && [ ! -f /sync/data-failed ]; do sleep 2; done
+                  test ! -f /sync/data-failed
+                  java -jar /app/database-admin.jar
+                  rm -f /sync/schema-failed
+                  touch /sync/schema-complete
+                  trap - EXIT
+              env:
+                - name: E_REPORT_MIGRATION_URL
+                  value: jdbc:postgresql://e-postgresql-v5:5432/fault_reporter_db
+                - name: E_REPORT_MIGRATION_USERNAME
+                  value: e_report_migrator
+                - name: E_REPORT_MIGRATION_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: e-report-postgresql
+                      key: POSTGRES_PASSWORD
+                - name: E_REPORT_MIGRATION_CHANGELOG
+                  value: db/changelog/postgresql/db.changelog-master.yaml
+                - name: E_REPORT_MIGRATION_TAG
+                  value: v5.6.9-test-data-sync.1
+              volumeMounts:
+                - name: sync
+                  mountPath: /sync
+              resources:
+                requests: {cpu: 25m, memory: 128Mi}
+                limits: {memory: 512Mi}
+            - name: redis-sync
+              image: docker.m.daocloud.io/library/redis:7.4-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+              imagePullPolicy: IfNotPresent
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  trap 'touch /sync/cache-failed' EXIT
+                  while [ ! -f /sync/data-complete ] && [ ! -f /sync/data-failed ]; do sleep 2; done
+                  test ! -f /sync/data-failed
+                  redis-cli -h e-report-redis -a "$TEST_REDIS_PASSWORD" FLUSHDB
+                  rm -f /sync/cache-failed
+                  touch /sync/cache-complete
+                  trap - EXIT
+              env:
+                - name: TEST_REDIS_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: e-report-redis
+                      key: REDIS_PASSWORD
+              volumeMounts:
+                - name: sync
+                  mountPath: /sync
+              resources:
+                requests: {cpu: 10m, memory: 32Mi}
+                limits: {memory: 128Mi}
+            - name: uploads-sync
+              image: localhost/e-report-test-sync-kubectl:20260810-v1.0.42-ui-test-1
+              imagePullPolicy: IfNotPresent
+              command: [sh, -c]
+              args:
+                - |
+                  set -eu
+                  trap 'touch /sync/uploads-failed' EXIT
+                  while [ ! -f /sync/backend-stopped ]; do sleep 2; done
+                  cp -an /production-uploads/. /test-uploads/
+                  rm -f /sync/uploads-failed
+                  touch /sync/uploads-complete
+                  trap - EXIT
+              volumeMounts:
+                - name: sync
+                  mountPath: /sync
+                - name: production-uploads
+                  mountPath: /production-uploads
+                  readOnly: true
+                - name: test-uploads
+                  mountPath: /test-uploads
+              resources:
+                requests: {cpu: 10m, memory: 32Mi}
+                limits: {memory: 128Mi}

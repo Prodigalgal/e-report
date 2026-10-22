@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">网络运维 Lite</string>
+    <string name="brand_name">e-report Lite</string>
+    <string name="settings_title">环境与应用设置</string>
+    <string name="page_unavailable">暂时无法打开页面</string>
+    <string name="retry">重新连接</string>
+    <string name="check_settings">检查环境设置</string>
+    <string name="version_summary">Lite %1$s · 网页功能自动更新。仅接收 Lite 升级；切换原生版请先卸载，再下载安装。</string>
+</resources>

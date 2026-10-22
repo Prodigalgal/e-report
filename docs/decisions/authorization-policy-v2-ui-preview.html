@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
+  <title>e-report 授权体系 V2 UI 设计预览</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --primary-soft: #eff6ff;
+      --background: #f8fafc;
+      --surface: #ffffff;
+      --surface-alt: #f1f5f9;
+      --border: #d7dde5;
+      --border-strong: #c2cbd7;
+      --ink: #0f172a;
+      --text: #1f2937;
+      --muted: #657282;
+      --success: #15803d;
+      --success-soft: #f0fdf4;
+      --warning: #b45309;
+      --warning-soft: #fffbeb;
+      --danger: #dc2626;
+      --danger-soft: #fef2f2;
+      --teal: #0f766e;
+      --teal-soft: #f0fdfa;
+      --purple: #7e22ce;
+      --purple-soft: #faf5ff;
+      --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      color: var(--text);
+      background: #e8edf4;
+      letter-spacing: 0;
+    }
+    button, input, select, textarea { font: inherit; letter-spacing: 0; }
+    button { cursor: default; }
+
+    .gallery {
+      display: grid;
+      gap: 48px;
+      padding: 48px;
+      justify-content: center;
+    }
+    .board {
+      width: 1600px;
+      height: 1000px;
+      overflow: hidden;
+      background: var(--background);
+      border: 1px solid #cbd5e1;
+      box-shadow: var(--shadow);
+      position: relative;
+    }
+    .board.mobile-board {
+      width: 1380px;
+      height: 1040px;
+      padding: 40px 44px;
+      background: #eef2f7;
+    }
+    .board-label {
+      display: none;
+    }
+
+    .app-shell { display: grid; grid-template-rows: 64px 1fr; height: 100%; }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding: 0 24px;
+      color: #fff;
+      background: var(--primary);
+      border-bottom: 1px solid rgba(255,255,255,.18);
+    }
+    .menu-icon { font-size: 25px; line-height: 1; }
+    .brand-mark {
+      width: 34px; height: 34px; border-radius: 8px;
+      background: #123b86; display: grid; place-items: center;
+      font-weight: 900; color: #8fffd7;
+    }
+    .brand-title { font-size: 17px; font-weight: 800; }
+    .brand-subtitle { margin-top: 2px; font-size: 12px; opacity: .8; }
+    .topbar-spacer { flex: 1; }
+    .topbar-user { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
+    .avatar {
+      width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+      background: #e11d48; color: #fff; font-weight: 800;
+    }
+
+    .body-shell { display: grid; grid-template-columns: 224px 1fr; min-height: 0; }
+    .sidebar { background: #fff; border-right: 1px solid var(--border); padding: 18px 0; }
+    .nav-caption { padding: 8px 22px; color: #94a3b8; font-size: 12px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 13px; height: 44px;
+      padding: 0 22px; font-size: 14px; color: #334155;
+    }
+    .nav-item.active { color: var(--primary); background: #eff6ff; font-weight: 700; border-right: 3px solid var(--primary); }
+    .nav-glyph { width: 20px; text-align: center; color: #64748b; }
+
+    .main { min-width: 0; overflow: hidden; padding: 24px 28px 18px; }
+    .breadcrumb { color: #64748b; font-size: 13px; margin-bottom: 12px; }
+    .page-head { display: flex; align-items: flex-start; gap: 16px; margin-bottom: 18px; }
+    .page-title { margin: 0; color: var(--ink); font-size: 24px; font-weight: 800; }
+    .page-subtitle { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+    .head-actions { margin-left: auto; display: flex; gap: 10px; }
+
+    .button {
+      min-height: 40px; border-radius: 6px; padding: 0 16px; border: 1px solid transparent;
+      font-size: 14px; font-weight: 750; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: #fff; color: #334155;
+    }
+    .button.primary { color: #fff; background: var(--primary); box-shadow: 0 2px 5px rgba(37,99,235,.24); }
+    .button.outline { color: var(--primary); border-color: #9fbcfb; background: #fff; }
+    .button.ghost { color: #475569; border-color: var(--border); background: #fff; }
+    .button.danger { color: var(--danger); border-color: #fecaca; background: #fff; }
+    .button.disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; }
+
+    .stepper {
+      height: 64px; display: flex; align-items: center; justify-content: center;
+      background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 16px;
+    }
+    .step { display: flex; align-items: center; min-width: 250px; color: #64748b; }
+    .step-circle {
+      width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--border-strong);
+      display: grid; place-items: center; margin-right: 10px; font-size: 13px; font-weight: 800; background: #fff;
+    }
+    .step.active { color: var(--primary); font-weight: 800; }
+    .step.active .step-circle { color: #fff; border-color: var(--primary); background: var(--primary); }
+    .step.done { color: var(--success); font-weight: 700; }
+    .step.done .step-circle { color: #fff; border-color: var(--success); background: var(--success); }
+    .step-line { height: 1px; width: 92px; background: #cbd5e1; margin: 0 18px 0 -40px; }
+
+    .workspace {
+      min-height: 724px; background: #fff; border: 1px solid var(--border); border-radius: 8px;
+      display: grid; grid-template-rows: 1fr 68px; overflow: hidden;
+    }
+    .workspace-content { min-height: 0; overflow: hidden; }
+    .workspace-footer {
+      border-top: 1px solid var(--border); display: flex; align-items: center; padding: 0 22px;
+      background: #fff; gap: 10px;
+    }
+    .footer-note { color: #64748b; font-size: 13px; }
+    .footer-spacer { flex: 1; }
+
+    .two-col { display: grid; grid-template-columns: 380px 1fr; height: 100%; min-height: 0; }
+    .side-panel { border-right: 1px solid var(--border); padding: 20px; background: #fbfdff; }
+    .panel-title { margin: 0; color: var(--ink); font-size: 17px; font-weight: 800; }
+    .panel-help { margin: 6px 0 16px; color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .content-panel { padding: 20px 24px; min-width: 0; }
+    .section-title-row { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 14px; }
+    .section-title-row .summary { margin-left: auto; color: #64748b; font-size: 13px; }
+
+    .search-box, .field {
+      min-height: 42px; border: 1px solid var(--border-strong); border-radius: 6px; background: #fff;
+      display: flex; align-items: center; gap: 10px; padding: 0 12px; color: #94a3b8; font-size: 14px;
+    }
+    .search-box { margin-bottom: 14px; }
+    .field-wrap { margin-bottom: 14px; }
+    .field-label { display: block; color: #475569; font-size: 12px; margin-bottom: 6px; font-weight: 650; }
+    .field-value { color: #1f2937; flex: 1; }
+    .select-arrow { margin-left: auto; color: #64748b; }
+    .two-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+    .template-list { display: grid; gap: 9px; max-height: 440px; overflow: hidden; }
+    .template-row {
+      border: 1px solid var(--border); border-radius: 7px; padding: 12px;
+      display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; background: #fff;
+    }
+    .template-row.selected { border-color: #8ab0fb; background: var(--primary-soft); }
+    .check {
+      width: 18px; height: 18px; border-radius: 4px; border: 1px solid #94a3b8;
+      display: grid; place-items: center; font-size: 12px; color: #fff; margin-top: 1px;
+    }
+    .selected .check { background: var(--primary); border-color: var(--primary); }
+    .template-name { color: var(--ink); font-size: 14px; font-weight: 750; }
+    .template-desc { color: var(--muted); font-size: 12px; line-height: 1.45; margin-top: 4px; }
+    .template-count { color: #475569; font-size: 12px; white-space: nowrap; }
+
+    .selection-strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+    .chip {
+      min-height: 28px; border-radius: 14px; padding: 4px 10px; display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; font-weight: 700; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0;
+    }
+    .chip.primary { color: var(--primary-dark); background: var(--primary-soft); border-color: #bfdbfe; }
+    .chip.success { color: var(--success); background: var(--success-soft); border-color: #bbf7d0; }
+    .chip.warning { color: var(--warning); background: var(--warning-soft); border-color: #fde68a; }
+    .chip.danger { color: var(--danger); background: var(--danger-soft); border-color: #fecaca; }
+    .chip.purple { color: var(--purple); background: var(--purple-soft); border-color: #e9d5ff; }
+    .chip.teal { color: var(--teal); background: var(--teal-soft); border-color: #99f6e4; }
+
+    .summary-band {
+      border: 1px solid #bfdbfe; background: #f8fbff; border-radius: 8px; padding: 16px 18px;
+      display: flex; align-items: center; gap: 24px; margin-bottom: 18px;
+    }
+    .summary-icon { width: 42px; height: 42px; border-radius: 8px; display: grid; place-items: center; color: #fff; background: var(--primary); font-weight: 900; }
+    .summary-main { color: var(--ink); font-size: 15px; font-weight: 800; }
+    .summary-detail { color: var(--muted); font-size: 13px; margin-top: 5px; }
+    .summary-metrics { margin-left: auto; display: flex; gap: 30px; }
+    .summary-metric strong { display: block; color: var(--ink); font-size: 20px; }
+    .summary-metric span { color: #64748b; font-size: 12px; }
+
+    .permission-preview { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+    .permission-head, .permission-line {
+      display: grid; grid-template-columns: 1.3fr .85fr .9fr; align-items: center; min-height: 44px; padding: 0 14px;
+      border-bottom: 1px solid #e2e8f0; font-size: 13px;
+    }
+    .permission-head { background: #f1f5f9; color: #475569; font-weight: 750; }
+    .permission-line:last-child { border-bottom: 0; }
+    .permission-name { color: #1f2937; font-weight: 700; }
+
+    .notice {
+      border-radius: 7px; padding: 11px 13px; display: flex; align-items: flex-start; gap: 9px;
+      font-size: 13px; line-height: 1.5; margin-bottom: 14px;
+    }
+    .notice.info { color: #1e40af; border: 1px solid #bfdbfe; background: #eff6ff; }
+    .notice.warning { color: #92400e; border: 1px solid #fde68a; background: #fffbeb; }
+
+    .advanced-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .advanced-toolbar .search-box { margin: 0; width: 310px; }
+    .filter-button { height: 40px; padding: 0 12px; border: 1px solid var(--border); background: #fff; border-radius: 6px; color: #475569; font-size: 13px; }
+    .toolbar-spacer { flex: 1; }
+    .permission-table { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+    .permission-table .row {
+      display: grid; grid-template-columns: 1.1fr 1fr 1fr .9fr .8fr 96px;
+      min-height: 56px; align-items: center; padding: 0 12px; border-bottom: 1px solid #e2e8f0; font-size: 12.5px;
+    }
+    .permission-table .row.header { min-height: 42px; background: #f1f5f9; color: #475569; font-weight: 750; }
+    .permission-table .row.group { display: flex; min-height: 39px; background: #fafcff; color: #334155; font-weight: 800; }
+    .permission-table .row:last-child { border-bottom: 0; }
+    .permission-table .row.adjusted { background: #f8fbff; box-shadow: inset 3px 0 var(--primary); }
+    .permission-table .row.disabled-row { color: #94a3b8; background: #fcfcfd; }
+    .cell-title { color: var(--ink); font-weight: 750; }
+    .cell-sub { color: #64748b; font-size: 11px; margin-top: 3px; }
+    .link-action { color: var(--primary); font-weight: 750; text-align: right; }
+
+    .confirmation-layout { display: grid; grid-template-columns: 1fr 340px; height: 100%; }
+    .confirmation-main { padding: 20px 22px; min-width: 0; }
+    .confirmation-side { border-left: 1px solid var(--border); padding: 20px; background: #fbfdff; }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .stat {
+      min-height: 74px; border: 1px solid var(--border); border-radius: 7px; padding: 11px 13px; background: #fff;
+    }
+    .stat strong { display: block; color: var(--ink); font-size: 21px; }
+    .stat span { color: #64748b; font-size: 12px; }
+    .diff-table { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+    .diff-row {
+      display: grid; grid-template-columns: 92px 1.1fr 1fr 1fr .75fr; min-height: 55px;
+      align-items: center; padding: 0 12px; border-bottom: 1px solid #e2e8f0; font-size: 12.5px;
+    }
+    .diff-row.header { min-height: 42px; background: #f1f5f9; color: #475569; font-weight: 750; }
+    .diff-row:last-child { border-bottom: 0; }
+    .arrow { color: #94a3b8; margin: 0 5px; }
+    .check-line { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 13px; font-size: 13px; line-height: 1.45; }
+    .check-dot { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--success); font-size: 12px; }
+    .reason-box { width: 100%; min-height: 86px; border: 1px solid var(--border-strong); border-radius: 6px; padding: 10px; background: #fff; color: #475569; font-size: 13px; }
+
+    .mobile-title { text-align: center; margin-bottom: 28px; }
+    .mobile-title h1 { margin: 0; color: var(--ink); font-size: 24px; }
+    .mobile-title p { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+    .phones { display: grid; grid-template-columns: repeat(3, 390px); gap: 36px; justify-content: center; }
+    .phone {
+      width: 390px; height: 870px; border: 8px solid #1f2937; border-radius: 28px; overflow: hidden;
+      background: var(--background); box-shadow: 0 16px 34px rgba(15,23,42,.18); position: relative;
+    }
+    .phone-status { height: 28px; display: flex; align-items: center; padding: 0 16px; background: var(--primary); color: #fff; font-size: 11px; }
+    .phone-status span:last-child { margin-left: auto; }
+    .phone-header { height: 58px; display: flex; align-items: center; gap: 12px; padding: 0 16px; color: #fff; background: var(--primary); }
+    .phone-back { font-size: 24px; }
+    .phone-header-title { font-size: 17px; font-weight: 800; }
+    .phone-step { color: rgba(255,255,255,.8); font-size: 12px; margin-left: auto; }
+    .phone-content { height: 714px; overflow: hidden; padding: 14px 14px 90px; }
+    .phone-footer {
+      height: 70px; padding: 12px 14px; position: absolute; left: 0; right: 0; bottom: 0;
+      border-top: 1px solid var(--border); background: #fff; display: grid; grid-template-columns: 1fr 1.7fr; gap: 10px;
+    }
+    .mobile-card { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 12px; }
+    .mobile-section-title { color: var(--ink); font-size: 16px; font-weight: 850; margin-bottom: 5px; }
+    .mobile-help { color: var(--muted); font-size: 12px; line-height: 1.45; margin-bottom: 12px; }
+    .mobile-template { border-top: 1px solid #e2e8f0; padding: 12px 0; display: grid; grid-template-columns: 22px 1fr auto; gap: 9px; }
+    .mobile-template:first-of-type { border-top: 0; }
+    .mobile-template .check { margin-top: 2px; }
+    .mobile-template.selected .check { background: var(--primary); border-color: var(--primary); }
+    .mobile-field { border: 1px solid var(--border-strong); border-radius: 6px; min-height: 48px; padding: 8px 10px; margin-top: 10px; }
+    .mobile-field small { display: block; color: #64748b; font-size: 10px; }
+    .mobile-field span { display: block; margin-top: 3px; font-size: 13px; color: var(--ink); }
+    .mobile-permission { padding: 12px 0; border-top: 1px solid #e2e8f0; }
+    .mobile-permission:first-of-type { border-top: 0; }
+    .mobile-permission-top { display: flex; gap: 8px; align-items: center; }
+    .mobile-permission-name { color: var(--ink); font-size: 14px; font-weight: 800; flex: 1; }
+    .mobile-permission-meta { color: #64748b; font-size: 11px; line-height: 1.55; margin-top: 5px; }
+    .mobile-summary-row { display: flex; align-items: center; padding: 10px 0; border-top: 1px solid #e2e8f0; font-size: 12px; }
+    .mobile-summary-row:first-of-type { border-top: 0; }
+    .mobile-summary-row strong { color: var(--ink); flex: 1; }
+    .mobile-summary-row span { color: #475569; text-align: right; }
+    .mobile-security { display: flex; gap: 8px; align-items: flex-start; color: var(--success); font-size: 12px; line-height: 1.45; margin: 8px 0; }
+
+    .profile-hero {
+      display: grid; grid-template-columns: 72px minmax(0, 1fr) auto; gap: 18px; align-items: center;
+      padding: 18px 20px; background: #fff; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px;
+    }
+    .profile-avatar {
+      width: 72px; height: 72px; border-radius: 8px; display: grid; place-items: center;
+      color: #fff; background: #0f766e; font-size: 25px; font-weight: 850;
+    }
+    .profile-title-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .profile-title-line h1 { margin: 0; color: var(--ink); font-size: 23px; }
+    .profile-meta { margin-top: 7px; color: var(--muted); font-size: 13px; display: flex; gap: 18px; flex-wrap: wrap; }
+    .profile-actions { display: flex; gap: 8px; align-items: center; }
+    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: #fff; margin-bottom: 14px; }
+    .metric-compact { padding: 13px 16px; border-right: 1px solid var(--border); }
+    .metric-compact:last-child { border-right: 0; }
+    .metric-compact strong { display: block; color: var(--ink); font-size: 20px; font-variant-numeric: tabular-nums; }
+    .metric-compact span { color: var(--muted); font-size: 12px; }
+    .details-grid { display: grid; grid-template-columns: 410px minmax(0, 1fr); gap: 14px; }
+    .detail-surface { background: #fff; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .surface-head { min-height: 54px; padding: 0 16px; display: flex; align-items: center; border-bottom: 1px solid var(--border); }
+    .surface-head h2 { margin: 0; color: var(--ink); font-size: 16px; }
+    .surface-head .surface-sub { margin-left: 9px; color: var(--muted); font-size: 12px; }
+    .surface-head .button { margin-left: auto; min-height: 34px; padding: 0 12px; }
+    .kv-row { display: grid; grid-template-columns: 112px 1fr; min-height: 43px; align-items: center; padding: 0 16px; border-bottom: 1px solid #edf1f5; font-size: 13px; }
+    .kv-row:last-child { border-bottom: 0; }
+    .kv-row span:first-child { color: var(--muted); }
+    .kv-row strong { color: var(--ink); font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+    .assignment-table { padding: 0 16px 10px; }
+    .assignment-row-v2 {
+      display: grid; grid-template-columns: minmax(210px, 1.35fr) minmax(130px, .8fr) minmax(120px, .65fr) 96px;
+      align-items: center; gap: 12px; min-height: 72px; border-bottom: 1px solid #e8edf3; font-size: 12px;
+    }
+    .assignment-row-v2:last-child { border-bottom: 0; }
+    .source-title { color: var(--ink); font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .source-description { color: var(--muted); margin-top: 4px; line-height: 1.45; }
+    .source-scope strong, .source-count strong { display: block; color: var(--ink); font-size: 13px; }
+    .source-scope span, .source-count span { color: var(--muted); }
+    .source-action { color: var(--primary); font-weight: 750; text-align: right; }
+    .source-action.locked { color: #64748b; }
+
+    .auth-modal-backdrop { position: absolute; inset: 0; background: rgba(15,23,42,.42); display: grid; place-items: center; padding: 34px; }
+    .auth-dialog { width: 1260px; height: 900px; background: #fff; border-radius: 8px; box-shadow: 0 24px 70px rgba(15,23,42,.28); display: grid; grid-template-rows: 76px 64px 1fr 68px; overflow: hidden; }
+    .auth-dialog-head { padding: 0 22px; display: flex; align-items: center; border-bottom: 1px solid var(--border); }
+    .auth-dialog-head h2 { margin: 0; color: var(--ink); font-size: 20px; }
+    .auth-dialog-head p { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .dialog-close { margin-left: auto; color: #64748b; font-size: 24px; }
+    .auth-dialog .stepper { margin: 0; border: 0; border-radius: 0; border-bottom: 1px solid var(--border); }
+    .auth-dialog-body { min-height: 0; display: grid; grid-template-columns: 310px 1fr; }
+    .source-rail { background: #f8fafc; border-right: 1px solid var(--border); padding: 18px; overflow: hidden; }
+    .source-rail h3, .source-workspace h3 { margin: 0; color: var(--ink); font-size: 15px; }
+    .source-rail p { color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .source-option { margin-top: 10px; padding: 12px; border: 1px solid var(--border); border-radius: 7px; background: #fff; }
+    .source-option.active { border-color: #93b4fb; background: var(--primary-soft); }
+    .source-option.system { border-color: #cbd5e1; background: #f8fafc; }
+    .source-option-title { display: flex; align-items: center; gap: 7px; color: var(--ink); font-size: 13px; font-weight: 800; }
+    .source-option-meta { color: var(--muted); font-size: 11px; line-height: 1.45; margin-top: 5px; }
+    .source-workspace { padding: 18px 20px; min-width: 0; overflow: hidden; }
+    .baseline-banner { display: flex; align-items: flex-start; gap: 11px; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 7px; background: #f8fafc; margin: 13px 0; }
+    .baseline-lock { width: 30px; height: 30px; border-radius: 6px; display: grid; place-items: center; background: #e2e8f0; color: #475569; font-weight: 900; }
+    .baseline-banner strong { display: block; color: var(--ink); font-size: 13px; }
+    .baseline-banner span { color: var(--muted); font-size: 12px; line-height: 1.45; }
+    .baseline-permissions { border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+    .baseline-permission-row { display: grid; grid-template-columns: 1.3fr .9fr .7fr 80px; min-height: 52px; align-items: center; padding: 0 13px; border-bottom: 1px solid #e8edf3; font-size: 12px; }
+    .baseline-permission-row.header { min-height: 40px; background: #f1f5f9; color: #475569; font-weight: 750; }
+    .baseline-permission-row:last-child { border-bottom: 0; }
+    .auth-dialog-footer { border-top: 1px solid var(--border); display: flex; align-items: center; gap: 9px; padding: 0 20px; }
+    .auth-dialog-footer .footer-spacer { flex: 1; }
+
+    .mobile-profile-head { padding: 16px 14px; background: #fff; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center; }
+    .mobile-profile-avatar { width: 56px; height: 56px; border-radius: 8px; display: grid; place-items: center; color: #fff; background: #0f766e; font-size: 20px; font-weight: 850; }
+    .mobile-profile-name { color: var(--ink); font-size: 18px; font-weight: 850; }
+    .mobile-profile-meta { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 3px; }
+    .mobile-source { padding: 12px 0; border-top: 1px solid #e2e8f0; }
+    .mobile-source:first-of-type { border-top: 0; }
+    .mobile-source-title { display: flex; align-items: center; gap: 7px; color: var(--ink); font-size: 13px; font-weight: 800; }
+    .mobile-source-meta { color: var(--muted); font-size: 11px; line-height: 1.5; margin-top: 5px; }
+
+    @media (max-width: 900px) {
+      .gallery { padding: 0; gap: 12px; }
+      .board { transform-origin: top left; }
+    }
+  </style>
+</head>
+<body>
+  <main class="gallery">
+    <section class="board" data-view="step1" aria-label="WEB 标准岗位配置">
+      <div class="app-shell">
+        <header class="topbar">
+          <span class="menu-icon">≡</span><span class="brand-mark">↗</span>
+          <div><div class="brand-title">网络运维管理</div><div class="brand-subtitle">漳州市公司 · 用户授权</div></div>
+          <div class="topbar-spacer"></div><div class="topbar-user"><span>⌂</span><span class="avatar">管</span><span>市公司管理员</span><span>退出</span></div>
+        </header>
+        <div class="body-shell">
+          <aside class="sidebar">
+            <div class="nav-caption">工作台</div><div class="nav-item"><span class="nav-glyph">◴</span>仪表盘</div><div class="nav-item"><span class="nav-glyph">⌕</span>运行诊断</div>
+            <div class="nav-caption">工单</div><div class="nav-item"><span class="nav-glyph">⌕</span>工单查询</div>
+            <div class="nav-caption">系统</div><div class="nav-item active"><span class="nav-glyph">●</span>用户管理</div><div class="nav-item"><span class="nav-glyph">⌘</span>组织目录</div><div class="nav-item"><span class="nav-glyph">⚙</span>系统配置</div><div class="nav-item"><span class="nav-glyph">▦</span>岗位权限模板</div>
+          </aside>
+          <main class="main">
+            <div class="breadcrumb">用户管理 / 示例管理员甲 / 调整授权</div>
+            <div class="page-head"><div><h1 class="page-title">调整用户授权</h1><p class="page-subtitle">示例管理员甲 · 13000000091 · 南靖县</p></div><div class="head-actions"><button class="button ghost">返回用户详情</button></div></div>
+            <div class="stepper"><div class="step active"><span class="step-circle">1</span>选择标准岗位</div><span class="step-line"></span><div class="step"><span class="step-circle">2</span>特殊权限调整</div><span class="step-line"></span><div class="step"><span class="step-circle">3</span>确认并应用</div></div>
+            <div class="workspace">
+              <div class="workspace-content two-col">
+                <aside class="side-panel">
+                  <h2 class="panel-title">选择岗位权限模板</h2><p class="panel-help">模板用于快速配置常见岗位。只展示当前账号可以完整授予的模板。</p>
+                  <div class="search-box"><span>⌕</span><span>搜索岗位名称或权限</span></div>
+                  <div class="template-list">
+                    <div class="template-row selected"><span class="check">✓</span><div><div class="template-name">网络故障标准处理员</div><div class="template-desc">查看、接单、接受派单、回单、挂起和恢复</div></div><span class="template-count">8 项权限</span></div>
+                    <div class="template-row selected"><span class="check">✓</span><div><div class="template-name">工单验收员</div><div class="template-desc">验收通过、验收驳回并查看流转记录</div></div><span class="template-count">4 项权限</span></div>
+                    <div class="template-row"><span class="check"></span><div><div class="template-name">网络故障调度员</div><div class="template-desc">首次派单、调整处理人、查看全流程</div></div><span class="template-count">5 项权限</span></div>
+                    <div class="template-row"><span class="check"></span><div><div class="template-name">一线提单员</div><div class="template-desc">提单并查看本人提交工单和流转记录</div></div><span class="template-count">3 项权限</span></div>
+                    <div class="template-row"><span class="check"></span><div><div class="template-name">工单审计员</div><div class="template-desc">只读查看完整操作身份和内部审计字段</div></div><span class="template-count">2 项权限</span></div>
+                  </div>
+                </aside>
+                <section class="content-panel">
+                  <div class="section-title-row"><div><h2 class="panel-title">设置模板默认范围</h2><p class="panel-help">这里是模板内权限的默认值，下一步仍可对单条权限做特殊调整。</p></div><span class="summary">已选 2 个模板</span></div>
+                  <div class="selection-strip"><span class="chip primary">网络故障标准处理员 ×</span><span class="chip primary">工单验收员 ×</span></div>
+                  <div class="two-fields"><div class="field-wrap"><label class="field-label">默认数据范围</label><div class="field"><span class="field-value">南靖县及下级组织</span><span class="select-arrow">⌄</span></div></div><div class="field-wrap"><label class="field-label">授权有效期</label><div class="field"><span class="field-value">长期有效</span><span class="select-arrow">⌄</span></div></div></div>
+                  <div class="notice info"><strong>i</strong><span>本次授权不影响 3 条由上级管理员授予且当前账号不可管理的授权；提交时不会覆盖或撤销它们。</span></div>
+                  <div class="summary-band"><div class="summary-icon">权</div><div><div class="summary-main">标准配置已就绪</div><div class="summary-detail">适合普通网络故障处理兼验收人员，可直接进入确认。</div></div><div class="summary-metrics"><div class="summary-metric"><strong>12</strong><span>原子权限</span></div><div class="summary-metric"><strong>1</strong><span>数据范围</span></div><div class="summary-metric"><strong>0</strong><span>特殊调整</span></div></div></div>
+                  <div class="section-title-row"><h3 class="panel-title">主要生效权限</h3><span class="summary">同名权限自动合并来源</span></div>
+                  <div class="permission-preview"><div class="permission-head"><span>权限</span><span>关系条件</span><span>数据范围</span></div><div class="permission-line"><span class="permission-name">查看网络故障工单</span><span>范围内任意工单</span><span>南靖县及下级</span></div><div class="permission-line"><span class="permission-name">主动接单</span><span>范围内任意工单</span><span>南靖县及下级</span></div><div class="permission-line"><span class="permission-name">提交回单 / 挂起 / 恢复</span><span>本人是当前处理人</span><span>南靖县及下级</span></div><div class="permission-line"><span class="permission-name">验收通过 / 驳回</span><span>范围内任意工单</span><span>南靖县及下级</span></div></div>
+                </section>
+              </div>
+              <footer class="workspace-footer"><span class="footer-note">普通岗位无需展开权限矩阵，可直接下一步确认。</span><span class="footer-spacer"></span><button class="button ghost">取消</button><button class="button outline">跳过高级调整</button><button class="button primary">下一步：特殊权限调整 →</button></footer>
+            </div>
+          </main>
+        </div>
+      </div><span class="board-label">授权体系 V2 · WEB · 第 1 步</span>
+    </section>
+
+    <section class="board" data-view="step2" aria-label="WEB 特殊权限调整">
+      <div class="app-shell">
+        <header class="topbar"><span class="menu-icon">≡</span><span class="brand-mark">↗</span><div><div class="brand-title">网络运维管理</div><div class="brand-subtitle">漳州市公司 · 用户授权</div></div><div class="topbar-spacer"></div><div class="topbar-user"><span>⌂</span><span class="avatar">管</span><span>市公司管理员</span><span>退出</span></div></header>
+        <div class="body-shell"><aside class="sidebar"><div class="nav-caption">工作台</div><div class="nav-item"><span class="nav-glyph">◴</span>仪表盘</div><div class="nav-item"><span class="nav-glyph">⌕</span>运行诊断</div><div class="nav-caption">工单</div><div class="nav-item"><span class="nav-glyph">⌕</span>工单查询</div><div class="nav-caption">系统</div><div class="nav-item active"><span class="nav-glyph">●</span>用户管理</div><div class="nav-item"><span class="nav-glyph">⌘</span>组织目录</div><div class="nav-item"><span class="nav-glyph">⚙</span>系统配置</div><div class="nav-item"><span class="nav-glyph">▦</span>岗位权限模板</div></aside>
+          <main class="main"><div class="breadcrumb">用户管理 / 示例管理员甲 / 调整授权</div><div class="page-head"><div><h1 class="page-title">调整用户授权</h1><p class="page-subtitle">示例管理员甲 · 特殊权限仅在确有业务需要时调整</p></div><div class="head-actions"><button class="button ghost">返回用户详情</button></div></div>
+            <div class="stepper"><div class="step done"><span class="step-circle">✓</span>选择标准岗位</div><span class="step-line"></span><div class="step active"><span class="step-circle">2</span>特殊权限调整</div><span class="step-line"></span><div class="step"><span class="step-circle">3</span>确认并应用</div></div>
+            <div class="workspace"><div class="workspace-content content-panel">
+              <div class="notice info"><strong>i</strong><span>标准岗位已经满足大多数人员。特殊调整只改变当前授权来源，不会覆盖其他岗位或上级授权。</span></div>
+              <div class="advanced-toolbar"><div class="search-box"><span>⌕</span><span>搜索权限名称、编码或来源</span></div><button class="filter-button">模块：工单处理 ⌄</button><button class="filter-button">状态：仅看特殊调整 ⌄</button><span class="toolbar-spacer"></span><button class="button outline">＋ 增加临时权限</button></div>
+              <div class="permission-table">
+                <div class="row header"><span>权限项</span><span>来源</span><span>数据范围</span><span>关系条件</span><span>有效期</span><span>操作</span></div>
+                <div class="row group">网络故障 · 4 项特殊配置</div>
+                <div class="row adjusted"><div><div class="cell-title">查看工单详情</div><div class="cell-sub">work-order.network-fault.view</div></div><div>网络故障标准处理员<br><span class="chip primary">已单独调整</span></div><div>南靖县、平和县<br><span class="cell-sub">2 个组织树</span></div><div>范围内任意工单</div><div>长期有效</div><div class="link-action">编辑</div></div>
+                <div class="row adjusted"><div><div class="cell-title">主动接单</div><div class="cell-sub">work-order.network-fault.claim</div></div><div>网络故障标准处理员<br><span class="chip primary">已单独调整</span></div><div>仅南靖县本级</div><div>范围内任意工单</div><div>长期有效</div><div class="link-action">编辑</div></div>
+                <div class="row disabled-row"><div><div class="cell-title">读取工单附件</div><div class="cell-sub">work-order.network-fault.attachment:read</div></div><div>网络故障标准处理员<br><span class="chip danger">此来源已停用</span></div><div>原：南靖县及下级</div><div>本人参与</div><div>长期有效</div><div class="link-action">恢复</div></div>
+                <div class="row adjusted"><div><div class="cell-title">调整处理人</div><div class="cell-sub">work-order.network-fault.assignment:reassign</div></div><div>临时直接授权<br><span class="chip purple">非模板权限</span></div><div>南靖县及下级</div><div>范围内任意工单</div><div>2026-08-21<br><span class="cell-sub">剩余 7 天</span></div><div class="link-action">编辑</div></div>
+                <div class="row group">验收与闭环 · 无特殊配置</div>
+                <div class="row"><div><div class="cell-title">验收通过 / 驳回</div><div class="cell-sub">2 项权限</div></div><div>工单验收员</div><div>南靖县及下级</div><div>范围内任意工单</div><div>长期有效</div><div class="link-action">调整</div></div>
+              </div>
+              <div class="notice warning" style="margin-top:14px"><strong>!</strong><span>“读取工单附件”虽然停用了当前模板来源，但该用户仍可能从其他授权来源获得同名权限。最终结果将在下一步按来源逐条说明。</span></div>
+            </div><footer class="workspace-footer"><span class="footer-note">已调整 3 项模板权限，新增 1 项临时权限。</span><span class="footer-spacer"></span><button class="button ghost">← 上一步</button><button class="button outline">恢复全部模板默认</button><button class="button primary">下一步：确认变更 →</button></footer></div>
+          </main>
+        </div>
+      </div><span class="board-label">授权体系 V2 · WEB · 第 2 步</span>
+    </section>
+
+    <section class="board" data-view="step3" aria-label="WEB 授权差异确认">
+      <div class="app-shell">
+        <header class="topbar"><span class="menu-icon">≡</span><span class="brand-mark">↗</span><div><div class="brand-title">网络运维管理</div><div class="brand-subtitle">漳州市公司 · 用户授权</div></div><div class="topbar-spacer"></div><div class="topbar-user"><span>⌂</span><span class="avatar">管</span><span>市公司管理员</span><span>退出</span></div></header>
+        <div class="body-shell"><aside class="sidebar"><div class="nav-caption">工作台</div><div class="nav-item"><span class="nav-glyph">◴</span>仪表盘</div><div class="nav-item"><span class="nav-glyph">⌕</span>运行诊断</div><div class="nav-caption">工单</div><div class="nav-item"><span class="nav-glyph">⌕</span>工单查询</div><div class="nav-caption">系统</div><div class="nav-item active"><span class="nav-glyph">●</span>用户管理</div><div class="nav-item"><span class="nav-glyph">⌘</span>组织目录</div><div class="nav-item"><span class="nav-glyph">⚙</span>系统配置</div><div class="nav-item"><span class="nav-glyph">▦</span>岗位权限模板</div></aside>
+          <main class="main"><div class="breadcrumb">用户管理 / 示例管理员甲 / 调整授权</div><div class="page-head"><div><h1 class="page-title">确认授权变更</h1><p class="page-subtitle">提交前由服务端重新校验委派边界、有效期和并发版本</p></div><div class="head-actions"><button class="button ghost">返回用户详情</button></div></div>
+            <div class="stepper"><div class="step done"><span class="step-circle">✓</span>选择标准岗位</div><span class="step-line"></span><div class="step done"><span class="step-circle">✓</span>特殊权限调整</div><span class="step-line"></span><div class="step active"><span class="step-circle">3</span>确认并应用</div></div>
+            <div class="workspace"><div class="workspace-content confirmation-layout"><section class="confirmation-main">
+              <div class="stat-grid"><div class="stat"><strong>2</strong><span>岗位模板</span></div><div class="stat"><strong>12</strong><span>最终权限项</span></div><div class="stat"><strong>4</strong><span>特殊调整</span></div><div class="stat"><strong>3</strong><span>上级授权不受影响</span></div></div>
+              <div class="section-title-row"><div><h2 class="panel-title">变更差异</h2><p class="panel-help">只提交以下增量操作，不整组覆盖用户现有授权。</p></div><span class="chip success">服务端预检通过</span></div>
+              <div class="diff-table"><div class="diff-row header"><span>变化</span><span>权限或模板</span><span>变更前</span><span>变更后</span><span>来源</span></div><div class="diff-row"><span><span class="chip success">新增</span></span><strong>网络故障标准处理员</strong><span>未分配</span><span>南靖县及下级</span><span>岗位模板</span></div><div class="diff-row"><span><span class="chip success">新增</span></span><strong>工单验收员</strong><span>未分配</span><span>南靖县及下级</span><span>岗位模板</span></div><div class="diff-row"><span><span class="chip warning">扩大</span></span><strong>查看工单详情</strong><span>南靖县及下级</span><span>南靖县、平和县</span><span>模板例外</span></div><div class="diff-row"><span><span class="chip primary">缩小</span></span><strong>主动接单</strong><span>南靖县及下级</span><span>仅南靖县本级</span><span>模板例外</span></div><div class="diff-row"><span><span class="chip danger">停用</span></span><strong>读取工单附件</strong><span>当前模板允许</span><span>当前模板停用</span><span>来源级停用</span></div><div class="diff-row"><span><span class="chip purple">临时</span></span><strong>调整处理人</strong><span>无</span><span>有效 7 天</span><span>直接授权</span></div></div>
+              <div class="notice warning" style="margin-top:14px"><strong>!</strong><span>这是增权操作：查看工单详情扩大到平和县，并新增临时调单权限。必须填写业务原因，审计日志将记录完整前后差异。</span></div>
+            </section><aside class="confirmation-side"><h2 class="panel-title">提交检查</h2><p class="panel-help">所有条件均满足后才允许应用。</p><div class="check-line"><span class="check-dot">✓</span><span><strong>委派边界</strong><br>当前管理员覆盖全部目标权限与组织</span></div><div class="check-line"><span class="check-dot">✓</span><span><strong>有效期上限</strong><br>临时授权不超过管理员自身期限</span></div><div class="check-line"><span class="check-dot">✓</span><span><strong>并发版本</strong><br>用户授权版本仍为 17</span></div><div class="check-line"><span class="check-dot">✓</span><span><strong>隐藏来源保护</strong><br>3 条上级授权不会被修改</span></div><label class="field-label" style="margin-top:18px">变更原因 *</label><div class="reason-box">跨区县联合保障，临时支持平和县网络故障查看与南靖县调度，授权期限 7 天。</div><div class="notice info" style="margin-top:14px"><strong>i</strong><span>应用后示例管理员甲需要刷新会话，新的权限快照立即生效。</span></div></aside></div><footer class="workspace-footer"><span class="footer-note">计划有效期 9 分 42 秒；过期或授权版本变化后需重新预览。</span><span class="footer-spacer"></span><button class="button ghost">← 返回调整</button><button class="button primary">✓ 确认并应用变更</button></footer></div>
+          </main>
+        </div>
+      </div><span class="board-label">授权体系 V2 · WEB · 第 3 步</span>
+    </section>
+
+    <section class="board mobile-board" data-view="mobile" aria-label="APP 三步授权流程">
+      <div class="mobile-title"><h1>APP 授权流程</h1><p>与 WEB 共用授权模型和变更计划，移动端采用分步全屏页面，避免在气泡框中堆叠权限。</p></div>
+      <div class="phones">
+        <article class="phone"><div class="phone-status"><span>18:42</span><span>5G · 86%</span></div><header class="phone-header"><span class="phone-back">‹</span><span class="phone-header-title">调整授权</span><span class="phone-step">1 / 3</span></header><div class="phone-content"><div class="mobile-card"><div class="mobile-section-title">选择标准岗位</div><div class="mobile-help">只展示你可以完整授予的岗位模板。</div><div class="search-box" style="margin-bottom:8px"><span>⌕</span><span>搜索岗位</span></div><div class="mobile-template selected"><span class="check">✓</span><div><div class="template-name">网络故障标准处理员</div><div class="template-desc">查看、接单、回单等 8 项权限</div></div><span class="chip primary">已选</span></div><div class="mobile-template selected"><span class="check">✓</span><div><div class="template-name">工单验收员</div><div class="template-desc">验收与流转查看 4 项权限</div></div><span class="chip primary">已选</span></div><div class="mobile-template"><span class="check"></span><div><div class="template-name">网络故障调度员</div><div class="template-desc">派单与调单 5 项权限</div></div></div></div><div class="mobile-card"><div class="mobile-section-title">默认范围</div><div class="mobile-field"><small>数据范围</small><span>南靖县及下级组织　⌄</span></div><div class="mobile-field"><small>授权有效期</small><span>长期有效　⌄</span></div></div><div class="notice info"><strong>i</strong><span>另有 3 条上级授权，本次不会修改。</span></div></div><footer class="phone-footer"><button class="button ghost">取消</button><button class="button primary">下一步</button></footer></article>
+        <article class="phone"><div class="phone-status"><span>18:43</span><span>5G · 85%</span></div><header class="phone-header"><span class="phone-back">‹</span><span class="phone-header-title">特殊权限调整</span><span class="phone-step">2 / 3</span></header><div class="phone-content"><div class="search-box"><span>⌕</span><span>搜索权限</span></div><div class="selection-strip"><span class="chip primary">仅看特殊调整</span><span class="chip">网络故障</span><span class="chip">筛选 ⌄</span></div><div class="mobile-card"><div class="mobile-section-title">网络故障</div><div class="mobile-help">特殊调整只影响当前来源。</div><div class="mobile-permission"><div class="mobile-permission-top"><span class="mobile-permission-name">查看工单详情</span><span class="chip primary">已调整</span><span>›</span></div><div class="mobile-permission-meta">网络故障标准处理员<br>南靖县、平和县 · 范围内任意工单</div></div><div class="mobile-permission"><div class="mobile-permission-top"><span class="mobile-permission-name">主动接单</span><span class="chip primary">已调整</span><span>›</span></div><div class="mobile-permission-meta">网络故障标准处理员<br>仅南靖县本级 · 范围内任意工单</div></div><div class="mobile-permission"><div class="mobile-permission-top"><span class="mobile-permission-name">读取工单附件</span><span class="chip danger">已停用</span><span>›</span></div><div class="mobile-permission-meta">当前模板来源已停用，其他来源不受影响</div></div><div class="mobile-permission"><div class="mobile-permission-top"><span class="mobile-permission-name">调整处理人</span><span class="chip purple">临时</span><span>›</span></div><div class="mobile-permission-meta">直接授权 · 南靖县及下级 · 剩余 7 天</div></div></div><button class="button outline" style="width:100%">＋ 增加临时权限</button></div><footer class="phone-footer"><button class="button ghost">上一步</button><button class="button primary">查看差异</button></footer></article>
+        <article class="phone"><div class="phone-status"><span>18:44</span><span>5G · 84%</span></div><header class="phone-header"><span class="phone-back">‹</span><span class="phone-header-title">确认授权变更</span><span class="phone-step">3 / 3</span></header><div class="phone-content"><div class="notice warning"><strong>!</strong><span>包含扩大范围和临时增权，需要填写原因。</span></div><div class="mobile-card"><div class="mobile-section-title">变更摘要</div><div class="mobile-summary-row"><strong>岗位模板</strong><span>新增 2 个</span></div><div class="mobile-summary-row"><strong>查看工单详情</strong><span>扩大到平和县</span></div><div class="mobile-summary-row"><strong>主动接单</strong><span>缩小到南靖县本级</span></div><div class="mobile-summary-row"><strong>读取工单附件</strong><span>停用当前来源</span></div><div class="mobile-summary-row"><strong>调整处理人</strong><span>临时 7 天</span></div></div><div class="mobile-card"><div class="mobile-section-title">提交检查</div><div class="mobile-security"><span class="check-dot">✓</span><span>委派边界校验通过</span></div><div class="mobile-security"><span class="check-dot">✓</span><span>有效期不超过当前管理员</span></div><div class="mobile-security"><span class="check-dot">✓</span><span>3 条上级授权不受影响</span></div><div class="mobile-field"><small>变更原因 *</small><span>跨区县联合保障，临时支持平和县…</span></div></div><div class="notice info"><strong>i</strong><span>应用后目标用户刷新会话即可生效。</span></div></div><footer class="phone-footer"><button class="button ghost">返回调整</button><button class="button primary">确认应用</button></footer></article>
+      </div><span class="board-label">授权体系 V2 · APP · 三步流程</span>
+    </section>
+
+    <section class="board" data-view="user-detail" aria-label="superAdmin 查看系统管理员详情">
+      <div class="app-shell">
+        <header class="topbar"><span class="menu-icon">≡</span><span class="brand-mark">↗</span><div><div class="brand-title">网络运维管理</div><div class="brand-subtitle">漳州市公司 · 用户管理</div></div><div class="topbar-spacer"></div><div class="topbar-user"><span>⌂</span><span class="avatar" style="background:#0f766e">超</span><span>superAdmin</span><span>退出</span></div></header>
+        <div class="body-shell"><aside class="sidebar"><div class="nav-caption">工作台</div><div class="nav-item"><span class="nav-glyph">◴</span>仪表盘</div><div class="nav-item"><span class="nav-glyph">⌕</span>运行诊断</div><div class="nav-caption">工单</div><div class="nav-item"><span class="nav-glyph">⌕</span>工单查询</div><div class="nav-caption">系统</div><div class="nav-item active"><span class="nav-glyph">●</span>用户管理</div><div class="nav-item"><span class="nav-glyph">⌘</span>组织目录</div><div class="nav-item"><span class="nav-glyph">⚙</span>系统配置</div><div class="nav-item"><span class="nav-glyph">▦</span>岗位权限模板</div><div class="nav-item"><span class="nav-glyph">▤</span>市公司租户</div></aside>
+          <main class="main"><div class="breadcrumb">用户管理 / admin</div>
+            <section class="profile-hero"><div class="profile-avatar">管</div><div><div class="profile-title-line"><h1>市公司管理员</h1><span class="chip teal">系统账号</span><span class="chip success">正常</span></div><div class="profile-meta"><span>admin</span><span>漳州市公司本部</span><span>13000000095</span><span>授权版本 28</span></div></div><div class="profile-actions"><button class="button ghost">编辑个人信息</button><button class="button primary">调整授权</button></div></section>
+            <div class="metric-row"><div class="metric-compact"><strong>18</strong><span>累计提单 · 近 30 天 2</span></div><div class="metric-compact"><strong>6</strong><span>参与处理 · 当前在办 1</span></div><div class="metric-compact"><strong>92.4%</strong><span>24 小时内回单率</span></div><div class="metric-compact"><strong>98.0%</strong><span>验收通过率</span></div></div>
+            <div class="details-grid"><section class="detail-surface"><header class="surface-head"><h2>账号与联系方式</h2><button class="button ghost">编辑</button></header><div class="kv-row"><span>用户标识</span><strong>019c7f42-4a13-7bb2-a34c-a2d70f75e54b</strong></div><div class="kv-row"><span>用户名</span><strong>admin</strong></div><div class="kv-row"><span>手机号</span><strong>13000000095</strong></div><div class="kv-row"><span>邮箱</span><strong>13000000095@139.com</strong></div><div class="kv-row"><span>所属组织</span><strong>漳州市公司本部（3506）</strong></div><div class="kv-row"><span>账号状态</span><strong>正常 · 系统保护</strong></div><div class="kv-row"><span>最后更新</span><strong>2026-08-14 18:35</strong></div></section>
+              <section class="detail-surface"><header class="surface-head"><h2>岗位与原子权限</h2><span class="surface-sub">117 项当前有效权限</span><button class="button outline">调整授权</button></header><div class="assignment-table"><div class="assignment-row-v2"><div><div class="source-title">▣ 市公司管理员标准岗位 <span class="chip">系统基线</span></div><div class="source-description">保障市公司管理员始终具备租户内管理能力，应用启动时自动校准。</div></div><div class="source-scope"><strong>全市公司</strong><span>全部组织树</span></div><div class="source-count"><strong>112 项</strong><span>系统托管权限</span></div><div class="source-action locked">只读</div></div><div class="assignment-row-v2"><div><div class="source-title">应急保障临时调度 <span class="chip purple">直接授权</span></div><div class="source-description">跨区县重大故障期间临时协调调单。</div></div><div class="source-scope"><strong>全市公司</strong><span>范围内工单</span></div><div class="source-count"><strong>5 项</strong><span>2026-08-21 到期</span></div><div class="source-action">管理</div></div></div><div class="notice info" style="margin:0 16px 14px"><strong>i</strong><span>系统基线可查看但不可通过用户授权入口调整；附加岗位与临时权限仍可独立管理。</span></div></section></div>
+          </main>
+        </div>
+      </div><span class="board-label">授权体系 V2 · WEB · 系统管理员详情</span>
+    </section>
+
+    <section class="board" data-view="system-baseline" aria-label="系统基线只读授权弹窗">
+      <div class="app-shell" style="filter:saturate(.9)"><header class="topbar"><span class="menu-icon">≡</span><span class="brand-mark">↗</span><div><div class="brand-title">网络运维管理</div><div class="brand-subtitle">漳州市公司 · 用户管理</div></div><div class="topbar-spacer"></div><div class="topbar-user"><span class="avatar" style="background:#0f766e">超</span><span>superAdmin</span></div></header><div class="body-shell"><aside class="sidebar"></aside><main class="main"><div class="profile-hero"><div class="profile-avatar">管</div><div><div class="profile-title-line"><h1>市公司管理员</h1><span class="chip teal">系统账号</span></div><div class="profile-meta">admin · 漳州市公司本部 · 117 项当前有效权限</div></div></div></main></div></div>
+      <div class="auth-modal-backdrop"><section class="auth-dialog"><header class="auth-dialog-head"><div><h2>调整用户授权</h2><p>市公司管理员 · admin · 只对附加授权执行增量变更</p></div><span class="dialog-close">×</span></header><div class="stepper"><div class="step done"><span class="step-circle">✓</span>添加标准岗位</div><span class="step-line"></span><div class="step active"><span class="step-circle">2</span>特殊权限调整</div><span class="step-line"></span><div class="step"><span class="step-circle">3</span>确认变更</div></div><div class="auth-dialog-body"><aside class="source-rail"><h3>授权来源</h3><p>按来源管理，避免误改其他岗位或系统基线。</p><div class="source-option system"><div class="source-option-title">▣ 市公司管理员标准岗位 <span class="chip">只读</span></div><div class="source-option-meta">SYSTEM · 112 项系统托管权限</div></div><div class="source-option active"><div class="source-option-title">应急保障临时调度</div><div class="source-option-meta">DIRECT · 5 项可管理权限 · 7 天后到期</div></div><button class="button outline" style="width:100%;margin-top:14px">＋ 增加临时权限</button></aside><section class="source-workspace"><h3>市公司管理员标准岗位</h3><div class="baseline-banner"><span class="baseline-lock">▣</span><div><strong>系统基线由系统托管</strong><span>最高管理员可以查看其构成，并可给目标账号增加其他授权；但不能从用户管理入口调整、升级或撤销此来源。</span></div></div><div class="advanced-toolbar"><div class="search-box"><span>⌕</span><span>搜索 112 项系统权限</span></div><button class="filter-button">模块：全部 ⌄</button><span class="toolbar-spacer"></span><span class="chip">系统基线 · 只读</span></div><div class="baseline-permissions"><div class="baseline-permission-row header"><span>权限项</span><span>数据范围</span><span>关系条件</span><span>状态</span></div><div class="baseline-permission-row"><div><strong>用户授权调整</strong><div class="cell-sub">user.authorization:adjust</div></div><span>全市公司</span><span>无资源关系</span><span class="chip">只读</span></div><div class="baseline-permission-row"><div><strong>用户授权撤销</strong><div class="cell-sub">user.authorization:revoke</div></div><span>全市公司</span><span>无资源关系</span><span class="chip">只读</span></div><div class="baseline-permission-row"><div><strong>查看全部网络故障工单</strong><div class="cell-sub">work-order.network-fault.view</div></div><span>全市公司</span><span>范围内工单</span><span class="chip">只读</span></div><div class="baseline-permission-row"><div><strong>系统配置修改</strong><div class="cell-sub">system.config:update</div></div><span>全市公司</span><span>无资源关系</span><span class="chip">只读</span></div><div class="baseline-permission-row"><div><strong>其余 108 项系统托管权限</strong></div><span>按权限定义</span><span>按权限定义</span><span class="chip">只读</span></div></div></section></div><footer class="auth-dialog-footer"><span class="footer-note">系统基线不会进入待变更清单。</span><span class="footer-spacer"></span><button class="button ghost">取消</button><button class="button ghost">上一步</button><button class="button primary">预览附加授权变更</button></footer></section></div><span class="board-label">授权体系 V2 · WEB · 系统基线只读态</span>
+    </section>
+
+    <section class="board mobile-board" data-view="mobile-system-admin" aria-label="APP 系统管理员详情与授权">
+      <div class="mobile-title"><h1>APP 系统管理员授权体验</h1><p>个人资料与授权来源渐进披露；系统基线可核对、不可误删，附加授权保留完整操作能力。</p></div><div class="phones" style="grid-template-columns:repeat(2,390px)"><article class="phone"><div class="phone-status"><span>18:48</span><span>5G · 86%</span></div><header class="phone-header"><span class="phone-back">‹</span><span class="phone-header-title">用户详情</span></header><div class="phone-content" style="padding:0 14px 90px"><div class="mobile-profile-head" style="margin:0 -14px 12px"><div class="mobile-profile-avatar">管</div><div><div class="mobile-profile-name">市公司管理员</div><div class="mobile-profile-meta">admin · 漳州市公司本部<br>系统账号 · 正常</div></div></div><div class="mobile-card"><div class="mobile-section-title">岗位与原子权限</div><div class="mobile-help">117 项当前有效权限</div><div class="mobile-source"><div class="mobile-source-title">▣ 市公司管理员标准岗位 <span class="chip">只读</span></div><div class="mobile-source-meta">系统基线 · 全市公司<br>112 项系统托管权限</div></div><div class="mobile-source"><div class="mobile-source-title">应急保障临时调度 <span class="chip purple">临时</span></div><div class="mobile-source-meta">直接授权 · 全市公司<br>5 项可管理权限 · 7 天后到期</div></div><button class="button outline" style="width:100%;margin-top:10px">调整授权</button></div><div class="mobile-card"><div class="mobile-section-title">账号与联系方式</div><div class="mobile-summary-row"><strong>手机号</strong><span>13000000095</span></div><div class="mobile-summary-row"><strong>邮箱</strong><span>1380…@139.com</span></div><div class="mobile-summary-row"><strong>授权版本</strong><span>28</span></div></div></div><footer class="phone-footer" style="grid-template-columns:1fr 1fr"><button class="button ghost">编辑资料</button><button class="button primary">调整授权</button></footer></article><article class="phone"><div class="phone-status"><span>18:49</span><span>5G · 85%</span></div><header class="phone-header"><span class="phone-back">‹</span><span class="phone-header-title">特殊权限调整</span><span class="phone-step">2 / 3</span></header><div class="phone-content"><div class="notice info"><strong>i</strong><span>系统基线可核对但不能修改。</span></div><div class="mobile-card"><div class="mobile-source"><div class="mobile-source-title">▣ 市公司管理员标准岗位 <span class="chip">系统基线</span></div><div class="mobile-source-meta">112 项系统托管权限 · 全市公司</div><div class="baseline-banner" style="margin:10px 0 0;padding:9px"><span class="baseline-lock">▣</span><div><strong>只读来源</strong><span>不会进入变更清单</span></div></div></div><div class="mobile-source"><div class="mobile-source-title">应急保障临时调度 <span class="chip purple">临时</span></div><div class="mobile-source-meta">5 项可管理权限 · 2026-08-21 到期</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px"><button class="button outline">调整</button><button class="button danger">撤销</button></div></div></div><button class="button outline" style="width:100%">＋ 增加临时权限</button></div><footer class="phone-footer"><button class="button ghost">上一步</button><button class="button primary">预览变更</button></footer></article></div><span class="board-label">授权体系 V2 · APP · 系统基线</span>
+    </section>
+  </main>
+  <script>
+    const view = new URLSearchParams(window.location.search).get('view');
+    if (view) {
+      document.querySelectorAll('[data-view]').forEach((board) => {
+        board.style.display = board.dataset.view === view ? 'block' : 'none';
+      });
+      document.querySelector('.gallery').style.padding = '0';
+      document.querySelector('.gallery').style.gap = '0';
+    }
+  </script>
+</body>
+</html>
