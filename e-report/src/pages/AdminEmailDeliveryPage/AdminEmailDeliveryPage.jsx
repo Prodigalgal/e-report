@@ -19,7 +19,7 @@ import { formatDate } from '../../utils/formatDate';
 const initialFilters = () => ({ category: '', status: '', keyword: '', orgUnitId: '', ...defaultEmailDeliveryRange() });
 
 function DeliveryStatus({ status }) {
-    const presentation = options.statuses[status] || options.statuses.UNKNOWN;
+    const presentation = options.statuses[status] || options.statuses.FAILED;
     return <Chip size="small" label={presentation.label} color={presentation.color} />;
 }
 
@@ -131,7 +131,7 @@ export default function AdminEmailDeliveryPage() {
                 </TableRow>)}</TableBody>
             </Table>
         </ViewportTableContainer>)}
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>SMTP 已接受表示发件服务器接收成功，无法据此确认收件箱送达或已读；时间为 UTC+8。</Typography>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>已发送表示 SMTP 发件服务器已接受邮件，不代表收件箱送达或已读；时间为 UTC+8。</Typography>
         <Dialog open={Boolean(selectedId)} onClose={() => setSelectedId(null)} fullWidth maxWidth="sm">
             <DialogTitle>邮件发送详情</DialogTitle>
             <DialogContent dividers>
@@ -139,9 +139,9 @@ export default function AdminEmailDeliveryPage() {
                 {!detail && !detailError && <Box sx={{ p: 3, textAlign: 'center' }}><CircularProgress size={28} /></Box>}
                 {detail && <Box sx={{ display: 'grid', gap: 1.5 }}>
                     <Box><DeliveryStatus status={detail.status} /></Box>
-                    {detail.failureMessage && <Alert severity={detail.status === 'UNKNOWN' ? 'warning' : 'error'}>{detail.failureMessage}</Alert>}
+                    {detail.failureMessage && <Alert severity="error">{detail.failureMessage}</Alert>}
                     <Box component="dl" sx={{ m: 0, display: 'grid', gridTemplateColumns: '80px minmax(0, 1fr)', columnGap: 2, rowGap: 1, '& dt': { color: 'text.secondary' }, '& dd': { m: 0, overflowWrap: 'anywhere' } }}>
-                        {Object.entries({ '通知类型': options.categories[detail.category], '主题': detail.subject, '归属组织': detail.orgUnitName, '收件地址': detail.recipientAddress, '发件地址': detail.senderAddress || '未选定发件方', '开始时间': formatDate(detail.startedAt), '结束时间': detail.completedAt ? formatDate(detail.completedAt) : '尚未确认', '耗时': detail.durationMs == null ? '-' : `${detail.durationMs} ms`, '失败分类': detail.failureCode || '-', '关联编号': detail.relatedId || '-', '记录编号': detail.id }).map(([label, value]) => <Box key={label} sx={{ display: 'contents' }}><Typography component="dt" variant="body2">{label}</Typography><Typography component="dd" variant="body2">{value}</Typography></Box>)}
+                        {Object.entries({ '通知类型': options.categories[detail.category], '主题': detail.subject, '归属组织': detail.orgUnitName, '收件地址': detail.recipientAddress, '发件地址': detail.senderAddress || '未选定发件方', '开始时间': formatDate(detail.startedAt), '结束时间': detail.completedAt ? formatDate(detail.completedAt) : '未记录', '耗时': detail.durationMs == null ? '-' : `${detail.durationMs} ms`, '失败分类': detail.failureCode || '-', '关联编号': detail.relatedId || '-', '记录编号': detail.id }).map(([label, value]) => <Box key={label} sx={{ display: 'contents' }}><Typography component="dt" variant="body2">{label}</Typography><Typography component="dd" variant="body2">{value}</Typography></Box>)}
                     </Box>
                 </Box>}
             </DialogContent>

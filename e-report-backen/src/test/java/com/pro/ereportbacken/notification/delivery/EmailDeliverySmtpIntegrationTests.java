@@ -97,6 +97,25 @@ class EmailDeliverySmtpIntegrationTests {
                 UUID.randomUUID(), null, "recipient@example.test", "SMTP integration");
     }
 
+    @Test
+    void smtpAcknowledgmentTimeoutRecordsAFailedAttemptWithItsTimeoutReason() throws Exception {
+        try (LocalSmtp smtp = new LocalSmtp(true, false)) {
+            var context = context();
+            var sender = sender(smtp.port());
+            var message = sender.createMimeMessage();
+            var helper = new MimeMessageHelper(message);
+            helper.setFrom("sender@example.test"); helper.setTo(context.recipientAddress());
+            helper.setSubject("超时验收"); helper.setText("Timeout acceptance test.");
+            assertThatThrownBy(() -> tracker.send(context, "sender@example.test", () -> sender.send(message)))
+                    .isInstanceOf(MailException.class);
+            smtp.await();
+            EmailDelivery delivery = record(context.relatedId());
+            assertThat(delivery.getStatus()).isEqualTo(EmailDeliveryStatus.FAILED);
+            assertThat(delivery.getFailureCode()).isEqualTo("TIMEOUT");
+            assertThat(delivery.getCompletedAt()).isNotNull();
+        }
+    }
+
     private EmailDelivery record(UUID relatedId) {
         EmailDelivery delivery = repository.findOne((root, query, cb) -> cb.equal(root.get("relatedId"), relatedId)).orElseThrow();
         records.add(delivery.getId()); return delivery;
@@ -116,6 +135,10 @@ class EmailDeliverySmtpIntegrationTests {
         private final CompletableFuture<Void> conversation;
 
         LocalSmtp(boolean acceptsRecipient) throws Exception {
+            this(acceptsRecipient, true);
+        }
+
+        LocalSmtp(boolean acceptsRecipient, boolean acknowledgesMessage) throws Exception {
             listener = new ServerSocket(0, 1, InetAddress.getByName("127.0.0.1"));
             listener.setSoTimeout(5000);
             conversation = CompletableFuture.runAsync(() -> {
@@ -130,6 +153,7 @@ class EmailDeliverySmtpIntegrationTests {
                         if (line.startsWith("DATA")) {
                             output.print("354 End with a dot\r\n"); output.flush();
                             while ((line = input.readLine()) != null && !line.equals(".")) { }
+                            if (!acknowledgesMessage) { input.readLine(); break; }
                             output.print("250 accepted\r\n");
                         } else if (line.startsWith("QUIT")) {
                             output.print("221 goodbye\r\n"); output.flush(); break;

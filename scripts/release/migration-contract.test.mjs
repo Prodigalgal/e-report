@@ -19,3 +19,12 @@ test('both database paths create the email ledger before the 6.9.0 tag', () => {
     assert.ok(ledger > 0 && changelog.indexOf('tag: e-report-6.9.0') > ledger, `${root} must include the email ledger`);
   }
 });
+
+test('both database paths normalize email attempt statuses before the 6.9.3 tag', () => {
+  for (const root of ['db/changelog/db.changelog-master.yaml', 'db/changelog/postgresql/db.changelog-master.yaml']) {
+    const changelog = readFileSync(new URL(`../../e-report-backen/src/main/resources/${root}`, import.meta.url), 'utf8');
+    const ledger = changelog.indexOf('2026-10-22-077-email-deliveries.sql');
+    const normalization = changelog.indexOf('2026-10-22-078-email-delivery-status.sql');
+    assert.ok(normalization > ledger && changelog.indexOf('tag: e-report-6.9.3') > normalization, `${root} must normalize email statuses`);
+  }
+});

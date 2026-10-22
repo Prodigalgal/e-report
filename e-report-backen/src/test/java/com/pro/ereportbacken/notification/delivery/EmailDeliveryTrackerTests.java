@@ -52,11 +52,13 @@ class EmailDeliveryTrackerTests {
     }
 
     @Test
-    void timeoutLeavesTheSmtpOutcomeUnconfirmed() {
+    void timeoutRecordsAFailedAttemptAndRethrowsTheOriginalWithoutRetry() {
         when(store.start(context, null)).thenReturn(id);
         var failure = new MailSendException("private transport details", new SocketTimeoutException("read timeout"));
-        assertThatThrownBy(() -> tracker.send(context, null, () -> { throw failure; })).isSameAs(failure);
-        verify(store).complete(eq(id), eq(EmailDeliveryStatus.UNKNOWN), anyLong(), eq("TIMEOUT"));
+        AtomicInteger calls = new AtomicInteger();
+        assertThatThrownBy(() -> tracker.send(context, null, () -> { calls.incrementAndGet(); throw failure; })).isSameAs(failure);
+        assertThat(calls).hasValue(1);
+        verify(store).complete(eq(id), eq(EmailDeliveryStatus.FAILED), anyLong(), eq("TIMEOUT"));
     }
 
     @Test
@@ -65,7 +67,7 @@ class EmailDeliveryTrackerTests {
         var nested = new jakarta.mail.MessagingException("transport detail", new SocketTimeoutException("timeout"));
         var failure = new MailSendException("send failed", null, Map.of("mail", nested));
         assertThatThrownBy(() -> tracker.send(context, null, () -> { throw failure; })).isSameAs(failure);
-        verify(store).complete(eq(id), eq(EmailDeliveryStatus.UNKNOWN), anyLong(), eq("TIMEOUT"));
+        verify(store).complete(eq(id), eq(EmailDeliveryStatus.FAILED), anyLong(), eq("TIMEOUT"));
     }
 
     @Test

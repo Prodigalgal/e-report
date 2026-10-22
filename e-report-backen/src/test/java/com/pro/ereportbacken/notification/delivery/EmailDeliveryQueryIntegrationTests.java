@@ -7,6 +7,7 @@ import com.pro.ereportbacken.time.DisplayTime;
 import com.pro.ereportbacken.time.UtcTime;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityManager;
 import org.hibernate.SessionFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,6 +47,7 @@ class EmailDeliveryQueryIntegrationTests {
     private final EmailDeliveryQueryService service;
     private final WebApplicationContext web;
     private final EntityManagerFactory entityManagerFactory;
+    private final EntityManager entityManager;
     private OrgUnit root;
     private OrgUnit county;
     private OrgUnit sibling;
@@ -55,10 +57,11 @@ class EmailDeliveryQueryIntegrationTests {
     EmailDeliveryQueryIntegrationTests(EmailDeliveryRepository deliveries, OrgUnitRepository organizations,
                                         TenantRepository tenants, UserRepository users,
                                         EmailDeliveryQueryService service, WebApplicationContext web,
-                                        EntityManagerFactory entityManagerFactory) {
+                                        EntityManagerFactory entityManagerFactory, EntityManager entityManager) {
         this.deliveries = deliveries; this.organizations = organizations; this.tenants = tenants;
         this.users = users; this.service = service; this.web = web;
         this.entityManagerFactory = entityManagerFactory;
+        this.entityManager = entityManager;
     }
 
     @BeforeEach
@@ -95,14 +98,38 @@ class EmailDeliveryQueryIntegrationTests {
     }
 
     @Test
-    void staleSendingIsUnknownAndLiteralWildcardsDoNotExpandSearch() {
+    void failedFilterIncludesStaleSendingAndLiteralWildcardsDoNotExpandSearch() {
         var stale = delivery(county, EmailDeliveryStatus.SENDING, "literal%_entry");
         stale.setStartedAt(UtcTime.now().minusMinutes(16)); deliveries.saveAndFlush(stale);
         delivery(county, EmailDeliveryStatus.SENDING, "normal entry");
-        var unknown = service.search(null, EmailDeliveryStatus.UNKNOWN, "%_", null, null, null, PageRequest.of(0, 20));
-        assertThat(unknown.getContent()).hasSize(1);
-        assertThat(unknown.getContent().getFirst().status()).isEqualTo(EmailDeliveryStatus.UNKNOWN);
+        var failed = delivery(county, EmailDeliveryStatus.FAILED, "失败记录");
+        failed.setFailureCode("TIMEOUT"); deliveries.saveAndFlush(failed);
+        delivery(county, EmailDeliveryStatus.SMTP_ACCEPTED, "成功记录");
+        var literal = service.search(null, EmailDeliveryStatus.FAILED, "%_", null, null, null, PageRequest.of(0, 20));
+        assertThat(literal.getContent()).extracting(record -> record.id()).containsExactly(stale.getId());
+        var detail = service.detail(stale.getId());
+        assertThat(detail.status()).isEqualTo(EmailDeliveryStatus.FAILED);
+        assertThat(detail.failureCode()).isEqualTo("INCOMPLETE");
+        assertThat(detail.failureMessage()).isEqualTo(EmailDeliveryFailure.INCOMPLETE.message());
+        assertThat(detail.completedAt()).isNull();
+        assertThat(service.detail(failed.getId()).failureMessage()).isEqualTo(EmailDeliveryFailure.TIMEOUT.message());
+        assertThat(service.search(null, EmailDeliveryStatus.FAILED, "", null, null, null, PageRequest.of(0, 20)).getTotalElements()).isEqualTo(2);
         assertThat(service.search(null, EmailDeliveryStatus.SENDING, "", null, null, null, PageRequest.of(0, 20)).getTotalElements()).isEqualTo(1);
+        assertThat(service.search(null, EmailDeliveryStatus.SMTP_ACCEPTED, "", null, null, null, PageRequest.of(0, 20)).getTotalElements()).isEqualTo(1);
+        assertThat(service.search(null, null, "", null, null, null, PageRequest.of(0, 20)).getTotalElements()).isEqualTo(4);
+    }
+
+    @Test
+    void queryingAnIncompleteAttemptDoesNotPreventItsActualSmtpResultFromBeingRecorded() {
+        var stale = delivery(county, EmailDeliveryStatus.SENDING, "收尾延迟");
+        stale.setStartedAt(UtcTime.now().minusMinutes(16)); deliveries.saveAndFlush(stale);
+        assertThat(service.detail(stale.getId()).status()).isEqualTo(EmailDeliveryStatus.FAILED);
+        assertThat(deliveries.complete(stale.getId(), EmailDeliveryStatus.SMTP_ACCEPTED, UtcTime.now(), 960_000, null)).isEqualTo(1);
+        entityManager.clear();
+        var completed = service.detail(stale.getId());
+        assertThat(completed.status()).isEqualTo(EmailDeliveryStatus.SMTP_ACCEPTED);
+        assertThat(completed.failureCode()).isNull();
+        assertThat(completed.failureMessage()).isNull();
     }
 
     @Test
@@ -130,6 +157,11 @@ class EmailDeliveryQueryIntegrationTests {
         mvc.perform(get("/admin/notifications/emails").param("status", "NOT_A_STATUS")
                         .with(authentication(as(PermissionCatalog.EMAIL_DELIVERY_VIEW))))
                 .andExpect(status().isBadRequest());
+        for (var deliveryStatus : EmailDeliveryStatus.values()) {
+            mvc.perform(get("/admin/notifications/emails").param("status", deliveryStatus.name())
+                            .with(authentication(as(PermissionCatalog.EMAIL_DELIVERY_VIEW))))
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test

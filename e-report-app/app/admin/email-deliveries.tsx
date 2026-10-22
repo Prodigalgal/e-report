@@ -79,7 +79,7 @@ export default function EmailDeliveryScreen() {
       <Text style={{ flex: 1, color: colors.muted, textAlign: 'center' }}>{page + 1} / {query.data.totalPages}</Text>
       <AppButton title="下一页" variant="secondary" disabled={page + 1 >= query.data.totalPages || query.isFetching} onPress={() => setPage(value => value + 1)} />
     </View>}
-    <Text style={{ color: colors.muted, fontSize: 12 }}>SMTP 已接受不能证明收件箱送达或已读。时间为 UTC+8。</Text>
+    <Text style={{ color: colors.muted, fontSize: 12 }}>已发送表示 SMTP 发件服务器已接受邮件，不代表收件箱送达或已读。时间为 UTC+8。</Text>
     <Modal visible={selectedId !== null} transparent animationType="fade" onRequestClose={() => setSelectedId(null)}>
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: 'rgba(15,23,42,0.42)', padding: uiLayout.pageGutter }}>
         <Card style={{ width: '100%', maxWidth: uiLayout.dialogMaxWidth, maxHeight: '88%', alignSelf: 'center' }}>
@@ -89,11 +89,11 @@ export default function EmailDeliveryScreen() {
             {!!detail.error && <Text style={{ color: colors.danger }}>{formatApiErrorMessage(detail.error, '邮件详情加载失败。')}</Text>}
             {detail.data && <>
               <DeliveryStatus delivery={detail.data} />
-              {!!detail.data.failureMessage && <Text style={{ color: colors.warning }}>{detail.data.failureMessage}</Text>}
+              {!!detail.data.failureMessage && <Text style={{ color: colors.danger }}>{detail.data.failureMessage}</Text>}
               <InfoRow label="通知类型" value={options.categories[detail.data.category]} />
               <InfoRow label="主题" value={detail.data.subject} /><InfoRow label="归属组织" value={detail.data.orgUnitName} />
               <InfoRow label="收件地址" value={detail.data.recipientAddress} /><InfoRow label="发件地址" value={detail.data.senderAddress || '未选定发件方'} />
-              <InfoRow label="开始时间" value={formatDateTime(detail.data.startedAt)} /><InfoRow label="结束时间" value={detail.data.completedAt ? formatDateTime(detail.data.completedAt) : '尚未确认'} />
+              <InfoRow label="开始时间" value={formatDateTime(detail.data.startedAt)} /><InfoRow label="结束时间" value={detail.data.completedAt ? formatDateTime(detail.data.completedAt) : '未记录'} />
               <InfoRow label="耗时" value={detail.data.durationMs == null ? '-' : `${detail.data.durationMs} ms`} />
               <InfoRow label="失败分类" value={detail.data.failureCode} /><InfoRow label="关联编号" value={detail.data.relatedId} /><InfoRow label="记录编号" value={detail.data.id} />
             </>}
@@ -106,8 +106,8 @@ export default function EmailDeliveryScreen() {
 }
 
 function DeliveryStatus({ delivery }: { delivery: EmailDelivery }) {
-  const presentation = options.statuses[delivery.status] || options.statuses.UNKNOWN;
-  const tones: Record<string, string> = { info: colors.primary, success: colors.success, error: colors.danger, warning: colors.warning };
+  const presentation = options.statuses[delivery.status] || options.statuses.FAILED;
+  const tones: Record<string, string> = { info: colors.primary, success: colors.success, error: colors.danger };
   const tone = tones[presentation.color];
   return <Text accessibilityLabel={`发送状态：${presentation.label}`} style={{ color: tone || colors.text, fontSize: 13, fontWeight: '600' }}>{presentation.label}</Text>;
 }

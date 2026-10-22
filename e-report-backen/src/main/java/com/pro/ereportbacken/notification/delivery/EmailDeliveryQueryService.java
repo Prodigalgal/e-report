@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 @Service
 public class EmailDeliveryQueryService {
     private static final int MAX_QUERY_DAYS = 93;
-    private static final int UNCONFIRMED_AFTER_MINUTES = 15;
+    private static final int SENDING_TIMEOUT_MINUTES = 15;
     private final EmailDeliveryRepository repository;
     private final OrganizationHierarchyService organizations;
     private final TenantContext tenantContext;
@@ -74,15 +74,15 @@ public class EmailDeliveryQueryService {
         }
         String normalized = keyword == null ? "" : keyword.trim().toLowerCase(Locale.ROOT);
         if (normalized.length() > 160) throw new IllegalArgumentException("关键词不能超过 160 个字符。");
-        LocalDateTime cutoff = UtcTime.now().minusMinutes(UNCONFIRMED_AFTER_MINUTES);
+        LocalDateTime cutoff = UtcTime.now().minusMinutes(SENDING_TIMEOUT_MINUTES);
         Specification<EmailDelivery> specification = visibility(tenantId, access).and((root, query, cb) -> {
             List<Predicate> filters = new ArrayList<>();
             filters.add(cb.greaterThanOrEqualTo(root.get("startedAt"), fromUtc));
             filters.add(cb.lessThan(root.get("startedAt"), untilUtc));
             if (category != null) filters.add(cb.equal(root.get("category"), category));
             if (orgUnitId != null) filters.add(cb.equal(root.get("orgUnitId"), orgUnitId));
-            if (status == EmailDeliveryStatus.UNKNOWN) {
-                filters.add(cb.or(cb.equal(root.get("status"), EmailDeliveryStatus.UNKNOWN), cb.and(
+            if (status == EmailDeliveryStatus.FAILED) {
+                filters.add(cb.or(cb.equal(root.get("status"), EmailDeliveryStatus.FAILED), cb.and(
                         cb.equal(root.get("status"), EmailDeliveryStatus.SENDING), cb.lessThan(root.get("startedAt"), cutoff))));
             } else if (status == EmailDeliveryStatus.SENDING) {
                 filters.add(cb.and(cb.equal(root.get("status"), status), cb.greaterThanOrEqualTo(root.get("startedAt"), cutoff)));
@@ -118,7 +118,7 @@ public class EmailDeliveryQueryService {
                 .orElseThrow(() -> new EntityNotFoundException("邮件发送记录不存在或无权查看。"));
         Map<UUID, String> names = organizationNames(tenantId,
                 delivery.getOrgUnitId() == null ? Set.of() : Set.of(delivery.getOrgUnitId()));
-        return toDto(delivery, names, UtcTime.now().minusMinutes(UNCONFIRMED_AFTER_MINUTES));
+        return toDto(delivery, names, UtcTime.now().minusMinutes(SENDING_TIMEOUT_MINUTES));
     }
 
     public List<OrganizationOption> scopes() {
@@ -138,20 +138,19 @@ public class EmailDeliveryQueryService {
     }
 
     private EmailDeliveryDTO toDto(EmailDelivery delivery, Map<UUID, String> names, LocalDateTime cutoff) {
-        EmailDeliveryStatus status = delivery.getStatus() == EmailDeliveryStatus.SENDING && delivery.getStartedAt().isBefore(cutoff)
-                ? EmailDeliveryStatus.UNKNOWN : delivery.getStatus();
+        boolean incomplete = delivery.getStatus() == EmailDeliveryStatus.SENDING && delivery.getStartedAt().isBefore(cutoff);
+        EmailDeliveryStatus status = incomplete ? EmailDeliveryStatus.FAILED : delivery.getStatus();
+        String failureCode = incomplete ? EmailDeliveryFailure.INCOMPLETE.name() : delivery.getFailureCode();
         String reason = null;
-        if (delivery.getFailureCode() != null) {
-            try { reason = EmailDeliveryFailure.valueOf(delivery.getFailureCode()).message(); }
+        if (failureCode != null) {
+            try { reason = EmailDeliveryFailure.valueOf(failureCode).message(); }
             catch (IllegalArgumentException exception) { reason = EmailDeliveryFailure.DELIVERY.message(); }
-        } else if (status == EmailDeliveryStatus.UNKNOWN) {
-            reason = "发送记录超过 15 分钟未收尾，可能因进程重启或台账写入失败，SMTP 结果尚未确认。";
         }
         return new EmailDeliveryDTO(delivery.getId(), delivery.getOrgUnitId(), delivery.getOrgUnitId() == null
                 ? "市公司级" : names.getOrDefault(delivery.getOrgUnitId(), "组织已移除"), delivery.getCategory(), status,
                 delivery.getSubject(), delivery.getRecipientAddress(), delivery.getSenderAddress(), delivery.getRelatedId(),
                 delivery.getRecipientUserId(), delivery.getStartedAt(), delivery.getCompletedAt(), delivery.getDurationMs(),
-                delivery.getFailureCode(), reason);
+                failureCode, reason);
     }
 
     public record OrganizationOption(UUID id, String name) {

@@ -15,7 +15,8 @@ import java.util.Set;
 public enum EmailDeliveryFailure {
     AUTHENTICATION("SMTP 认证失败，请检查发件账号、授权码或 OAuth 配置。"),
     CONNECTION("无法连接 SMTP 服务器，请检查服务器地址、端口和网络。"),
-    TIMEOUT("SMTP 请求超时，服务器是否接受邮件暂不能确认。"),
+    TIMEOUT("SMTP 请求超时，本次发送未正常完成；收件人仍可能收到邮件。"),
+    INCOMPLETE("发送任务长时间未结束，可能因服务重启或结果记录失败；收件人仍可能收到邮件。"),
     CONFIGURATION("无法取得可用发件配置，请检查发件池及认证配置。"),
     DELIVERY("邮件构建或发送失败，请结合记录编号检查服务端日志。");
 

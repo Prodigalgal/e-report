@@ -37,7 +37,7 @@ public class EmailDeliveryStore {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void complete(UUID id, EmailDeliveryStatus status, long durationMs, String failureCode) {
-        if (status != EmailDeliveryStatus.SMTP_ACCEPTED && status != EmailDeliveryStatus.FAILED && status != EmailDeliveryStatus.UNKNOWN) {
+        if (status != EmailDeliveryStatus.SMTP_ACCEPTED && status != EmailDeliveryStatus.FAILED) {
             throw new IllegalArgumentException("邮件结束状态不合法");
         }
         if (repository.complete(id, status, UtcTime.now(), Math.max(0, durationMs), failureCode) != 1) {

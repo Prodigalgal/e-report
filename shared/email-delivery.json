@@ -8,8 +8,7 @@
   },
   "statuses": {
     "SENDING": { "label": "发送中", "color": "info" },
-    "SMTP_ACCEPTED": { "label": "SMTP 已接受", "color": "success" },
-    "FAILED": { "label": "发送失败", "color": "error" },
-    "UNKNOWN": { "label": "结果未确认", "color": "warning" }
+    "SMTP_ACCEPTED": { "label": "已发送", "color": "success" },
+    "FAILED": { "label": "发送失败", "color": "error" }
   }
 }

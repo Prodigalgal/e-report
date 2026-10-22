@@ -201,3 +201,11 @@ databaseChangeLog:
       changes:
         - tagDatabase:
             tag: e-report-6.9.0
+  - include:
+      file: db/changelog/changes/2026-10-22-078-email-delivery-status.sql
+  - changeSet:
+      id: 2026-10-22-078-tag-6.9.3
+      author: e-report
+      changes:
+        - tagDatabase:
+            tag: e-report-6.9.3

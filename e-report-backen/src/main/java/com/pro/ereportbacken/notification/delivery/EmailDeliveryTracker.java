@@ -35,8 +35,7 @@ public class EmailDeliveryTracker {
             operation.run();
         } catch (MessagingException | RuntimeException failure) {
             EmailDeliveryFailure reason = EmailDeliveryFailure.classify(failure);
-            finish(id, reason == EmailDeliveryFailure.TIMEOUT ? EmailDeliveryStatus.UNKNOWN : EmailDeliveryStatus.FAILED,
-                    started, reason.name());
+            finish(id, EmailDeliveryStatus.FAILED, started, reason.name());
             throw failure;
         }
         finish(id, EmailDeliveryStatus.SMTP_ACCEPTED, started, null);
@@ -51,7 +50,7 @@ public class EmailDeliveryTracker {
         try {
             store.complete(id, status, TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - started), failureCode);
         } catch (RuntimeException failure) {
-            // SMTP 结果不能因台账收尾失败而重新发送；未收尾记录在查询时显示“结果未确认”。
+            // 台账收尾失败不能改变 SMTP 结果或触发重发；超期记录由查询层按执行失败展示。
             log.error("邮件台账收尾失败。deliveryId={}, smtpResult={}", id, status, failure);
         }
     }
