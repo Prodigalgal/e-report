@@ -92,6 +92,7 @@ export function AuthenticatedAppStack() {
         <Stack.Screen name="admin/configs" options={{ title: '系统配置' }} />
         <Stack.Screen name="admin/releases" options={{ title: '发布中心' }} />
         <Stack.Screen name="admin/sla-policies" options={{ title: '时限策略' }} />
+        <Stack.Screen name="admin/email-deliveries" options={{ title: '邮件发送台账' }} />
         <Stack.Screen name="admin/observability/index" options={{ title: '运行诊断' }} />
         <Stack.Screen name="admin/observability/[id]" options={{ title: '诊断详情' }} />
       </Stack>
