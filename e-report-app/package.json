@@ -1,6 +1,6 @@
 {
   "name": "e-report-app",
-  "version": "6.8.4",
+  "version": "6.8.5",
   "main": "expo-router/entry",
   "dependencies": {
     "@react-native-community/datetimepicker": "9.1.0",

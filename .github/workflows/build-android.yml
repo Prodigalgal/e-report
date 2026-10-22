@@ -56,12 +56,15 @@ jobs:
           npm test
           npm run typecheck
           npm run security:assets
-          npm run doctor
           node scripts/verify-version-contract.mjs
           node scripts/native-fingerprint.mjs
       - name: 查找不可变原生基础包
         id: foundation
         run: node scripts/release/native-artifact.mjs prepare --edition NATIVE --source-sha "$SOURCE_SHA" --output-dir .release-artifacts/android
+      - name: 验证新原生基础包的 SDK 依赖
+        if: steps.foundation.outputs.reuse != 'true'
+        working-directory: e-report-app
+        run: npm run doctor
       - name: 准备签名文件
         if: steps.foundation.outputs.reuse != 'true'
         run: |
