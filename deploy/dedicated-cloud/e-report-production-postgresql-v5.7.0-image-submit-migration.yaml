@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e-report-postgresql-v5-7-0-image-submit-production-1
+  namespace: e-report
+  labels:
+    app: e-report-liquibase
+    app.kubernetes.io/component: database-migration
+    app.kubernetes.io/version: "5.7.0"
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 900
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata:
+      labels:
+        app: e-report-liquibase
+        app.kubernetes.io/component: database-migration
+        app.kubernetes.io/version: "5.7.0"
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: liquibase
+          image: localhost/e-report-database-migration:20260906-v5.7.0-core-image-submit-1
+          imagePullPolicy: Never
+          command: [java, -jar, /app/database-admin.jar]
+          env:
+            - name: E_REPORT_MIGRATION_URL
+              value: jdbc:postgresql://e-postgresql-v5:5432/fault_reporter_db
+            - name: E_REPORT_MIGRATION_USERNAME
+              value: e_report_migrator
+            - name: E_REPORT_MIGRATION_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: POSTGRES_PASSWORD
+            - name: E_REPORT_MIGRATION_CHANGELOG
+              value: db/changelog/postgresql/db.changelog-master.yaml
+            - name: E_REPORT_MIGRATION_TAG
+              value: v5.7.0-image-redaction-submit-production.1
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi

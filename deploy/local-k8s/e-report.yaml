@@ -1,0 +1,427 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-report
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-mysql
+  namespace: e-report
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-mysql
+  template:
+    metadata:
+      labels:
+        app: e-mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.4@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: fault_reporter_db
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-mysql
+                  key: MYSQL_ROOT_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -uroot -p"$MYSQL_ROOT_PASSWORD" --silent
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 12
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/e-report/mysql
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-mysql
+  namespace: e-report
+spec:
+  selector:
+    app: e-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-redis
+  namespace: e-report
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-redis
+  template:
+    metadata:
+      labels:
+        app: e-report-redis
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: redis
+          image: redis:7.4-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+          imagePullPolicy: IfNotPresent
+          args:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --appendfsync
+            - everysec
+            - --aof-use-rdb-preamble
+            - "yes"
+            - --auto-aof-rewrite-percentage
+            - "100"
+            - --auto-aof-rewrite-min-size
+            - 64mb
+            - --save
+            - "60"
+            - "1000"
+            - --stop-writes-on-bgsave-error
+            - "yes"
+            - --tcp-keepalive
+            - "60"
+            - --maxmemory
+            - 192mb
+            - --maxmemory-policy
+            - noeviction
+            - --requirepass
+            - $(REDIS_PASSWORD)
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+            - name: REDISCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 25m
+              memory: 48Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            periodSeconds: 2
+            timeoutSeconds: 3
+            failureThreshold: 30
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/e-report/redis
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-redis
+  namespace: e-report
+spec:
+  selector:
+    app: e-report-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-backend
+  namespace: e-report
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-backend
+  template:
+    metadata:
+      labels:
+        app: e-report-backend
+    spec:
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: backend
+          image: localhost/e-report-backend:local-jdk25
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-mysql
+                  key: MYSQL_ROOT_PASSWORD
+            - name: SPRING_CACHE_TYPE
+              value: redis
+            - name: SPRING_DATA_REDIS_HOST
+              value: e-report-redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+            - name: DEFAULT_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_USERNAME
+            - name: DEFAULT_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_PASSWORD
+            - name: DEFAULT_ADMIN_PHONE
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_PHONE
+                  optional: true
+            - name: SUPER_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_USERNAME
+                  optional: true
+            - name: SUPER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_PASSWORD
+                  optional: true
+            - name: SUPER_ADMIN_PHONE
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_PHONE
+                  optional: true
+            - name: AMAP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-external-integrations
+                  key: AMAP_API_KEY
+            - name: AUTH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-auth
+                  key: AUTH_TOKEN_SECRET
+            - name: APP_OUTBOX_ENABLED
+              value: "true"
+            - name: APP_OUTBOX_BATCH_SIZE
+              value: "1"
+            - name: APP_OUTBOX_POLL_INTERVAL_MS
+              value: "20000"
+            - name: NOTIFICATION_CENTER_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-notification
+                  key: NOTIFICATION_CENTER_ENABLED
+            - name: APP_UPDATE_RELEASE_DIR
+              value: /app/app_releases
+            - name: APP_UPDATE_MAX_APK_SIZE
+              value: 300MB
+            - name: APP_MULTIPART_MAX_FILE_SIZE
+              value: 300MB
+            - name: APP_MULTIPART_MAX_REQUEST_SIZE
+              value: 300MB
+            - name: APP_PUBLIC_BASE_URL
+              value: https://e-report.fantong.eu.org:60443/api
+            - name: APP_UPDATE_STABLE_DOWNLOAD_URL
+              value: https://e-report.fantong.eu.org:60443/download/android
+            - name: APP_UPDATE_R2_ENABLED
+              value: "true"
+            - name: APP_UPDATE_R2_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_ACCOUNT_ID
+            - name: APP_UPDATE_R2_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_BUCKET
+            - name: APP_UPDATE_R2_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_API_TOKEN
+            - name: APP_UPDATE_R2_PUBLIC_BASE_URL
+              value: https://download.omnnu.xyz
+            - name: APP_UPDATE_R2_OBJECT_PREFIX
+              value: ""
+            - name: API_CORS_ALLOWED_ORIGINS
+              value: https://e-report.fantong.eu.org:60443,http://36.212.129.231:60080
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/fault_uploads
+            - name: app-releases
+              mountPath: /app/app_releases
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 45
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 18
+      volumes:
+        - name: uploads
+          hostPath:
+            path: /data/e-report/uploads
+            type: DirectoryOrCreate
+        - name: app-releases
+          hostPath:
+            path: /data/e-report/app-releases
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-backend
+  namespace: e-report
+spec:
+  selector:
+    app: e-report-backend
+  ports:
+    - name: http
+      port: 8083
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-frontend
+  namespace: e-report
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e-report-frontend
+  template:
+    metadata:
+      labels:
+        app: e-report-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: localhost/e-report-frontend:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 80
+          volumeMounts:
+            - name: app-releases
+              mountPath: /app/app_releases
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 12
+      volumes:
+        - name: app-releases
+          hostPath:
+            path: /data/e-report/app-releases
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-frontend
+  namespace: e-report
+spec:
+  selector:
+    app: e-report-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: e-report
+  namespace: e-report
+spec:
+  parentRefs:
+    - name: eg
+      namespace: default
+      sectionName: http-omnnu
+  hostnames:
+    - e-report.fantong.eu.org
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: e-report-frontend
+          port: 80

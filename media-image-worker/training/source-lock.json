@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "id": "cmcc-logo-2019",
+      "fileName": "cmcc-logo-2019.png",
+      "sha256": "3c30c906dfcb5036493939a761e2339e7a5b5798eb5e42a828b3e4cef85feaef",
+      "bytes": 68432,
+      "sourcePage": "https://en.wikipedia.org/wiki/File:China_Mobile_logo_(2019).svg",
+      "license": "PD-ineligible-US-only; trademarked; internal identification use"
+    },
+    {
+      "id": "cmcc-lte-sim",
+      "fileName": "cmcc-lte-sim.jpg",
+      "sha256": "772f2e4de26f3fa2a1d4f024baa257271c30ba60f774e3ede5f72d3c55f88eb3",
+      "bytes": 1603462,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:China_Mobile_LTE_SIM.JPG",
+      "license": "Public domain dedication by photographer"
+    },
+    {
+      "id": "cmcc-network-centre",
+      "fileName": "cmcc-network-centre.jpg",
+      "sha256": "51c4b3394db5dc720c7694b085a5e4763850495d31e87582ebf88ef19c6289c6",
+      "bytes": 2445513,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:China_Mobile_Global_Network_Centre.jpg",
+      "license": "CC BY-SA 4.0; Exploringlife"
+    },
+    {
+      "id": "cmcc-henan-building",
+      "fileName": "cmcc-henan-building.jpg",
+      "sha256": "0b50524fdf0d1cad3e0d805b5cc60d0000bec32b8df71bf02b33d745cf950cad",
+      "bytes": 1351655,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:20210701_China_Mobile_Group_Henan_Co.,_Ltd.jpg",
+      "license": "CC BY-SA 4.0; Windmemories"
+    },
+    {
+      "id": "cmcc-emergency-truck",
+      "fileName": "cmcc-emergency-truck.jpg",
+      "sha256": "6328030d8ed5f2c6f57e30b17fcbb3b3a68f2079e6cb7cb111a9bc86f4e9403a",
+      "bytes": 1381218,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:20230328_Sitrak_emergency_communication_truck_of_China_Mobile.jpg",
+      "license": "CC BY-SA 4.0; Windmemories"
+    },
+    {
+      "id": "cmcc-xian-building",
+      "fileName": "cmcc-xian-building.jpg",
+      "sha256": "ad280ccbb4e9d11e6dbc0094b52a232643901994664067e027a60890fbddbbac",
+      "bytes": 4918737,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:ChinaMobile_Communication_Corporation,xi'an,CHINA_-_panoramio.jpg",
+      "license": "CC BY-SA 3.0; miumiu熊"
+    },
+    {
+      "id": "cmcc-international-canada",
+      "fileName": "cmcc-international-canada.jpg",
+      "sha256": "dbdea98fd0b6e7867d60014a2b4948e11596bad15a89759b2a643cecd872b639",
+      "bytes": 8425261,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:ChinaMobileInternationalCanada.jpg",
+      "license": "CC0; Raysonho"
+    },
+    {
+      "id": "cmcc-xiangyun-branch",
+      "fileName": "cmcc-xiangyun-branch.jpg",
+      "sha256": "5ab789c041750a9fefaad19dfbbfbbc7d2ee65f18393011f08ba081970d71c6d",
+      "bytes": 3362710,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:中国移动祥云县分公司.jpg",
+      "license": "CC BY-SA 4.0; Kcx36"
+    },
+    {
+      "id": "cmcc-communications-panoramio",
+      "fileName": "cmcc-communications-panoramio.jpg",
+      "sha256": "d39640f610eb37942b5b0753dcb04ac6fa1b52fae1891f1aa97432edd784f07b",
+      "bytes": 815104,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:中国移动通信_-_panoramio.jpg",
+      "license": "CC BY 3.0; funcn"
+    },
+    {
+      "id": "cmcc-building-2022",
+      "fileName": "cmcc-building-2022.jpg",
+      "sha256": "523f185b7dfd68384378328cc7dbfdcf5a7ebaf9314d796ab048be82af0d5df7",
+      "bytes": 1585205,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:20220212_China_Mobile_Building.jpg",
+      "license": "CC BY-SA 4.0; Windmemories"
+    },
+    {
+      "id": "cmcc-brest-9220",
+      "fileName": "cmcc-brest-9220.jpg",
+      "sha256": "dd2750246107d2a49b648fde4a2ffdc12a68ec6200cd91e6cd7d6d5d4ea9c4a0",
+      "bytes": 1706902,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:CMCC_Brest-IMG_9220.JPG",
+      "license": "CC BY-SA 2.0 fr; Rama"
+    },
+    {
+      "id": "cmcc-brest-9223",
+      "fileName": "cmcc-brest-9223.jpg",
+      "sha256": "0e66639547b66cd2d2e74a35e70bfb353fde78e81a5d2eaa3d4595ec1716d876",
+      "bytes": 296751,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:CMCC_Brest-IMG_9223.JPG",
+      "license": "CC BY-SA 2.0 fr; Rama"
+    },
+    {
+      "id": "cmcc-brest-9224",
+      "fileName": "cmcc-brest-9224.jpg",
+      "sha256": "8c70d36b871c807e1226ca6f296daa32b16af0e135cc26698b0ce41a332a8c43",
+      "bytes": 256799,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:CMCC_Brest-IMG_9224.JPG",
+      "license": "CC BY-SA 2.0 fr; Rama"
+    },
+    {
+      "id": "cmcc-5g-store-2024",
+      "fileName": "cmcc-5g-store-2024.jpg",
+      "sha256": "9fd12a6ffe92ce85228a176085bef68a22fc8b979ded3987ddb6fb2ce27d0b2e",
+      "bytes": 516432,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:China_Mobile_5G_store_(202411131246).jpg",
+      "license": "CC BY-SA 4.0; 茅野ふたば"
+    },
+    {
+      "id": "cmcc-store-2024",
+      "fileName": "cmcc-store-2024.jpg",
+      "sha256": "68a8dceacb8bd25f6267f852dd57ab1922ebfabb40cd27a892082f75a1ea9e94",
+      "bytes": 557371,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:China_Mobile_store_(202411131246).jpg",
+      "license": "CC BY-SA 4.0; 茅野ふたば"
+    },
+    {
+      "id": "cmcc-innovation-building-2025",
+      "fileName": "cmcc-innovation-building-2025.jpg",
+      "sha256": "1f9808c803e0fb8ab2ddcbec7a277654e5b3342f2fe2c09fcf668c423bb1e569",
+      "bytes": 709519,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:China_Mobile_Innovation_Building_(20250517182355).jpg",
+      "license": "CC BY-SA 4.0; N509FZ"
+    },
+    {
+      "id": "cmcc-mobile-unicom-2020",
+      "fileName": "cmcc-mobile-unicom-2020.jpg",
+      "sha256": "825577c3e048319392ef8c0bbc0371da5b6d6d25b25170d670aa2aba7f0a6f65",
+      "bytes": 453461,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Mobile_BST_IMG_5710_China_Mobile_China_Unicom.jpg",
+      "license": "CC BY-SA 4.0; Bjoertvedt"
+    },
+    {
+      "id": "cmcc-towers-guangzhou",
+      "fileName": "cmcc-towers-guangzhou.jpg",
+      "sha256": "89806f729c421e1c8aef8ad5c83dcc75166b293e8d56eaa621e578d92c02d02c",
+      "bytes": 1187702,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:Moxing_Summi_Guangzhou_China_mobile_towers.JPG",
+      "license": "CC BY-SA 3.0; 古海岸遗址"
+    },
+    {
+      "id": "cmcc-3g-phones",
+      "fileName": "cmcc-3g-phones.jpg",
+      "sha256": "2332752a02ad9c1e3186779b7d2570e2712d33fe93cd6ade52175a6e67b7001b",
+      "bytes": 896542,
+      "sourcePage": "https://commons.wikimedia.org/wiki/File:3G_Mobile_Phones_fot_China_Mobile.jpg",
+      "license": "CC BY-SA 3.0; Yoshi Canopus"
+    }
+  ]
+}

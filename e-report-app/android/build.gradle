@@ -1,0 +1,31 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath('com.android.tools.build:gradle')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+  }
+}
+
+allprojects {
+  configurations.configureEach {
+    resolutionStrategy.eachDependency {
+      if (requested.group == 'org.bouncycastle' && requested.name.endsWith('-jdk15to18')) {
+        useVersion('1.86')
+        because('Expo OTA certificate parsing requires the current Bouncy Castle security fixes')
+      }
+    }
+  }
+  repositories {
+    google()
+    mavenCentral()
+  }
+}
+
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"

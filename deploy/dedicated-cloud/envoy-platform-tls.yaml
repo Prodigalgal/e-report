@@ -1,0 +1,66 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: platform-gateway
+  namespace: gateway-system
+spec:
+  gatewayClassName: envoy-gateway
+  listeners:
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https
+      hostname: "*.omnnu.xyz"
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: omnnu-wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-fantong
+      hostname: "e-report.fantong.eu.org"
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: fantong-wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-fantong-test
+      hostname: "e-report-test.fantong.eu.org"
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: fantong-wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: All
+    - name: https-fantong-ops
+      hostname: "ops.fantong.eu.org"
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: fantong-wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: All

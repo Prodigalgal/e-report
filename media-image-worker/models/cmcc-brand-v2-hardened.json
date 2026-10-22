@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "modelVersion": "cmcc-brand-v2-hardened",
+  "architecture": "MobileNetV3-Small ImageNet transfer learning with an anchor-free detection head",
+  "input": {
+    "name": "image",
+    "shape": [
+      1,
+      3,
+      384,
+      384
+    ],
+    "color": "grayscale-replicated",
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "output": {
+    "name": "detections",
+    "shape": [
+      1,
+      5,
+      24,
+      24
+    ]
+  },
+  "sha256": "36df19a2443c8bfcbbd2b5883f7872adcfd5ec47cb5dddfa1e643ed5ef96ac10",
+  "bytes": 3971065,
+  "validation": {
+    "precision": 0.29085979860573197,
+    "recall": 0.6640141467727675,
+    "f1": 0.40452464314570424
+  },
+  "trainingSources": "training/source-lock.json"
+}

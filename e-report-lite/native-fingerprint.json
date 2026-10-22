@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "nativeVersion": "6.8.0",
+  "runtimeVersion": "android-lite-6.8.0-native5008000",
+  "hash": "59efb75b01ee69eb08ac056f762627cb41a1fd4760edfd9fcb4a7f4231679c05",
+  "sources": [
+    {
+      "filePath": "app/build.gradle.kts",
+      "hash": "bf11ec916b1f71ef9991265442ee3ee3559ba3755d535e28145ec39f6b7d54d7"
+    },
+    {
+      "filePath": "app/gradle.lockfile",
+      "hash": "d34d9df27bfd25019a02be1fd89146dbdf0206eacdcede2a974c1c188a6ca9d5"
+    },
+    {
+      "filePath": "app/proguard-rules.pro",
+      "hash": "9009c2c1fef843850480731cf83088007a2d57a438e0553a36f4801afdefddc6"
+    },
+    {
+      "filePath": "app/src/main/AndroidManifest.xml",
+      "hash": "dc1ad3b4c14d7fa71bb2eaffef2da8db0fda4c4eb50779ba0395614c36804053"
+    },
+    {
+      "filePath": "app/src/main/java/com/mnnu/ereport/lite/EndpointPolicy.kt",
+      "hash": "eb729b431a4d5c3f540469ed6202aa1fd8829451e4aa5d1fb394d2ec8fc6da20"
+    },
+    {
+      "filePath": "app/src/main/java/com/mnnu/ereport/lite/ExportSession.kt",
+      "hash": "1f244038819ef766df9fee86feca0f75684429e567cc516c74b2fd59266ed296"
+    },
+    {
+      "filePath": "app/src/main/java/com/mnnu/ereport/lite/LiteAppUpdater.kt",
+      "hash": "bb2bc83fb10713bb1cad47d3bade574bda2625d18c10f8f4cf1abc9a08aae7d8"
+    },
+    {
+      "filePath": "app/src/main/java/com/mnnu/ereport/lite/LiteSettings.kt",
+      "hash": "645bcdcb3bacb16966fb2a6d7af11193818ec148723ad78749f96c42c6fecf85"
+    },
+    {
+      "filePath": "app/src/main/java/com/mnnu/ereport/lite/LiteWebBridge.kt",
+      "hash": "3a0747743998f20349e12d312966f561f11fc31ec6f7a3cf0473376ce26c161f"
+    },
+    {
+      "filePath": "app/src/main/java/com/mnnu/ereport/lite/MainActivity.kt",
+      "hash": "eb69fd3bcfdf70c825bfa4c57ad0d159bc7f66debbb7c654c393a8c2f99769d0"
+    },
+    {
+      "filePath": "app/src/main/res/drawable/ic_brand.xml",
+      "hash": "1535f5185fef12a8dd3f84adcf2c2e09653b02a16e48901a0439179f1efaf7c8"
+    },
+    {
+      "filePath": "app/src/main/res/drawable/ic_settings.xml",
+      "hash": "c3da4d2d283e176d40a580ab52cbc7b8dba83137c4b32eb1adfc5d8c3494dc18"
+    },
+    {
+      "filePath": "app/src/main/res/layout/activity_main.xml",
+      "hash": "bf1f22913c7c6af3e666e2751f14aa2a86642bf212939666a25cadd22822fdc5"
+    },
+    {
+      "filePath": "app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+      "hash": "8d892527c0ee076b23987756accc7d12396e79072585f2be878bf68f932c207b"
+    },
+    {
+      "filePath": "app/src/main/res/values-v27/styles.xml",
+      "hash": "ec194a97c90c5475a1cdfcacc3cc6131c8b1f427f856c76a1ed97d0a5d6197cf"
+    },
+    {
+      "filePath": "app/src/main/res/values/strings.xml",
+      "hash": "cb32dca745e19a96f1478934ccec58f5cd71c8db15201d15b624aba935f0b81d"
+    },
+    {
+      "filePath": "app/src/main/res/values/styles.xml",
+      "hash": "971969f924f89eff6b9d723133bc2f20ec5cb890739d21cb534a5a1b9e250cab"
+    },
+    {
+      "filePath": "app/src/main/res/xml/data_extraction_rules.xml",
+      "hash": "09c4566d46ae1ca79469513cb716957919ceaf5ca7a5aac50495ce2ec335662d"
+    },
+    {
+      "filePath": "app/src/main/res/xml/file_paths.xml",
+      "hash": "525194c3e1928d4a21ad76daf0dc4d3b7b9f5d211261bd26b0386b2feded5a25"
+    },
+    {
+      "filePath": "build.gradle.kts",
+      "hash": "7e79eb59daa464bac253780a1047a505a825a8a8036a90dfa01b2891890e51c4"
+    },
+    {
+      "filePath": "gradle.properties",
+      "hash": "05b5e0942c7c96739004e2b8e19d0a27b9db532e26133369db6ee56163665afc"
+    },
+    {
+      "filePath": "gradle/verification-metadata.xml",
+      "hash": "5bd459fd51d2a01802a5c9b4fae21d491624de6af73af1c8b77044b6bc43a56e"
+    },
+    {
+      "filePath": "gradle/wrapper/gradle-wrapper.jar",
+      "hash": "b3a875ddc1f044746e1b1a55f645584505f4a10438c1afea9f15e92a7c42ec13"
+    },
+    {
+      "filePath": "gradle/wrapper/gradle-wrapper.properties",
+      "hash": "52a7be6d52ab45ec17e22d33a59bb80772690e3c2e57064eb7a01b4ae5269ca3"
+    },
+    {
+      "filePath": "gradlew",
+      "hash": "fb68debc1b1acf8ec55dc0d5e5495e1dedd0bd6b61f304bee61613eeb2bd9b92"
+    },
+    {
+      "filePath": "gradlew.bat",
+      "hash": "753400fb02ea31346d7f89b0b1de6659850fc008d68cdb49e1c783fe70013dd6"
+    },
+    {
+      "filePath": "native-release.json",
+      "hash": "f1e7764ff0e26bf4ef39bc1b6e69ef94b5187f5f74353afb70aa345c1c68339c"
+    },
+    {
+      "filePath": "settings.gradle.kts",
+      "hash": "cf90260a880dfa1abfdda57cc011dbee65ec875997cfda444df9f28160846703"
+    }
+  ]
+}

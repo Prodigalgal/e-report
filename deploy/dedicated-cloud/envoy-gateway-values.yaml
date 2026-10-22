@@ -1,0 +1,27 @@
+global:
+  images:
+    envoyGateway:
+      image: registry.mnnu.eu.org/infra/envoy-gateway:v1.8.2
+      pullPolicy: IfNotPresent
+      pullSecrets:
+        - name: registry-pull-secret
+    envoyProxy:
+      image: registry.mnnu.eu.org/infra/envoy:distroless-v1.38.1
+      pullPolicy: IfNotPresent
+      pullSecrets:
+        - name: registry-pull-secret
+
+deployment:
+  replicas: 1
+  envoyGateway:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 96Mi
+      limits:
+        memory: 384Mi
+
+config:
+  envoyGateway:
+    gateway:
+      controllerName: gateway.envoyproxy.io/gatewayclass-controller
