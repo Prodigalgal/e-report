@@ -1,0 +1,222 @@
+{
+  "schemaVersion": 1,
+  "modelVersion": "cmcc-brand-v2-focused",
+  "architecture": "MobileNetV3-Small ImageNet transfer learning with an anchor-free detection head",
+  "input": {
+    "name": "image",
+    "shape": [
+      1,
+      3,
+      384,
+      384
+    ],
+    "color": "grayscale-replicated",
+    "range": [
+      0.0,
+      1.0
+    ]
+  },
+  "output": {
+    "name": "detections",
+    "shape": [
+      1,
+      5,
+      24,
+      24
+    ]
+  },
+  "sha256": "e0e4284e41cb03f67a8bbfff8f7fed0c7aa8c9bb1b4033a1f4948dd2c88d1800",
+  "bytes": 3971065,
+  "validation": {
+    "precision": 0.28064300066979236,
+    "recall": 0.6348484848484849,
+    "f1": 0.38922433813283797
+  },
+  "trainingSources": "training/source-lock.json",
+  "acceptance": {
+    "confidenceThreshold": 0.65,
+    "detectorConfig": {
+      "grayscaleInference": false,
+      "denseScan": true,
+      "ocrEnabled": true,
+      "ocrMaxSide": 2000,
+      "ocrMinConfidence": 0.65,
+      "standaloneModelConfidence": 0.9
+    },
+    "cpuBenchmark": {
+      "medianMs": 531.35,
+      "p95Ms": 549.69,
+      "maximumAllowedMs": 2500.0
+    },
+    "samples": [
+      {
+        "name": "current-logo-composite",
+        "expectedPositive": true,
+        "bestIou": 0.776,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 3
+      },
+      {
+        "name": "legacy-logo-real-photo",
+        "expectedPositive": true,
+        "bestIou": 0.5406,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 3
+      },
+      {
+        "name": "legacy-storefront-held-out",
+        "expectedPositive": true,
+        "bestIou": 0.6094,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 1
+      },
+      {
+        "name": "negative-network-centre",
+        "expectedPositive": false,
+        "bestIou": 0.0,
+        "matchedCount": 0,
+        "expectedCount": 0,
+        "detectionCount": 0
+      },
+      {
+        "name": "annotated-cmcc-henan-building",
+        "expectedPositive": true,
+        "bestIou": 0.8625,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 1
+      },
+      {
+        "name": "annotated-cmcc-emergency-truck",
+        "expectedPositive": true,
+        "bestIou": 0.4044,
+        "matchedCount": 3,
+        "expectedCount": 3,
+        "detectionCount": 6
+      },
+      {
+        "name": "annotated-cmcc-xian-building",
+        "expectedPositive": true,
+        "bestIou": 0.9526,
+        "matchedCount": 2,
+        "expectedCount": 2,
+        "detectionCount": 4
+      },
+      {
+        "name": "annotated-cmcc-international-canada",
+        "expectedPositive": true,
+        "bestIou": 0.9886,
+        "matchedCount": 3,
+        "expectedCount": 3,
+        "detectionCount": 4
+      },
+      {
+        "name": "annotated-cmcc-xiangyun-branch",
+        "expectedPositive": true,
+        "bestIou": 0.952,
+        "matchedCount": 2,
+        "expectedCount": 2,
+        "detectionCount": 5
+      },
+      {
+        "name": "annotated-cmcc-lte-sim",
+        "expectedPositive": true,
+        "bestIou": 0.5406,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 3
+      },
+      {
+        "name": "annotated-cmcc-communications-panoramio",
+        "expectedPositive": true,
+        "bestIou": 0.6094,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 1
+      },
+      {
+        "name": "annotated-cmcc-building-2022",
+        "expectedPositive": true,
+        "bestIou": 0.9695,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 2
+      },
+      {
+        "name": "annotated-cmcc-5g-store-2024",
+        "expectedPositive": true,
+        "bestIou": 0.9625,
+        "matchedCount": 2,
+        "expectedCount": 2,
+        "detectionCount": 5
+      },
+      {
+        "name": "annotated-cmcc-store-2024",
+        "expectedPositive": true,
+        "bestIou": 0.9867,
+        "matchedCount": 2,
+        "expectedCount": 2,
+        "detectionCount": 6
+      },
+      {
+        "name": "annotated-cmcc-innovation-building-2025",
+        "expectedPositive": true,
+        "bestIou": 0.2772,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 1
+      },
+      {
+        "name": "annotated-cmcc-mobile-unicom-2020",
+        "expectedPositive": true,
+        "bestIou": 0.841,
+        "matchedCount": 1,
+        "expectedCount": 1,
+        "detectionCount": 3
+      },
+      {
+        "name": "annotated-cmcc-brest-9220",
+        "expectedPositive": false,
+        "bestIou": 0.0,
+        "matchedCount": 0,
+        "expectedCount": 0,
+        "detectionCount": 0
+      },
+      {
+        "name": "annotated-cmcc-brest-9223",
+        "expectedPositive": false,
+        "bestIou": 0.0,
+        "matchedCount": 0,
+        "expectedCount": 0,
+        "detectionCount": 0
+      },
+      {
+        "name": "annotated-cmcc-brest-9224",
+        "expectedPositive": false,
+        "bestIou": 0.0,
+        "matchedCount": 0,
+        "expectedCount": 0,
+        "detectionCount": 0
+      },
+      {
+        "name": "annotated-cmcc-towers-guangzhou",
+        "expectedPositive": false,
+        "bestIou": 0.0,
+        "matchedCount": 0,
+        "expectedCount": 0,
+        "detectionCount": 0
+      },
+      {
+        "name": "annotated-cmcc-3g-phones",
+        "expectedPositive": false,
+        "bestIou": 0.0,
+        "matchedCount": 0,
+        "expectedCount": 0,
+        "detectionCount": 0
+      }
+    ]
+  }
+}

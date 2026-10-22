@@ -1,0 +1,8 @@
+training/sources/*
+!training/sources/.gitkeep
+training/generated/*
+!training/generated/.gitkeep
+training/checkpoints/*
+!training/checkpoints/.gitkeep
+__pycache__/
+*.pyc

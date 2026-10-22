@@ -1,0 +1,154 @@
+{
+  "reportTypes": {
+    "NETWORK_FAULT": {
+      "label": "网络故障",
+      "foreground": "#2563EB",
+      "surface": "#EFF6FF",
+      "border": "#93C5FD"
+    },
+    "BOX_DOOR_OPEN": {
+      "label": "箱门未关",
+      "foreground": "#0F766E",
+      "surface": "#F0FDFA",
+      "border": "#99F6E4"
+    },
+    "DAMAGED_BOX_REPLACEMENT": {
+      "label": "破损箱体更换",
+      "foreground": "#4338CA",
+      "surface": "#EEF2FF",
+      "border": "#C7D2FE"
+    }
+  },
+  "priorities": {
+    "URGENT": {
+      "label": "紧急",
+      "foreground": "#B91C1C",
+      "surface": "#FEF2F2",
+      "border": "#FCA5A5",
+      "rail": "#DC2626"
+    },
+    "HIGH": {
+      "label": "高优先",
+      "foreground": "#C2410C",
+      "surface": "#FFF7ED",
+      "border": "#FDBA74",
+      "rail": "#EA580C"
+    },
+    "ROUTINE": {
+      "label": "常规",
+      "foreground": "#1D4ED8",
+      "surface": "#EFF6FF",
+      "border": "#93C5FD",
+      "rail": "#2563EB"
+    },
+    "LOW": {
+      "label": "低优先",
+      "foreground": "#475569",
+      "surface": "#F8FAFC",
+      "border": "#CBD5E1",
+      "rail": "#64748B"
+    }
+  },
+  "slaRisks": {
+    "NORMAL": {
+      "label": "正常",
+      "foreground": "#475569",
+      "surface": "#F8FAFC",
+      "border": "#CBD5E1"
+    },
+    "DUE_SOON": {
+      "label": "临期",
+      "foreground": "#A16207",
+      "surface": "#FEFCE8",
+      "border": "#FDE047"
+    },
+    "BREACHED": {
+      "label": "已超时",
+      "foreground": "#6D28D9",
+      "surface": "#F5F3FF",
+      "border": "#C4B5FD"
+    },
+    "PAUSED": {
+      "label": "已暂停",
+      "foreground": "#0369A1",
+      "surface": "#F0F9FF",
+      "border": "#7DD3FC"
+    },
+    "COMPLETED": {
+      "label": "已完成",
+      "foreground": "#15803D",
+      "surface": "#F0FDF4",
+      "border": "#86EFAC"
+    }
+  },
+  "statuses": {
+    "SUBMITTED": {
+      "label": "已提交",
+      "foreground": "#475569",
+      "surface": "#F8FAFC",
+      "border": "#CBD5E1"
+    },
+    "ASSIGNED": {
+      "label": "已派单",
+      "foreground": "#0369A1",
+      "surface": "#F0F9FF",
+      "border": "#7DD3FC"
+    },
+    "IN_PROGRESS": {
+      "label": "处理中",
+      "foreground": "#1D4ED8",
+      "surface": "#EFF6FF",
+      "border": "#93C5FD"
+    },
+    "PENDING_VERIFICATION": {
+      "label": "待验收",
+      "foreground": "#0E7490",
+      "surface": "#ECFEFF",
+      "border": "#67E8F9"
+    },
+    "ON_HOLD": {
+      "label": "已挂起",
+      "foreground": "#854D0E",
+      "surface": "#FEFCE8",
+      "border": "#FDE047"
+    },
+    "CLOSED": {
+      "label": "已闭环",
+      "foreground": "#15803D",
+      "surface": "#F0FDF4",
+      "border": "#86EFAC"
+    },
+    "CANCELLED": {
+      "label": "已取消",
+      "foreground": "#4B5563",
+      "surface": "#F9FAFB",
+      "border": "#D1D5DB"
+    }
+  },
+  "durationBuckets": {
+    "WITHIN_24_HOURS": {
+      "label": "24小时内",
+      "foreground": "#475569",
+      "surface": "#F8FAFC",
+      "border": "#CBD5E1"
+    },
+    "HOURS_24_TO_48": {
+      "label": "24至48小时",
+      "foreground": "#1D4ED8",
+      "surface": "#EFF6FF",
+      "border": "#93C5FD"
+    },
+    "HOURS_48_TO_72": {
+      "label": "48至72小时",
+      "foreground": "#A16207",
+      "surface": "#FEFCE8",
+      "border": "#FDE047"
+    },
+    "OVER_72_HOURS": {
+      "label": "超过72小时",
+      "foreground": "#6D28D9",
+      "surface": "#F5F3FF",
+      "border": "#C4B5FD"
+    }
+  }
+}

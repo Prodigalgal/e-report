@@ -1,0 +1,555 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: e-report
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-mysql
+  namespace: e-report
+spec:
+  # PostgreSQL 已成为唯一业务数据库；保留旧 MySQL 数据卷用于冷回退，禁止部署清单重新拉起实例。
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-mysql
+  template:
+    metadata:
+      labels:
+        app: e-mysql
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: mysql
+          image: docker.m.daocloud.io/library/mysql:8.4@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: mysql
+              containerPort: 3306
+          env:
+            - name: MYSQL_DATABASE
+              value: fault_reporter_db
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-mysql
+                  key: MYSQL_ROOT_PASSWORD
+          resources:
+            requests:
+              cpu: 150m
+              memory: 384Mi
+            limits:
+              memory: 2Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/mysql
+          startupProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -uroot -p"$MYSQL_ROOT_PASSWORD" --silent
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - mysqladmin ping -uroot -p"$MYSQL_ROOT_PASSWORD" --silent
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/e-report/mysql
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-mysql
+  namespace: e-report
+spec:
+  selector:
+    app: e-mysql
+  ports:
+    - name: mysql
+      port: 3306
+      targetPort: mysql
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-redis
+  namespace: e-report
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-redis
+  template:
+    metadata:
+      labels:
+        app: e-report-redis
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: redis
+          image: docker.m.daocloud.io/library/redis:7.4-alpine@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
+          imagePullPolicy: IfNotPresent
+          args:
+            - redis-server
+            - --appendonly
+            - "yes"
+            - --appendfsync
+            - everysec
+            - --aof-use-rdb-preamble
+            - "yes"
+            - --auto-aof-rewrite-percentage
+            - "100"
+            - --auto-aof-rewrite-min-size
+            - 64mb
+            - --save
+            - "60"
+            - "1000"
+            - --stop-writes-on-bgsave-error
+            - "yes"
+            - --tcp-keepalive
+            - "60"
+            - --maxmemory
+            - 192mb
+            - --maxmemory-policy
+            - noeviction
+            - --requirepass
+            - $(REDIS_PASSWORD)
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+            - name: REDISCLI_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+          ports:
+            - name: redis
+              containerPort: 6379
+          resources:
+            requests:
+              cpu: 25m
+              memory: 48Mi
+            limits:
+              memory: 256Mi
+          volumeMounts:
+            - name: data
+              mountPath: /data
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          startupProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            periodSeconds: 2
+            timeoutSeconds: 3
+            failureThreshold: 30
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/e-report/redis
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-redis
+  namespace: e-report
+spec:
+  selector:
+    app: e-report-redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-backend
+  namespace: e-report
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-backend
+  template:
+    metadata:
+      labels:
+        app: e-report-backend
+    spec:
+      terminationGracePeriodSeconds: 45
+      containers:
+        - name: backend
+          image: localhost/e-report-backend:20260820-v2.5.3-permission-catalog-test-4
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8083
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: prod
+            - name: SPRING_LIQUIBASE_ENABLED
+              value: "false"
+            - name: DEFAULT_TENANT_GROUP_CODE
+              value: FUJIAN_PROVINCE
+            - name: DEFAULT_TENANT_GROUP_NAME
+              value: 福建省公司
+            - name: DEFAULT_TENANT_CODE
+              value: DEFAULT_CITY
+            - name: DEFAULT_TENANT_NAME
+              value: 漳州市公司
+            - name: DEFAULT_TENANT_ROOT_ORG_NAME
+              value: 漳州市公司本部
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-mysql
+                  key: MYSQL_ROOT_PASSWORD
+            - name: SPRING_CACHE_TYPE
+              value: redis
+            - name: SPRING_DATA_REDIS_HOST
+              value: e-report-redis
+            - name: SPRING_DATA_REDIS_PORT
+              value: "6379"
+            - name: SPRING_DATA_REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-redis
+                  key: REDIS_PASSWORD
+            - name: DEFAULT_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_USERNAME
+            - name: DEFAULT_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_PASSWORD
+            - name: DEFAULT_ADMIN_PHONE
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-default-admin
+                  key: DEFAULT_ADMIN_PHONE
+                  optional: true
+            - name: SUPER_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_USERNAME
+                  optional: true
+            - name: SUPER_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_PASSWORD
+                  optional: true
+            - name: SUPER_ADMIN_PHONE
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-super-admin
+                  key: SUPER_ADMIN_PHONE
+                  optional: true
+            - name: AMAP_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-external-integrations
+                  key: AMAP_API_KEY
+            - name: AUTH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-auth
+                  key: AUTH_TOKEN_SECRET
+            - name: AUTH_CONTEXT_PEPPER
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-auth
+                  key: AUTH_CONTEXT_PEPPER
+            - name: ANDROID_EXPECTED_SIGNATURE_SHA256
+              value: c63061845c0ca95444e9e9507338cc25284f2b5b022f6662bf85045371cb2d27
+            - name: AUTH_COOKIE_SECURE
+              value: "true"
+            - name: NOTIFICATION_CENTER_ENABLED
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-notification
+                  key: NOTIFICATION_CENTER_ENABLED
+            - name: APP_UPDATE_RELEASE_DIR
+              value: /app/app_releases
+            - name: APP_UPDATE_MAX_APK_SIZE
+              value: 300MB
+            - name: APP_MULTIPART_MAX_FILE_SIZE
+              value: 300MB
+            - name: APP_MULTIPART_MAX_REQUEST_SIZE
+              value: 300MB
+            - name: APP_PUBLIC_BASE_URL
+              value: https://e-report.fantong.eu.org:60443/api
+            - name: APP_UPDATE_STABLE_DOWNLOAD_URL
+              value: https://e-report.fantong.eu.org:60443/download/android
+            - name: APP_UPDATE_R2_ENABLED
+              value: "true"
+            - name: APP_UPDATE_R2_ACCOUNT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_ACCOUNT_ID
+            - name: APP_UPDATE_R2_BUCKET_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_BUCKET
+            - name: APP_UPDATE_R2_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-r2
+                  key: APP_R2_API_TOKEN
+            - name: APP_UPDATE_R2_PUBLIC_BASE_URL
+              value: https://download.omnnu.xyz
+            - name: APP_UPDATE_R2_OBJECT_PREFIX
+              value: ""
+            - name: API_CORS_ALLOWED_ORIGINS
+              value: https://e-report.fantong.eu.org:60443,http://36.212.129.231:60080
+          resources:
+            requests:
+              cpu: 150m
+              memory: 384Mi
+            limits:
+              memory: 1536Mi
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/fault_uploads
+            - name: app-releases
+              mountPath: /app/app_releases
+          startupProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 30
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+      volumes:
+        - name: uploads
+          hostPath:
+            path: /data/e-report/uploads
+            type: DirectoryOrCreate
+        - name: app-releases
+          hostPath:
+            path: /data/e-report/app-releases
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-backend
+  namespace: e-report
+spec:
+  selector:
+    app: e-report-backend
+  ports:
+    - name: http
+      port: 8083
+      targetPort: http
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-report-frontend
+  namespace: e-report
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-report-frontend
+  template:
+    metadata:
+      labels:
+        app: e-report-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: localhost/e-report-frontend:20260820-v2.5.3-permission-catalog-test-4
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              memory: 256Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 3
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-report-frontend
+  namespace: e-report
+spec:
+  selector:
+    app: e-report-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: e-report-mysql-backup
+  namespace: e-report
+spec:
+  suspend: true
+  schedule: "30 2 * * *"
+  timeZone: Asia/Shanghai
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      activeDeadlineSeconds: 1800
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: backup
+              image: docker.m.daocloud.io/library/mysql:8.4@sha256:b3b90af2a6552ae30c266fdb7d5dd55f3afb72404bb78d37fe8a23eb857fd3fb
+              imagePullPolicy: IfNotPresent
+              command:
+                - sh
+                - -c
+                - |
+                  set -eu
+                  umask 077
+                  stamp="$(date +%Y%m%d-%H%M%S)"
+                  target="/backups/fault_reporter_db-${stamp}.sql"
+                  temporary="${target}.tmp"
+                  mysqldump -h e-mysql -uroot \
+                    --single-transaction \
+                    --quick \
+                    --routines \
+                    --events \
+                    --triggers \
+                    --set-gtid-purged=OFF \
+                    --no-tablespaces \
+                    --databases fault_reporter_db > "${temporary}"
+                  mv "${temporary}" "${target}"
+                  find /backups -maxdepth 1 -type f -name 'fault_reporter_db-*.sql' -mtime +14 -delete
+              env:
+                - name: MYSQL_PWD
+                  valueFrom:
+                    secretKeyRef:
+                      name: e-report-mysql
+                      key: MYSQL_ROOT_PASSWORD
+                - name: TZ
+                  value: Asia/Shanghai
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  memory: 512Mi
+              volumeMounts:
+                - name: backups
+                  mountPath: /backups
+          volumes:
+            - name: backups
+              hostPath:
+                path: /data/e-report/backups
+                type: DirectoryOrCreate
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: e-report
+  namespace: e-report
+spec:
+  parentRefs:
+    - name: platform-gateway
+      namespace: gateway-system
+      sectionName: http
+    - name: platform-gateway
+      namespace: gateway-system
+      sectionName: https-fantong
+  hostnames:
+    - e-report.fantong.eu.org
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: e-report-frontend
+          port: 80
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: e-report-direct-ip
+  namespace: e-report
+spec:
+  parentRefs:
+    - name: platform-gateway
+      namespace: gateway-system
+      sectionName: http
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: e-report-frontend
+          port: 80

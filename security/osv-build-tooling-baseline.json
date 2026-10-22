@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "reviewUntil": "2026-10-25",
+  "reason": "Android and Gradle build-only dependencies are checksum verified and execute in isolated CI with pinned inputs and immutable outputs. GHSA-r937-wjx7-w2jp affects kotlin-gradle-plugin 2.1.20 build-cache deserialization; Kotlin incremental is disabled for the signed release build and the plugin is absent from the APK runtime. GHSA-8c42-7qj2-3j46, GHSA-c4c3-7fpv-j4q5 and GHSA-fccg-mwvh-qqg4 affect Netty versions confined to Android Unified Test Platform internal configurations and verification metadata; they are absent from the APK runtime and no Netty server is deployed by the app. GHSA-9pwp-9qqc-pr26 and GHSA-qp49-qgx5-5m26 affect Bouncy Castle versions retained only in Android verification metadata, not the Android release runtime lock. The Spring Boot buildscript HttpComponents chain is forced to fixed httpclient5 5.6.3 and httpcore5 5.4.3. The Backend runtime now uses Netty 4.2.17.Final and Bouncy Castle 1.85. Spring Boot Gradle Plugin 4.1.0 requests Jackson 3.1.4 for build-time use; the Backend buildscript resolves its Jackson artifacts to 3.1.7. Unresolved 3.1.4 checksums were removed from dependency verification metadata. The resulting finding inventory is smaller, and the release runtime graph contains no unreviewed findings. Any finding-set drift requires a new review. Lite uses the same reviewed Android toolchain; its Netty, protobuf, Commons Compress, HttpClient, jose4j, Bouncy Castle, JDOM and Kotlin findings match the existing package/version/advisory set and are absent from the Lite release runtime. Expo OTA adds Kotlin Gradle Plugin 2.2.0 under the same disabled-incremental-cache boundary, and verification metadata for Guava 31.1-jre, Okio 2.8.0 and JUnit 4.12 in development/test tooling. These are not selected in the Android release runtime; builds do not process untrusted source trees or XML in those tooling paths. Bouncy Castle jdk15to18 is fixed at 1.86 in every Android project configuration. Review expiry is unchanged.",
+  "expected": {
+    "findingCount": 450,
+    "sourcePackageVersionCount": 105,
+    "affectedPackageVersionCount": 55,
+    "advisoryCount": 94,
+    "fingerprintSha256": "594d88faaa02d6ae91f12e4d7e9cff22c9e9c40f38f2a1499193c96d25c8849b"
+  }
+}

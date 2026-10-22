@@ -1,0 +1,43 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/postgresql/2026-08-23-000-v5-baseline.sql
+  - include:
+      file: db/changelog/postgresql/2026-08-23-001-v5-core-tenant-row-security.sql
+  - include:
+      file: db/changelog/postgresql/2026-08-23-002-v5-observation-behavior.sql
+  - include:
+      file: db/changelog/postgresql/2026-08-24-003-v5-delegation-baseline-repair.sql
+  - include:
+      file: db/changelog/postgresql/2026-08-24-004-v5-otel-observation-model.sql
+  - include:
+      file: db/changelog/postgresql/2026-08-30-005-v5-image-redaction-jobs.sql
+  - include:
+      file: db/changelog/postgresql/2026-09-06-006-v5-image-redaction-submission-toggle.sql
+  - include:
+      file: db/changelog/changes/2026-09-01-067-auth-session-pagination.sql
+  - include:
+      file: db/changelog/changes/2026-09-01-068-work-order-department-processing.sql
+  - include:
+      file: db/changelog/changes/2026-09-12-069-work-order-organization-processing.sql
+  - include:
+      file: db/changelog/changes/2026-09-12-071-work-order-assignment-invariant-repair.sql
+  - include:
+      file: db/changelog/changes/2026-09-29-072-remove-unused-user-import-result-permission.sql
+  - include:
+      file: db/changelog/changes/2026-10-20-074-personal-email-preferences.sql
+  - changeSet:
+      id: 2026-10-20-074-tag-6.4.0
+      author: e-report
+      changes:
+        - tagDatabase:
+            tag: e-report-6.4.0
+  - include:
+      file: db/changelog/changes/2026-10-21-075-app-editions.sql
+  - include:
+      file: db/changelog/changes/2026-10-21-076-expo-updates.sql
+  - changeSet:
+      id: 2026-10-21-076-tag-6.8.0
+      author: e-report
+      changes:
+        - tagDatabase:
+            tag: e-report-6.8.0

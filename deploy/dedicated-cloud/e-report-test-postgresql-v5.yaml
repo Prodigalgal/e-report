@@ -1,0 +1,129 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: e-report-postgresql-v5-init
+  namespace: e-report-test
+  labels:
+    app.kubernetes.io/name: e-report-postgresql-v5
+    app.kubernetes.io/part-of: e-report-test
+data:
+  01-create-application-role.sh: |
+    #!/bin/sh
+    set -eu
+    psql --set=ON_ERROR_STOP=1 \
+      --username "$POSTGRES_USER" \
+      --dbname "$POSTGRES_DB" \
+      --set=app_db_password="$APP_DB_PASSWORD" <<-'EOSQL'
+    SELECT format(
+      'CREATE ROLE e_report_app LOGIN PASSWORD %L NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS',
+      :'app_db_password'
+    )
+    WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'e_report_app')
+    \gexec
+    REVOKE CREATE ON SCHEMA public FROM PUBLIC;
+    GRANT USAGE ON SCHEMA public TO e_report_app;
+    ALTER DEFAULT PRIVILEGES FOR ROLE e_report_migrator IN SCHEMA public
+      GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO e_report_app;
+    ALTER DEFAULT PRIVILEGES FOR ROLE e_report_migrator IN SCHEMA public
+      GRANT USAGE, SELECT ON SEQUENCES TO e_report_app;
+    EOSQL
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e-postgresql-v5
+  namespace: e-report-test
+  labels:
+    app.kubernetes.io/name: e-report-postgresql-v5
+    app.kubernetes.io/part-of: e-report-test
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: e-postgresql-v5
+  template:
+    metadata:
+      labels:
+        app: e-postgresql-v5
+        app.kubernetes.io/name: e-report-postgresql-v5
+        app.kubernetes.io/part-of: e-report-test
+    spec:
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: postgresql
+          image: docker.m.daocloud.io/library/postgres:18.6-alpine@sha256:d3e1620b530c944afa6e887d22eb899824da68e19c52024bf98f5220c88a65b2
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: postgresql
+              containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: fault_reporter_db
+            - name: POSTGRES_USER
+              value: e_report_migrator
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: POSTGRES_PASSWORD
+            - name: APP_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: e-report-postgresql
+                  key: APP_DB_PASSWORD
+            - name: POSTGRES_INITDB_ARGS
+              value: --data-checksums --auth-host=scram-sha-256
+            - name: PGDATA
+              value: /var/lib/postgresql/18/docker
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql
+            - name: init
+              mountPath: /docker-entrypoint-initdb.d/01-create-application-role.sh
+              subPath: 01-create-application-role.sh
+              readOnly: true
+          startupProbe:
+            exec:
+              command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 30
+          readinessProbe:
+            exec:
+              command: [sh, -c, 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"']
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+      volumes:
+        - name: data
+          hostPath:
+            path: /data/e-report-test/postgresql-v5
+            type: DirectoryOrCreate
+        - name: init
+          configMap:
+            name: e-report-postgresql-v5-init
+            defaultMode: 0555
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: e-postgresql-v5
+  namespace: e-report-test
+  labels:
+    app.kubernetes.io/name: e-report-postgresql-v5
+    app.kubernetes.io/part-of: e-report-test
+spec:
+  selector:
+    app: e-postgresql-v5
+  ports:
+    - name: postgresql
+      port: 5432
+      targetPort: postgresql
