@@ -60,6 +60,9 @@ public class DailyWorkOrderReportDispatchLedger {
                     if (dispatch.getStatus() != DailyWorkOrderReportDispatchStatus.PROCESSING) {
                         return Optional.<LocalDateTime>empty();
                     }
+                    if (dispatch.getNextAttemptAt() != null) {
+                        return Optional.of(dispatch.getNextAttemptAt().isAfter(now) ? dispatch.getNextAttemptAt() : now);
+                    }
                     // 回收使用严格小于条件，避开数据库时间精度和租约边界上的立即重入。
                     LocalDateTime leaseExpiresAt = dispatch.getStartedAt().plus(claimTimeout).plusSeconds(1);
                     return Optional.of(leaseExpiresAt.isAfter(now) ? leaseExpiresAt : now);
@@ -72,7 +75,9 @@ public class DailyWorkOrderReportDispatchLedger {
         LocalDateTime staleBefore = reclaimedAt.minus(claimTimeout);
         if (dispatch.getStatus() != DailyWorkOrderReportDispatchStatus.PROCESSING
                 || dispatch.getStartedAt() == null
-                || !dispatch.getStartedAt().isBefore(staleBefore)) {
+                || (dispatch.getNextAttemptAt() != null
+                    ? dispatch.getNextAttemptAt().isAfter(reclaimedAt)
+                    : !dispatch.getStartedAt().isBefore(staleBefore))) {
             return Optional.empty();
         }
 
@@ -91,6 +96,18 @@ public class DailyWorkOrderReportDispatchLedger {
     }
 
     @Transactional
+    public void defer(UUID dispatchId, LocalDateTime retryAt, int workOrderCount,
+                      int recipientCount, int successCount, int failureCount) {
+        DailyWorkOrderReportDispatch dispatch = repository.findById(dispatchId).orElseThrow();
+        dispatch.setNextAttemptAt(retryAt);
+        dispatch.setWorkOrderCount(workOrderCount);
+        dispatch.setRecipientCount(recipientCount);
+        dispatch.setSuccessCount(successCount);
+        dispatch.setFailureCount(failureCount);
+        repository.save(dispatch);
+    }
+
+    @Transactional
     public void complete(UUID dispatchId,
                          DailyWorkOrderReportDispatchStatus status,
                          int workOrderCount,
@@ -102,6 +119,7 @@ public class DailyWorkOrderReportDispatchLedger {
         DailyWorkOrderReportDispatch dispatch = repository.findById(dispatchId)
                 .orElseThrow(() -> new EntityNotFoundException("日报执行台账不存在: " + dispatchId));
         dispatch.setStatus(status);
+        dispatch.setNextAttemptAt(null);
         dispatch.setWorkOrderCount(workOrderCount);
         dispatch.setRecipientCount(recipientCount);
         dispatch.setSuccessCount(successCount);

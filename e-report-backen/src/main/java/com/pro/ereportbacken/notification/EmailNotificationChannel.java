@@ -6,13 +6,18 @@ import com.pro.ereportbacken.service.MapService;
 import com.pro.ereportbacken.notification.delivery.EmailDeliveryCategory;
 import com.pro.ereportbacken.notification.delivery.EmailDeliveryContext;
 import com.pro.ereportbacken.notification.delivery.EmailDeliveryTracker;
+import com.pro.ereportbacken.notification.delivery.EmailDeliveryStatus;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchService;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchResult;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchDeferredException;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchFailedException;
+import java.time.Instant;
 import com.pro.ereportbacken.time.DisplayTime;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
@@ -44,20 +49,20 @@ public class EmailNotificationChannel implements NotificationChannel {
             false
     );
 
-    private final ConfiguredMailSenderFactory mailSenderFactory;
+    private final EmailDispatchService dispatcher;
     private final FileStorageService fileStorageService;
     private final MapService mapService;
     private final MapKeyPoolService mapKeyPoolService;
     private final EmailNotificationRecipientResolver recipientResolver;
     private final EmailDeliveryTracker deliveryTracker;
 
-    public EmailNotificationChannel(ConfiguredMailSenderFactory mailSenderFactory,
+    public EmailNotificationChannel(EmailDispatchService dispatcher,
                                     FileStorageService fileStorageService,
                                     MapService mapService,
                                     MapKeyPoolService mapKeyPoolService,
                                     EmailNotificationRecipientResolver recipientResolver,
                                     EmailDeliveryTracker deliveryTracker) {
-        this.mailSenderFactory = mailSenderFactory;
+        this.dispatcher = dispatcher;
         this.fileStorageService = fileStorageService;
         this.mapService = mapService;
         this.mapKeyPoolService = mapKeyPoolService;
@@ -84,47 +89,49 @@ public class EmailNotificationChannel implements NotificationChannel {
             throw new IllegalStateException("邮件通知已启用，但" + recipientType + "没有可用的收件地址。");
         }
 
-        ConfiguredMailSenderFactory.MailSenderContext mailContext;
+        EmailDispatchService.Batch batch;
         try {
-            mailContext = mailSenderFactory.next();
+            batch = dispatcher.prepareBatch();
         } catch (RuntimeException failure) {
             recipients.forEach(recipient -> deliveryTracker.configurationFailed(deliveryContext(notification, recipient)));
             throw failure;
         }
-        JavaMailSender configuredMailSender = mailContext.mailSender();
-        String mailFrom = mailContext.fromAddress();
-
         int successCount = 0;
-        List<Exception> failures = new java.util.ArrayList<>();
+        int failureCount = 0;
+        Instant retryAt = null;
         for (EmailNotificationRecipientResolver.EmailRecipient recipient : recipients) {
-            try {
-                deliveryTracker.send(deliveryContext(notification, recipient), mailFrom, () -> {
-                    MimeMessage mimeMessage = configuredMailSender.createMimeMessage();
-                    MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-                    helper.setFrom(mailFrom);
-                    helper.setSubject(subject(notification));
-                    helper.setText(buildHtmlContent(helper, notification), true);
-                    helper.setTo(recipient.address());
-                    configuredMailSender.send(mimeMessage);
-                });
+            EmailDispatchResult result = dispatcher.send(batch, notificationKey(notification),
+                    deliveryContext(notification, recipient), mailContext -> {
+                        JavaMailSender mailSender = mailContext.mailSender();
+                        MimeMessage message = mailSender.createMimeMessage();
+                        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                        helper.setFrom(mailContext.fromAddress());
+                        helper.setSubject(subject(notification));
+                        helper.setText(buildHtmlContent(helper, notification), true);
+                        helper.setTo(recipient.address());
+                        mailSender.send(message);
+                    });
+            if (result.status() == EmailDeliveryStatus.SMTP_ACCEPTED) {
                 successCount++;
-            } catch (MessagingException | MailException e) {
-                failures.add(e);
-                log.error("邮件通知投递失败。workOrderId={}, userId={}, address={}, phoneFallback={}, reason={}",
-                        notification.id(), recipient.userId(),
-                        EmailNotificationRecipientResolver.maskAddress(recipient.address()),
-                        recipient.phoneFallback(), e.getMessage(), e);
+            } else if (result.retryAt() != null) {
+                if (retryAt == null || result.retryAt().isBefore(retryAt)) retryAt = result.retryAt();
+            } else {
+                failureCount++;
             }
         }
-        log.info("邮件通知投递完成。workOrderId={}, success={}/{}",
-                notification.id(), successCount, recipients.size());
-        if (!failures.isEmpty()) {
-            IllegalStateException deliveryFailure = new IllegalStateException(
-                    "邮件通知有 " + failures.size() + " 个收件地址投递失败。"
-            );
-            failures.forEach(deliveryFailure::addSuppressed);
-            throw deliveryFailure;
+        log.info("邮件通知投递进度。workOrderId={}, accepted={}, failed={}, recipients={}, retryAt={}",
+                notification.id(), successCount, failureCount, recipients.size(), retryAt);
+        if (retryAt != null) throw new EmailDispatchDeferredException(retryAt);
+        if (failureCount > 0) throw new EmailDispatchFailedException(failureCount);
+    }
+
+    private String notificationKey(WorkOrderNotification notification) {
+        if (notification.isAssignmentReceived()) return notification.id() + ":" + notification.assignmentId();
+        if (notification.isSlaBreach()) {
+            return notification.id() + ":" + notification.slaStageName() + ":" + notification.slaDueAt()
+                    + ":" + notification.slaBreachedAt();
         }
+        return notification.id().toString();
     }
 
     private EmailDeliveryContext deliveryContext(WorkOrderNotification notification,

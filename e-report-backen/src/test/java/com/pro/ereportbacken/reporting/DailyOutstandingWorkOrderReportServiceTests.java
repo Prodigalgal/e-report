@@ -234,7 +234,7 @@ class DailyOutstandingWorkOrderReportServiceTests {
                 .thenReturn(new EmailNotificationRecipientResolver.RecipientSelection(recipients, recipients.size(), 0));
         when(exporter.export(any())).thenReturn(new byte[]{1, 2});
         when(emailSender.send(any(), any(), eq(recipients)))
-                .thenReturn(new DailyOutstandingWorkOrderReportEmailSender.DeliveryResult(1, List.of()));
+                .thenReturn(new DailyOutstandingWorkOrderReportEmailSender.DeliveryResult(1, List.of(), null));
 
         service.dispatchIfDue(tenantId, countyScope(), now);
 
@@ -271,12 +271,51 @@ class DailyOutstandingWorkOrderReportServiceTests {
         when(exporter.export(any())).thenReturn(new byte[]{1, 2});
         when(emailSender.send(any(), any(), eq(recipients)))
                 .thenReturn(new DailyOutstandingWorkOrderReportEmailSender.DeliveryResult(1,
-                        List.of(new DailyOutstandingWorkOrderReportEmailSender.DeliveryFailure(uuid(6), "SMTP timeout"))));
+                        List.of(new DailyOutstandingWorkOrderReportEmailSender.DeliveryFailure(uuid(6), "SMTP timeout")), null));
 
         service.dispatchIfDue(tenantId, countyScope(), now);
 
         verify(dispatchLedger).complete(eq(dispatchId), eq(DailyWorkOrderReportDispatchStatus.PARTIAL_FAILED),
                 eq(1), eq(2), eq(1), eq(1), eq(uuid(6) + ": SMTP timeout"), any());
+    }
+
+    @Test
+    void incompleteRecipientBatchIsRescheduledAtItsCooldownWithoutCompletingTheReport() {
+        var now = at(18, 0);
+        var retryAt = now.toInstant().plusSeconds(10);
+        prepareRecipientBatch(retryAt);
+        service.dispatchIfDue(tenantId, countyScope(), now);
+        verify(dispatchLedger).defer(dispatchId, LocalDateTime.ofInstant(retryAt, ZoneOffset.UTC), 1, 2, 1, 0);
+        verify(dispatchLedger, never()).complete(any(), any(), org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt(), any(), any());
+        when(dispatchLedger.nextAttemptAt(tenantId, countyId, now.toLocalDate(), utc(now)))
+                .thenReturn(Optional.of(LocalDateTime.ofInstant(retryAt, ZoneOffset.UTC)));
+        assertThat(service.nextExecutionAt(tenantId, countyId, now)).contains(retryAt);
+    }
+
+    @Test
+    void backoffBeyondTheDeliveryWindowFinishesTheReportWithItsExistingSuccesses() {
+        var now = at(20, 59);
+        prepareRecipientBatch(now.toInstant().plusSeconds(120));
+        service.dispatchIfDue(tenantId, countyScope(), now);
+        verify(dispatchLedger).complete(eq(dispatchId), eq(DailyWorkOrderReportDispatchStatus.PARTIAL_FAILED),
+                eq(1), eq(2), eq(1), eq(1), org.mockito.ArgumentMatchers.contains("超过当日报告发送窗口"), any());
+        verify(dispatchLedger, never()).defer(any(), any(), org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    private void prepareRecipientBatch(Instant retryAt) {
+        var recipients = List.of(
+                new EmailNotificationRecipientResolver.EmailRecipient(uuid(5), "first@example.com", false),
+                new EmailNotificationRecipientResolver.EmailRecipient(uuid(6), "second@example.com", false));
+        when(dispatchLedger.claim(any(), any(), any(), any())).thenReturn(Optional.of(dispatchId));
+        when(reportRepository.findOutstandingRows(eq(tenantId), any(), any())).thenReturn(List.of(row()));
+        when(recipientResolver.resolve(tenantId, countyId, EmailNotificationCategory.DAILY_OUTSTANDING_REPORT))
+                .thenReturn(new EmailNotificationRecipientResolver.RecipientSelection(recipients, recipients.size(), 0));
+        when(exporter.export(any())).thenReturn(new byte[]{1, 2});
+        when(emailSender.send(any(), any(), eq(recipients)))
+                .thenReturn(new DailyOutstandingWorkOrderReportEmailSender.DeliveryResult(1, List.of(), retryAt));
     }
 
     private OutstandingWorkOrderReportRow row() {

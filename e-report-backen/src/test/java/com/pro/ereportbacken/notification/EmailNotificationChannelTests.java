@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 class EmailNotificationChannelTests {
     @Test
     void optOutCompletesNormallyWithoutUsingSmtpOrBuildingAttachments() {
-        var factory = mock(ConfiguredMailSenderFactory.class);
+        var factory = mock(com.pro.ereportbacken.notification.delivery.EmailDispatchService.class);
         var files = mock(FileStorageService.class);
         var map = mock(MapService.class);
         var keys = mock(MapKeyPoolService.class);
@@ -33,7 +33,7 @@ class EmailNotificationChannelTests {
 
     @Test
     void missingContactDetailsStillFailsInsteadOfPretendingTheUserOptedOut() {
-        var factory = mock(ConfiguredMailSenderFactory.class);
+        var factory = mock(com.pro.ereportbacken.notification.delivery.EmailDispatchService.class);
         var resolver = mock(EmailNotificationRecipientResolver.class);
         var notification = mock(WorkOrderNotification.class);
         when(resolver.resolve(notification)).thenReturn(

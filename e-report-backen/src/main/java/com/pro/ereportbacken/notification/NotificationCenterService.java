@@ -2,6 +2,8 @@ package com.pro.ereportbacken.notification;
 
 import com.pro.ereportbacken.security.ConfigurationScopeContext;
 import com.pro.ereportbacken.security.TenantContext;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchDeferredException;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchFailedException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
@@ -90,6 +92,12 @@ public class NotificationCenterService {
             enabledChannelCount++;
             try {
                 channel.send(notification);
+            } catch (EmailDispatchDeferredException deferred) {
+                failures.add(deferred);
+                log.debug("邮件通知已延后。workOrderId={}, retryAt={}", workOrderId, deferred.retryAt());
+            } catch (EmailDispatchFailedException failure) {
+                failures.add(failure);
+                log.warn("邮件通知已停止自动重试。workOrderId={}, reason={}", workOrderId, failure.getMessage());
             } catch (Exception exception) {
                 failures.add(exception);
                 log.error("Notification channel '{}' failed for work order {}: {}",
@@ -109,6 +117,10 @@ public class NotificationCenterService {
                                            List<Exception> failures) {
         if (failures.isEmpty()) {
             return;
+        }
+        if (failures.size() == 1 && (failures.getFirst() instanceof EmailDispatchDeferredException
+                || failures.getFirst() instanceof EmailDispatchFailedException)) {
+            throw (RuntimeException) failures.getFirst();
         }
         if (selectedChannels.size() == 1 && failures.size() == 1) {
             Exception failure = failures.getFirst();

@@ -24,6 +24,7 @@ public interface DailyWorkOrderReportDispatchRepository
     @Query("""
             UPDATE DailyWorkOrderReportDispatch dispatch
             SET dispatch.startedAt = :reclaimedAt,
+                dispatch.nextAttemptAt = NULL,
                 dispatch.completedAt = NULL,
                 dispatch.workOrderCount = 0,
                 dispatch.recipientCount = 0,
@@ -32,7 +33,8 @@ public interface DailyWorkOrderReportDispatchRepository
                 dispatch.errorSummary = NULL
             WHERE dispatch.id = :dispatchId
               AND dispatch.status = :processingStatus
-              AND dispatch.startedAt < :staleBefore
+              AND ((dispatch.nextAttemptAt IS NOT NULL AND dispatch.nextAttemptAt <= :reclaimedAt)
+                OR (dispatch.nextAttemptAt IS NULL AND dispatch.startedAt < :staleBefore))
             """)
     int reclaimStale(
             @Param("dispatchId") UUID dispatchId,

@@ -4,7 +4,6 @@ import com.pro.ereportbacken.notification.MailSenderConfigurationService.MailSen
 import org.junit.jupiter.api.Test;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 
-import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -15,21 +14,13 @@ import static org.mockito.Mockito.when;
 class ConfiguredMailSenderFactoryTests {
 
     @Test
-    void selectsSenderFromResolvedPoolUsingRoundRobinIndex() {
+    void constructsTheSpecifiedSenderWithoutSelectingAnotherPoolAccount() {
         MailSenderConfigurationService configurationService = mock(MailSenderConfigurationService.class);
-        MailSenderRotationService rotationService = mock(MailSenderRotationService.class);
         MailSenderOAuthTokenService oauthTokenService = mock(MailSenderOAuthTokenService.class);
-        when(configurationService.requireCurrent()).thenReturn(
-                new MailSenderConfigurationService.MailSenderConfiguration(
-                        List.of(
-                                sender("smtp.first.example", "first", "first@example.com"),
-                                sender("smtp.second.example", "second", "second@example.com")),
-                        true, true, "ORGANIZATION_OVERRIDE", null, null, false, null, false, MailSenderPoolStrategy.REPLACE, List.of(), List.of(), null));
-        when(rotationService.nextIndex(2)).thenReturn(1);
         ConfiguredMailSenderFactory factory = new ConfiguredMailSenderFactory(
-                configurationService, rotationService, oauthTokenService);
+                configurationService, oauthTokenService);
 
-        var context = factory.next();
+        var context = factory.createConfigured(sender("smtp.second.example", "second", "second@example.com"));
 
         JavaMailSenderImpl mailSender = (JavaMailSenderImpl) context.mailSender();
         assertThat(mailSender.getHost()).isEqualTo("smtp.second.example");
@@ -44,7 +35,6 @@ class ConfiguredMailSenderFactoryTests {
                 .containsEntry("mail.smtp.starttls.enable", "false")
                 .containsEntry("mail.smtp.starttls.required", "false")
                 .containsEntry("mail.smtp.connectiontimeout", "10000");
-        verify(rotationService).nextIndex(2);
     }
 
     @Test
@@ -53,9 +43,9 @@ class ConfiguredMailSenderFactoryTests {
                 UUID.randomUUID(), "CUSTOM", "smtp.example.com", 587, "sender", "secret",
                 "sender@example.com", true, false, true, true, "PASSWORD", "NTLM",
                 "mail.example.com", "CORP", null, "TLSv1.3", 4000, 5000, 6000,
-                null, null, null, null, null, new MailSenderOrigin(null, null, false));
+                null, null, null, null, null, 10, new MailSenderOrigin(null, null, false));
         ConfiguredMailSenderFactory factory = new ConfiguredMailSenderFactory(
-                mock(MailSenderConfigurationService.class), mock(MailSenderRotationService.class),
+                mock(MailSenderConfigurationService.class),
                 mock(MailSenderOAuthTokenService.class));
 
         JavaMailSenderImpl mailSender = (JavaMailSenderImpl) factory.create(account).mailSender();
@@ -77,9 +67,9 @@ class ConfiguredMailSenderFactoryTests {
                 UUID.randomUUID(), "CUSTOM", "smtp.example.com", 465, "sender", "secret",
                 "sender@example.com", true, true, false, false, "PASSWORD", "DIGEST_MD5",
                 null, null, null, "TLSv1.2 TLSv1.3", 10000, 30000, 30000,
-                null, null, null, null, null, new MailSenderOrigin(null, null, false));
+                null, null, null, null, null, 10, new MailSenderOrigin(null, null, false));
         ConfiguredMailSenderFactory factory = new ConfiguredMailSenderFactory(
-                mock(MailSenderConfigurationService.class), mock(MailSenderRotationService.class),
+                mock(MailSenderConfigurationService.class),
                 mock(MailSenderOAuthTokenService.class));
 
         JavaMailSenderImpl mailSender = (JavaMailSenderImpl) factory.create(account).mailSender();
@@ -94,9 +84,9 @@ class ConfiguredMailSenderFactoryTests {
                 UUID.randomUUID(), "CUSTOM", "smtp.example.com", 465, "sender", "secret",
                 "sender@example.com", true, true, false, false, "PASSWORD", "DIGEST_MD5",
                 null, null, "mail-realm", "TLSv1.2 TLSv1.3", 10000, 30000, 30000,
-                null, null, null, null, null, new MailSenderOrigin(null, null, false));
+                null, null, null, null, null, 10, new MailSenderOrigin(null, null, false));
         ConfiguredMailSenderFactory factory = new ConfiguredMailSenderFactory(
-                mock(MailSenderConfigurationService.class), mock(MailSenderRotationService.class),
+                mock(MailSenderConfigurationService.class),
                 mock(MailSenderOAuthTokenService.class));
 
         JavaMailSenderImpl mailSender = (JavaMailSenderImpl) factory.create(account).mailSender();
@@ -114,9 +104,9 @@ class ConfiguredMailSenderFactoryTests {
                 UUID.randomUUID(), "CUSTOM", "smtp.example.com", 465, "sender", "secret",
                 "sender@example.com", true, true, false, false, "PASSWORD", "CRAM_MD5",
                 null, null, null, "TLSv1.2 TLSv1.3", 10000, 30000, 30000,
-                null, null, null, null, null, new MailSenderOrigin(null, null, false));
+                null, null, null, null, null, 10, new MailSenderOrigin(null, null, false));
         ConfiguredMailSenderFactory factory = new ConfiguredMailSenderFactory(
-                mock(MailSenderConfigurationService.class), mock(MailSenderRotationService.class),
+                mock(MailSenderConfigurationService.class),
                 mock(MailSenderOAuthTokenService.class));
 
         JavaMailSenderImpl mailSender = (JavaMailSenderImpl) factory.create(account).mailSender();
@@ -134,11 +124,11 @@ class ConfiguredMailSenderFactoryTests {
                 UUID.randomUUID(), "GMAIL", "smtp.gmail.com", 587, "sender@gmail.com", null,
                 "sender@gmail.com", true, false, true, true, "OAUTH2", "XOAUTH2",
                 null, null, null, "TLSv1.2 TLSv1.3", 10000, 30000, 30000,
-                "client", "client-secret", "refresh-token", null, "https://mail.google.com/", new MailSenderOrigin(null, null, false));
+                "client", "client-secret", "refresh-token", null, "https://mail.google.com/", 10, new MailSenderOrigin(null, null, false));
         when(oauthTokenService.accessToken(account)).thenReturn(
                 new MailSenderOAuthTokenService.OAuthAccessToken("access-token", "refresh", null));
         ConfiguredMailSenderFactory factory = new ConfiguredMailSenderFactory(
-                mock(MailSenderConfigurationService.class), mock(MailSenderRotationService.class), oauthTokenService);
+                mock(MailSenderConfigurationService.class), oauthTokenService);
 
         JavaMailSenderImpl mailSender = (JavaMailSenderImpl) factory.create(account).mailSender();
 
@@ -153,7 +143,6 @@ class ConfiguredMailSenderFactoryTests {
     @Test
     void persistsRotatedRefreshTokenAtTheAccountSourceWithinAMergedPool() {
         MailSenderConfigurationService configurationService = mock(MailSenderConfigurationService.class);
-        MailSenderRotationService rotationService = mock(MailSenderRotationService.class);
         MailSenderOAuthTokenService oauthTokenService = mock(MailSenderOAuthTokenService.class);
         UUID senderId = UUID.randomUUID();
         UUID sourceOrgUnitId = UUID.randomUUID();
@@ -161,18 +150,13 @@ class ConfiguredMailSenderFactoryTests {
                 senderId, "MICROSOFT_365", "smtp.office365.com", 587, "sender@example.com", null,
                 "sender@example.com", true, false, true, true, "OAUTH2", "XOAUTH2",
                 null, null, null, "TLSv1.2 TLSv1.3", 10000, 30000, 30000,
-                "client", "secret", "old-refresh", "tenant", null, new MailSenderOrigin(sourceOrgUnitId, "南靖县", false));
-        when(configurationService.requireCurrent()).thenReturn(
-                new MailSenderConfigurationService.MailSenderConfiguration(
-                        List.of(account), true, true, "MIXED", UUID.randomUUID(),
-                        "使用方组织", false, null, false, MailSenderPoolStrategy.MERGE, List.of(), List.of(), null));
-        when(rotationService.nextIndex(1)).thenReturn(0);
+                "client", "secret", "old-refresh", "tenant", null, 10, new MailSenderOrigin(sourceOrgUnitId, "南靖县", false));
         when(oauthTokenService.accessToken(account)).thenReturn(
                 new MailSenderOAuthTokenService.OAuthAccessToken("access", "old-refresh", "new-refresh"));
         ConfiguredMailSenderFactory factory = new ConfiguredMailSenderFactory(
-                configurationService, rotationService, oauthTokenService);
+                configurationService, oauthTokenService);
 
-        factory.next();
+        factory.createConfigured(account);
 
         verify(configurationService).persistRotatedOAuthRefreshToken(
                 sourceOrgUnitId, senderId, "old-refresh", "new-refresh");
@@ -182,6 +166,6 @@ class ConfiguredMailSenderFactoryTests {
         return new MailSenderAccountConfiguration(
                 UUID.randomUUID(), "CUSTOM", host, 465, username, "secret-" + username, fromAddress,
                 true, true, false, false, "PASSWORD", "AUTO", null, null, null,
-                "TLSv1.2 TLSv1.3", 10000, 30000, 30000, null, null, null, null, null, new MailSenderOrigin(null, null, false));
+                "TLSv1.2 TLSv1.3", 10000, 30000, 30000, null, null, null, null, null, 10, new MailSenderOrigin(null, null, false));
     }
 }

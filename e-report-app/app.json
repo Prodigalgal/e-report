@@ -2,7 +2,7 @@
   "expo": {
     "name": "网络运维管理",
     "slug": "e-report-app",
-    "version": "6.9.3",
+    "version": "6.10.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "runtimeVersion": "android-6.8.2-native5008002",

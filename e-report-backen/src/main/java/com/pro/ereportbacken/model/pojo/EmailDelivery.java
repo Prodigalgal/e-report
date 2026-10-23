@@ -25,6 +25,8 @@ import java.util.UUID;
 public class EmailDelivery extends UuidV7Entity {
     @Column(name = "tenant_id", nullable = false)
     private UUID tenantId;
+    @Column(name = "dispatch_id")
+    private UUID dispatchId;
     @Column(name = "org_unit_id")
     private UUID orgUnitId;
     @Enumerated(EnumType.STRING)

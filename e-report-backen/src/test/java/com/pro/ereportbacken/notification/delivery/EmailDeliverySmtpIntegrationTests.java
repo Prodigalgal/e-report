@@ -94,7 +94,7 @@ class EmailDeliverySmtpIntegrationTests {
 
     private EmailDeliveryContext context() {
         return new EmailDeliveryContext(tenants.findAll().getFirst().getId(), null, EmailDeliveryCategory.CONFIGURATION_TEST,
-                UUID.randomUUID(), null, "recipient@example.test", "SMTP integration");
+                UUID.randomUUID(), null, "recipient@example.test", "SMTP integration", null);
     }
 
     @Test
@@ -130,9 +130,10 @@ class EmailDeliverySmtpIntegrationTests {
         return sender;
     }
 
-    private static final class LocalSmtp implements AutoCloseable {
+    static final class LocalSmtp implements AutoCloseable {
         private final ServerSocket listener;
         private final CompletableFuture<Void> conversation;
+        private final java.util.concurrent.atomic.AtomicInteger receivedMessages = new java.util.concurrent.atomic.AtomicInteger();
 
         LocalSmtp(boolean acceptsRecipient) throws Exception {
             this(acceptsRecipient, true);
@@ -153,6 +154,7 @@ class EmailDeliverySmtpIntegrationTests {
                         if (line.startsWith("DATA")) {
                             output.print("354 End with a dot\r\n"); output.flush();
                             while ((line = input.readLine()) != null && !line.equals(".")) { }
+                            if (".".equals(line)) receivedMessages.incrementAndGet();
                             if (!acknowledgesMessage) { input.readLine(); break; }
                             output.print("250 accepted\r\n");
                         } else if (line.startsWith("QUIT")) {
@@ -167,6 +169,7 @@ class EmailDeliverySmtpIntegrationTests {
         }
 
         int port() { return listener.getLocalPort(); }
+        int receivedMessages() { return receivedMessages.get(); }
         void await() throws Exception { conversation.get(6, TimeUnit.SECONDS); }
         @Override public void close() throws Exception { listener.close(); }
     }

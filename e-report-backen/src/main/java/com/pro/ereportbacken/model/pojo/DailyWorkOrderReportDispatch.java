@@ -61,6 +61,9 @@ public class DailyWorkOrderReportDispatch extends UuidV7Entity {
     @Column(name = "started_at", nullable = false)
     private LocalDateTime startedAt;
 
+    @Column(name = "next_attempt_at")
+    private LocalDateTime nextAttemptAt;
+
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 }

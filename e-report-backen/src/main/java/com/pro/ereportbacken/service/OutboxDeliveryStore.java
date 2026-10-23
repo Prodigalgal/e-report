@@ -51,6 +51,26 @@ public class OutboxDeliveryStore {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void defer(UUID eventId, java.time.Instant retryAt) {
+        OutboxEvent event = requireEvent(eventId);
+        event.setState("PENDING");
+        event.setLockedAt(null);
+        event.setAvailableAt(LocalDateTime.ofInstant(retryAt, java.time.ZoneOffset.UTC));
+        event.setAttempts(Math.max(0, event.getAttempts() - 1));
+        event.setLastError(null);
+        repository.save(event);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void markTerminalFailure(UUID eventId, String message) {
+        OutboxEvent event = requireEvent(eventId);
+        event.setState("FAILED");
+        event.setLockedAt(null);
+        event.setLastError(truncate(message));
+        repository.save(event);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void markFailed(UUID eventId, String errorMessage) {
         OutboxEvent event = requireEvent(eventId);
         event.setLastError(truncate(errorMessage));

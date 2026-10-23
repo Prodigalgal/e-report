@@ -77,6 +77,21 @@ class OutboxEventProcessorTests {
     }
 
     @Test
+    void accountCooldownReschedulesTheEventInsteadOfRecordingADeliveryFailure() {
+        var store = mock(OutboxDeliveryStore.class);
+        var notifications = mock(NotificationCenterService.class);
+        var event = event(uuid(12), "WORK_ORDER_CREATED:email");
+        var retryAt = java.time.Instant.now().plusSeconds(10);
+        when(store.claim(1)).thenReturn(List.of(event));
+        doThrow(new com.pro.ereportbacken.notification.delivery.EmailDispatchDeferredException(retryAt))
+                .when(notifications).notifyWorkOrder(uuid(3), uuid(19), WorkOrderNotificationKind.CREATED, "email");
+        processor(store, notifications).deliver();
+        verify(store).defer(event.getId(), retryAt);
+        verify(store, never()).markFailed(any(), anyString());
+        verify(store, never()).markCompleted(any());
+    }
+
+    @Test
     void dispatchesReassignmentNoticeToTheCapturedAssignment() {
         OutboxDeliveryStore deliveryStore = mock(OutboxDeliveryStore.class);
         NotificationCenterService notificationCenterService = mock(NotificationCenterService.class);

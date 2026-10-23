@@ -310,7 +310,8 @@ public class MailSenderConfigurationService {
                 smtpAuth, sslEnabled, startTlsEnabled, startTlsRequired,
                 authenticationMode, authMechanism, ehloDomain, authDomain, saslRealm, sslProtocols,
                 connectionTimeoutMs, readTimeoutMs, writeTimeoutMs,
-                oauthClientId, oauthClientSecret, oauthRefreshToken, oauthTenantId, oauthScope);
+                oauthClientId, oauthClientSecret, oauthRefreshToken, oauthTenantId, oauthScope,
+                sendInterval(request.sendIntervalSeconds(), existing == null ? null : existing.sendIntervalSeconds()));
     }
 
     private String choice(String requested,
@@ -329,6 +330,14 @@ public class MailSenderConfigurationService {
             }
         }
         throw new IllegalArgumentException(label + "不受支持。");
+    }
+
+    private int sendInterval(Integer requested, Integer existing) {
+        int seconds = requested != null ? requested : existing != null ? existing : 10;
+        if (seconds < 0 || seconds > 3600) {
+            throw new IllegalArgumentException("单封发送间隔必须在0至3600秒之间。");
+        }
+        return seconds;
     }
 
     private Integer timeout(Integer requested, Integer existing, int defaultValue, String label) {
@@ -527,7 +536,7 @@ public class MailSenderConfigurationService {
                 stored.readTimeoutMs() == null ? DEFAULT_READ_TIMEOUT_MS : stored.readTimeoutMs(),
                 stored.writeTimeoutMs() == null ? DEFAULT_WRITE_TIMEOUT_MS : stored.writeTimeoutMs(),
                 stored.oauthClientId(), stored.oauthClientSecret(), stored.oauthRefreshToken(),
-                stored.oauthTenantId(), oauthScope, origin);
+                stored.oauthTenantId(), oauthScope, sendInterval(stored.sendIntervalSeconds(), null), origin);
     }
 
     private List<MailSenderAccountConfiguration> legacySender(Map<String, AppConfig> configs, MailSenderOrigin origin) {
@@ -551,7 +560,7 @@ public class MailSenderConfigurationService {
                 Boolean.TRUE.equals(startTlsEnabled), MailSenderAuthenticationMode.PASSWORD.name(),
                 MailSenderAuthenticationMechanism.AUTO.name(), null, null, null, DEFAULT_SSL_PROTOCOLS,
                 DEFAULT_CONNECTION_TIMEOUT_MS, DEFAULT_READ_TIMEOUT_MS, DEFAULT_WRITE_TIMEOUT_MS,
-                null, null, null, null, null, origin));
+                null, null, null, null, null, 10, origin));
     }
 
     private UUID legacySenderId(UUID sourceOrgUnitId) {
@@ -627,7 +636,8 @@ public class MailSenderConfigurationService {
             String oauthClientSecret,
             String oauthRefreshToken,
             String oauthTenantId,
-            String oauthScope
+            String oauthScope,
+            Integer sendIntervalSeconds
     ) {
         private StoredMailSenderAccount withOAuthRefreshToken(String refreshToken) {
             return new StoredMailSenderAccount(
@@ -635,7 +645,7 @@ public class MailSenderConfigurationService {
                     sslEnabled, startTlsEnabled, startTlsRequired, authenticationMode, authMechanism,
                     ehloDomain, authDomain, saslRealm, sslProtocols, connectionTimeoutMs,
                     readTimeoutMs, writeTimeoutMs, oauthClientId, oauthClientSecret, refreshToken,
-                    oauthTenantId, oauthScope);
+                    oauthTenantId, oauthScope, sendIntervalSeconds);
         }
     }
 
@@ -694,7 +704,7 @@ public class MailSenderConfigurationService {
                             sender.oauthClientId(), sender.oauthTenantId(), sender.oauthScope(),
                             StringUtils.hasText(sender.oauthClientSecret()),
                             StringUtils.hasText(sender.oauthRefreshToken()), sender.origin().scope(),
-                            sender.origin().orgUnitId(), sender.origin().orgUnitName());
+                            sender.origin().orgUnitId(), sender.origin().orgUnitName(), sender.sendIntervalSeconds());
         }
     }
 
@@ -724,6 +734,7 @@ public class MailSenderConfigurationService {
             String oauthRefreshToken,
             String oauthTenantId,
             String oauthScope,
+            int sendIntervalSeconds,
             MailSenderOrigin origin
     ) {
         public boolean configured() {

@@ -19,7 +19,7 @@ class EmailDeliveryTrackerTests {
     private final EmailDeliveryTracker tracker = new EmailDeliveryTracker(store, mock(TenantContext.class));
     private final UUID id = UUID.randomUUID();
     private final EmailDeliveryContext context = new EmailDeliveryContext(UUID.randomUUID(), UUID.randomUUID(),
-            EmailDeliveryCategory.CREATED, UUID.randomUUID(), UUID.randomUUID(), "recipient@example.test", "发送验证");
+            EmailDeliveryCategory.CREATED, UUID.randomUUID(), UUID.randomUUID(), "recipient@example.test", "发送验证", null);
 
     @Test
     void recordsStartBeforeSmtpAndAcceptedOnlyAfterTheSingleSend() throws Exception {

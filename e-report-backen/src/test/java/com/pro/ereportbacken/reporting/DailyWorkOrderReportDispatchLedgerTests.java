@@ -112,6 +112,19 @@ class DailyWorkOrderReportDispatchLedgerTests {
     }
 
     @Test
+    void coolingReportUsesItsExplicitRetryDeadlineAndCanBeClaimedAtThatInstant() {
+        var existing = dispatch(DailyWorkOrderReportDispatchStatus.PROCESSING, now.minusSeconds(10));
+        existing.setNextAttemptAt(now.plusSeconds(10));
+        when(repository.findByTenantIdAndOrgUnitIdAndReportDate(tenantId, orgUnitId, reportDate))
+                .thenReturn(Optional.of(existing));
+        assertThat(ledger.nextAttemptAt(tenantId, orgUnitId, reportDate, now)).contains(now.plusSeconds(10));
+        assertThat(ledger.claim(tenantId, orgUnitId, reportDate, now)).isEmpty();
+        when(repository.reclaimStale(dispatchId, DailyWorkOrderReportDispatchStatus.PROCESSING,
+                now.plusSeconds(10).minusMinutes(60), now.plusSeconds(10))).thenReturn(1);
+        assertThat(ledger.claim(tenantId, orgUnitId, reportDate, now.plusSeconds(10))).contains(dispatchId);
+    }
+
+    @Test
     void finishedAndPartiallyFailedReportsAreNotAutomaticallyResent() {
         for (var status : DailyWorkOrderReportDispatchStatus.values()) {
             if (status == DailyWorkOrderReportDispatchStatus.PROCESSING) {

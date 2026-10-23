@@ -12,26 +12,20 @@ import java.util.Properties;
 public class ConfiguredMailSenderFactory {
 
     private final MailSenderConfigurationService configurationService;
-    private final MailSenderRotationService rotationService;
     private final MailSenderOAuthTokenService oauthTokenService;
 
     public ConfiguredMailSenderFactory(MailSenderConfigurationService configurationService,
-                                      MailSenderRotationService rotationService,
                                       MailSenderOAuthTokenService oauthTokenService) {
         this.configurationService = configurationService;
-        this.rotationService = rotationService;
         this.oauthTokenService = oauthTokenService;
-    }
-
-    public MailSenderContext next() {
-        MailSenderConfigurationService.MailSenderConfiguration configuration = configurationService.requireCurrent();
-        int senderIndex = rotationService.nextIndex(configuration.senders().size());
-        MailSenderAccountConfiguration sender = configuration.senders().get(senderIndex);
-        return create(sender, sender.origin().orgUnitId(), !sender.origin().runtimeDefault());
     }
 
     public MailSenderContext create(MailSenderAccountConfiguration sender) {
         return create(sender, null, false);
+    }
+
+    public MailSenderContext createConfigured(MailSenderAccountConfiguration sender) {
+        return create(sender, sender.origin().orgUnitId(), !sender.origin().runtimeDefault());
     }
 
     private MailSenderContext create(MailSenderAccountConfiguration sender,

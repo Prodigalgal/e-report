@@ -24,6 +24,7 @@ public class EmailDeliveryStore {
         EmailDelivery delivery = new EmailDelivery();
         delivery.setTenantId(Objects.requireNonNull(context.tenantId(), "邮件租户不能为空"));
         delivery.setOrgUnitId(context.orgUnitId());
+        delivery.setDispatchId(context.dispatchId());
         delivery.setCategory(Objects.requireNonNull(context.category(), "邮件类型不能为空"));
         delivery.setRelatedId(context.relatedId());
         delivery.setRecipientUserId(context.recipientUserId());

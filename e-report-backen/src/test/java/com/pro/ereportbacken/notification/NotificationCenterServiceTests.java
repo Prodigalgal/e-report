@@ -94,6 +94,24 @@ class NotificationCenterServiceTests {
     }
 
     @Test
+    void emailCooldownKeepsItsRetryDeadlineWhenOtherChannelsHaveCompleted() throws Exception {
+        var configs = mock(AppConfigService.class);
+        var reader = mock(WorkOrderNotificationReader.class);
+        var email = channel("email", "notification.email.enabled", true);
+        var wecom = channel("wecom", "notification.wecom.enabled", false);
+        var notification = notification(uuid(9), uuid(7));
+        when(configs.getConfigValueAsBoolean("notification.center.enabled", false)).thenReturn(true);
+        when(configs.getConfigValueAsBoolean("notification.email.enabled", true)).thenReturn(true);
+        when(configs.getConfigValueAsBoolean("notification.wecom.enabled", false)).thenReturn(true);
+        when(reader.load(uuid(3), uuid(9), WorkOrderNotificationKind.CREATED)).thenReturn(notification);
+        var deferred = new com.pro.ereportbacken.notification.delivery.EmailDispatchDeferredException(java.time.Instant.now().plusSeconds(10));
+        org.mockito.Mockito.doThrow(deferred).when(email).send(notification);
+        var service = service(configs, reader, List.of(email, wecom), tenantContext(), new ConfigurationScopeContext());
+        assertThatThrownBy(() -> service.notifyWorkOrder(uuid(3), uuid(9), WorkOrderNotificationKind.CREATED)).isSameAs(deferred);
+        verify(wecom).send(notification);
+    }
+
+    @Test
     void disabledTargetedChannelCompletesWithoutCallingTransport() throws Exception {
         AppConfigService appConfigService = mock(AppConfigService.class);
         WorkOrderNotificationReader reader = mock(WorkOrderNotificationReader.class);

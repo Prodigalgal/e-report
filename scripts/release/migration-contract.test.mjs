@@ -28,3 +28,12 @@ test('both database paths normalize email attempt statuses before the 6.9.3 tag'
     assert.ok(normalization > ledger && changelog.indexOf('tag: e-report-6.9.3') > normalization, `${root} must normalize email statuses`);
   }
 });
+
+test('both database paths persist recipient checkpoints before the 6.10.0 tag', () => {
+  for (const root of ['db/changelog/db.changelog-master.yaml', 'db/changelog/postgresql/db.changelog-master.yaml']) {
+    const changelog = readFileSync(new URL(`../../e-report-backen/src/main/resources/${root}`, import.meta.url), 'utf8');
+    const checkpoints = changelog.indexOf('2026-10-23-079-mail-delivery-control.sql');
+    assert.ok(checkpoints > changelog.indexOf('2026-10-22-078-email-delivery-status.sql')
+      && changelog.indexOf('tag: e-report-6.10.0') > checkpoints, `${root} must include mail delivery control`);
+  }
+});

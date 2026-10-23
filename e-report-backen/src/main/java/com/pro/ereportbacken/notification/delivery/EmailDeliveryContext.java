@@ -9,6 +9,11 @@ public record EmailDeliveryContext(
         UUID relatedId,
         UUID recipientUserId,
         String recipientAddress,
-        String subject
+        String subject,
+        UUID dispatchId
 ) {
+    public EmailDeliveryContext withDispatchId(UUID id) {
+        return new EmailDeliveryContext(tenantId, orgUnitId, category, relatedId, recipientUserId,
+                recipientAddress, subject, id);
+    }
 }

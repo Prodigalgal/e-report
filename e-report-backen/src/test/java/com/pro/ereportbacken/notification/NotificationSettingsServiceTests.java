@@ -173,7 +173,7 @@ class NotificationSettingsServiceTests {
                         uuid(20), "smtp.example.com", 465, "sender@example.com", "sender@example.com",
                         true, true, false, true, "CUSTOM", "PASSWORD", "AUTO", false,
                         null, null, null, "TLSv1.2 TLSv1.3", 10000, 30000, 30000,
-                        null, null, null, false, false, "TENANT_OVERRIDE", null, null)),
+                        null, null, null, false, false, "TENANT_OVERRIDE", null, null, 10)),
                 "TENANT_OVERRIDE", null, null, true, null, false, MailSenderPoolStrategy.INHERIT, List.of(), List.of(), null));
         return service;
     }

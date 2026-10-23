@@ -30,6 +30,7 @@ public record MailSenderAccountDTO(
         boolean oauthRefreshTokenConfigured,
         String sourceScope,
         UUID sourceOrgUnitId,
-        String sourceOrgUnitName
+        String sourceOrgUnitName,
+        Integer sendIntervalSeconds
 ) {
 }

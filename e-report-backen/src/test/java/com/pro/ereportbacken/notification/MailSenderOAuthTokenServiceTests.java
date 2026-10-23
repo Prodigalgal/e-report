@@ -99,6 +99,6 @@ class MailSenderOAuthTokenServiceTests {
                 587, "sender@example.com", null, "sender@example.com", true, false,
                 true, true, "OAUTH2", "XOAUTH2", null, null, null,
                 "TLSv1.2 TLSv1.3", 10000, 30000, 30000,
-                "client-id", "client-secret", "refresh-token", tenantId, null, new MailSenderOrigin(null, null, false));
+                "client-id", "client-secret", "refresh-token", tenantId, null, 10, new MailSenderOrigin(null, null, false));
     }
 }

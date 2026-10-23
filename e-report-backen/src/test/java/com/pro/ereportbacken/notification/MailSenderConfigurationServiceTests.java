@@ -62,6 +62,7 @@ class MailSenderConfigurationServiceTests {
         assertThat(settings.senders()).hasSize(1);
         assertThat(settings.senders().getFirst().host()).isEqualTo("smtp.county.example");
         assertThat(settings.senders().getFirst().passwordConfigured()).isTrue();
+        assertThat(settings.senders().getFirst().sendIntervalSeconds()).isEqualTo(10);
         assertThat(settings.sourceOrgUnitName()).isEqualTo("南靖县");
         assertThat(objectMapper.writeValueAsString(settings)).doesNotContain("county-secret");
     }
@@ -137,7 +138,7 @@ class MailSenderConfigurationServiceTests {
                 uuid(34), "smtp.office365.com", 587, "new@example.com", null, "new@example.com",
                 true, false, true, "MICROSOFT_365", "OAUTH2", "XOAUTH2", true,
                 null, null, null, "TLSv1.2 TLSv1.3", 10_000, 30_000, 30_000,
-                "new-client", "new-secret", "new-refresh", "common", null);
+                "new-client", "new-secret", "new-refresh", "common", null, null);
         service.update(updateRequest(List.of(request)), countyId);
 
         assertThat(currentPool.get())
@@ -202,7 +203,7 @@ class MailSenderConfigurationServiceTests {
         var request = new MailSenderAccountUpdateRequestDTO(
                 senderId, "smtp.example.com", 465, "sender", "", "sender@example.com",
                 true, true, false, "CUSTOM", "PASSWORD", "DIGEST_MD5", false,
-                "", "", "", "", null, null, null, null, null, null, null, null);
+                "", "", "", "", null, null, null, null, null, null, null, null, null);
 
         service.update(updateRequest(List.of(request)), countyId);
 
@@ -264,13 +265,37 @@ class MailSenderConfigurationServiceTests {
         var relay = new MailSenderAccountUpdateRequestDTO(
                 uuid(120), "relay.example.com", 25, null, null, "relay@example.com", false, false, false,
                 "CUSTOM", "PASSWORD", "AUTO", false, null, null, null, "TLSv1.2 TLSv1.3",
-                10_000, 30_000, 30_000, null, null, null, null, null);
+                10_000, 30_000, 30_000, null, null, null, null, null, null);
 
         service.update(updateRequest(List.of(relay)), countyId);
 
         verify(appConfigService).saveOrUpdateScopedConfig(
                 eq(MAIL_SENDER_POOL_KEY), argThat(value -> value.contains("relay@example.com")
                 && value.contains("\"smtpAuth\":false")), anyString(), eq(countyId));
+    }
+
+    @Test
+    void sendIntervalDefaultsToTenAcceptsZeroAndSurvivesPartialConfigurationUpdates() {
+        memoryConfigs();
+        UUID id = uuid(170);
+        var initial = service.update(updateRequest(List.of(senderRequest(id, "sender@example.com", "secret"))), countyId);
+        assertThat(initial.senders().getFirst().sendIntervalSeconds()).isEqualTo(10);
+        var zero = service.update(updateRequest(List.of(senderRequest(id, "smtp.example.com", "sender@example.com", "", 0))), countyId);
+        assertThat(zero.senders().getFirst().sendIntervalSeconds()).isZero();
+        var maximum = service.update(updateRequest(List.of(senderRequest(id, "smtp.example.com", "sender@example.com", "", 3600))), countyId);
+        assertThat(maximum.senders().getFirst().sendIntervalSeconds()).isEqualTo(3600);
+        var unchanged = service.update(updateRequest(List.of(senderRequest(id, "sender@example.com", ""))), countyId);
+        assertThat(unchanged.senders().getFirst().sendIntervalSeconds()).isEqualTo(3600);
+    }
+
+    @Test
+    void rejectsSendIntervalsOutsideTheAllowedRange() {
+        memoryConfigs();
+        for (int interval : new int[]{-1, 3601}) {
+            assertThatThrownBy(() -> service.update(updateRequest(List.of(senderRequest(null,
+                    "smtp.example.com", "sender@example.com", "secret", interval))), countyId))
+                    .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("0至3600");
+        }
     }
 
     @Test
@@ -281,7 +306,7 @@ class MailSenderConfigurationServiceTests {
                 + "\"fromAddress\":\"sender@example.com\",\"smtpAuth\":true,\"sslEnabled\":false,"
                 + "\"startTlsEnabled\":true,\"authenticationMode\":\"OAUTH2\","
                 + "\"oauthClientId\":\"client\",\"oauthClientSecret\":\"secret\","
-                + "\"oauthRefreshToken\":\"old-refresh\"}]";
+                + "\"oauthRefreshToken\":\"old-refresh\",\"sendIntervalSeconds\":42}]";
         AtomicReference<String> currentPool = new AtomicReference<>(pool);
         when(appConfigService.findLocalScopedConfigs(anyCollection(), isNull())).thenAnswer(invocation ->
                 Map.of(MAIL_SENDER_POOL_KEY, config(MAIL_SENDER_POOL_KEY, currentPool.get())));
@@ -299,6 +324,7 @@ class MailSenderConfigurationServiceTests {
 
         assertThat(updated).isTrue();
         assertThat(stale).isFalse();
+        assertThat(currentPool.get()).contains("\"sendIntervalSeconds\":42");
         verify(appConfigService).saveOrUpdateScopedConfig(
                 eq(MAIL_SENDER_POOL_KEY), argThat(value -> value.contains("new-refresh")),
                 eq("按配置作用域轮询的SMTP邮件发件池"), isNull());
@@ -499,10 +525,14 @@ class MailSenderConfigurationServiceTests {
     }
 
     private MailSenderAccountUpdateRequestDTO senderRequest(UUID id, String host, String from, String password) {
+        return senderRequest(id, host, from, password, null);
+    }
+
+    private MailSenderAccountUpdateRequestDTO senderRequest(UUID id, String host, String from, String password, Integer intervalSeconds) {
         return new MailSenderAccountUpdateRequestDTO(
                 id, host, 465, "sender", password, from, true, true, false,
                 "CUSTOM", "PASSWORD", "AUTO", false, null, null, null, "TLSv1.2 TLSv1.3",
-                10_000, 30_000, 30_000, null, null, null, null, null);
+                10_000, 30_000, 30_000, null, null, null, null, null, intervalSeconds);
     }
 
     private String serviceId() {

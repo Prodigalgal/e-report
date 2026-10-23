@@ -24,7 +24,7 @@ public class EmailDeliveryTracker {
     public EmailDeliveryContext context(EmailDeliveryCategory category, UUID orgUnitId, UUID relatedId,
                                         UUID recipientUserId, String recipientAddress, String subject) {
         return new EmailDeliveryContext(tenantContext.currentTenantIdOrDefault(), orgUnitId, category,
-                relatedId, recipientUserId, recipientAddress, subject);
+                relatedId, recipientUserId, recipientAddress, subject, null);
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)

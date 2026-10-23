@@ -177,6 +177,19 @@ public class DailyOutstandingWorkOrderReportService {
             byte[] workbook = spreadsheetExporter.export(report);
             DailyOutstandingWorkOrderReportEmailSender.DeliveryResult delivery =
                     emailSender.send(report, workbook, recipients);
+            if (delivery.retryAt() != null) {
+                Instant deadline = reportDate.atTime(sendTime()).atZone(REPORT_ZONE).plus(catchUpWindow).toInstant();
+                if (!delivery.retryAt().isAfter(deadline)) {
+                    dispatchLedger.defer(dispatchId, LocalDateTime.ofInstant(delivery.retryAt(), ZoneOffset.UTC),
+                            workOrderCount, recipientCount, delivery.successCount(), delivery.failureCount());
+                } else {
+                    complete(dispatchId, delivery.successCount() == 0 ? DailyWorkOrderReportDispatchStatus.FAILED
+                                    : DailyWorkOrderReportDispatchStatus.PARTIAL_FAILED,
+                            workOrderCount, recipientCount, delivery.successCount(), recipientCount - delivery.successCount(),
+                            "剩余收件人的冷却或退避已超过当日报告发送窗口，请查看邮件台账。");
+                }
+                return;
+            }
             DailyWorkOrderReportDispatchStatus status = deliveryStatus(delivery, recipientCount);
             complete(dispatchId, status, workOrderCount, recipientCount,
                     delivery.successCount(), delivery.failureCount(), failureSummary(delivery));

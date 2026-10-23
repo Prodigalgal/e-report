@@ -7,6 +7,8 @@ import com.pro.ereportbacken.model.pojo.OutboxEvent;
 import com.pro.ereportbacken.notification.EmailNotificationChannel;
 import com.pro.ereportbacken.notification.NotificationCenterService;
 import com.pro.ereportbacken.notification.WorkOrderNotificationKind;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchDeferredException;
+import com.pro.ereportbacken.notification.delivery.EmailDispatchFailedException;
 import com.pro.ereportbacken.security.TenantExecutionContext;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -62,6 +64,11 @@ public class OutboxEventProcessor {
             try {
                 tenantExecutionContext.runInTenant(event.getTenantId(), () -> dispatch(event));
                 deliveryStore.markCompleted(event.getId());
+            } catch (EmailDispatchDeferredException deferred) {
+                deliveryStore.defer(event.getId(), deferred.retryAt());
+            } catch (EmailDispatchFailedException failure) {
+                log.warn("邮件通知已停止自动重试。eventId={}, reason={}", event.getId(), failure.getMessage());
+                deliveryStore.markTerminalFailure(event.getId(), failure.getMessage());
             } catch (RuntimeException exception) {
                 log.error("Outbox delivery failed. eventId={}, type={}, attempt={}",
                         event.getId(), event.getEventType(), event.getAttempts(), exception);

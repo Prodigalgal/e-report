@@ -63,6 +63,7 @@ export const createEmptyMailSenderDraft = (providerId = 'CUSTOM') => {
         connectionTimeoutMs: 10000,
         readTimeoutMs: 30000,
         writeTimeoutMs: 30000,
+        sendIntervalSeconds: 10,
         oauthClientId: '',
         oauthClientSecret: '',
         oauthRefreshToken: '',
@@ -88,4 +89,11 @@ export const applyMailSenderProviderPreset = (sender, providerId) => {
         startTlsEnabled: preset.startTlsEnabled,
         startTlsRequired: preset.startTlsRequired,
     };
+};
+
+export const mailSenderIntervalError = (value) => {
+    const seconds = Number(value);
+    return value === '' || value == null || !Number.isInteger(seconds) || seconds < 0 || seconds > 3600
+        ? '请输入0至3600之间的整数秒数'
+        : null;
 };

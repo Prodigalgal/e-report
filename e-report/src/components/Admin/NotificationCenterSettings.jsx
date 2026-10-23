@@ -30,6 +30,7 @@ import { notificationSettingSourceLabel } from '../../utils/notificationConfig';
 import {
     applyMailSenderProviderPreset,
     createEmptyMailSenderDraft,
+    mailSenderIntervalError,
     MAIL_SENDER_PROVIDER_HELP,
     MAIL_SENDER_PROVIDER_PRESETS,
 } from '../../utils/mailSenderConfig';
@@ -62,6 +63,7 @@ const senderDraftFromAccount = (sender) => {
         connectionTimeoutMs: sender.connectionTimeoutMs ?? defaults.connectionTimeoutMs,
         readTimeoutMs: sender.readTimeoutMs ?? defaults.readTimeoutMs,
         writeTimeoutMs: sender.writeTimeoutMs ?? defaults.writeTimeoutMs,
+        sendIntervalSeconds: sender.sendIntervalSeconds ?? defaults.sendIntervalSeconds,
         oauthClientId: sender.oauthClientId || '',
         oauthTenantId: sender.oauthTenantId || defaults.oauthTenantId,
         oauthScope: sender.oauthScope || '',
@@ -95,6 +97,7 @@ const senderRequestBody = (sender) => ({
     connectionTimeoutMs: Number(sender.connectionTimeoutMs),
     readTimeoutMs: Number(sender.readTimeoutMs),
     writeTimeoutMs: Number(sender.writeTimeoutMs),
+    sendIntervalSeconds: Number(sender.sendIntervalSeconds),
     oauthClientId: sender.oauthClientId,
     oauthClientSecret: sender.oauthClientSecret,
     oauthRefreshToken: sender.oauthRefreshToken,
@@ -307,6 +310,10 @@ export default function NotificationCenterSettings({
             }
             if (sender.sslEnabled && sender.startTlsEnabled) {
                 setError(`发件方${index + 1}不能同时启用SSL直连和STARTTLS。`);
+                return;
+            }
+            if (mailSenderIntervalError(sender.sendIntervalSeconds)) {
+                setError(`发件方${index + 1}的单封发送间隔必须是0至3600秒之间的整数。`);
                 return;
             }
             for (const field of ['connectionTimeoutMs', 'readTimeoutMs', 'writeTimeoutMs']) {
@@ -568,6 +575,7 @@ export default function NotificationCenterSettings({
                                                 ['STARTTLS', sender.startTlsEnabled ? (sender.startTlsRequired ? '强制' : '启用') : '关闭'],
                                                 ['TLS 协议', sender.sslProtocols], ['EHLO 域名', sender.ehloDomain],
                                                 ['认证域', sender.authDomain], ['SASL Realm', sender.saslRealm],
+                                                ['单封发送间隔（秒）', String(sender.sendIntervalSeconds ?? 10)],
                                                 ['连接超时（毫秒）', sender.connectionTimeoutMs],
                                                 ['读取超时（毫秒）', sender.readTimeoutMs], ['写入超时（毫秒）', sender.writeTimeoutMs],
                                                 ['OAuth Client ID', sender.oauthClientId], ['OAuth 租户', sender.oauthTenantId],
@@ -795,6 +803,18 @@ export default function NotificationCenterSettings({
                                     </>
                                 )}
                                 <Box sx={{ gridColumn: { md: 'span 12' }, display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: { xs: 0.5, sm: 2 } }}>
+                                    <TextField
+                                        label="单封发送间隔（秒）"
+                                        type="number"
+                                        size="small"
+                                        value={sender.sendIntervalSeconds}
+                                        onChange={event => updateSenderDraft(index, 'sendIntervalSeconds', event.target.value)}
+                                        disabled={smtpSettingsDisabled}
+                                        error={Boolean(mailSenderIntervalError(sender.sendIntervalSeconds))}
+                                        helperText={mailSenderIntervalError(sender.sendIntervalSeconds) || '同账号共享冷却；0秒仍保持串行发送'}
+                                        slotProps={{ htmlInput: { min: 0, max: 3600, step: 1 } }}
+                                        sx={{ width: { xs: '100%', sm: 280 }, my: 0.5 }}
+                                    />
                                     <FormControlLabel
                                         control={<Switch checked={sender.smtpAuth} onChange={event => updateSmtpAuthentication(index, event.target.checked)} />}
                                         label="SMTP认证"

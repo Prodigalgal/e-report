@@ -68,6 +68,9 @@ public record MailSenderAccountUpdateRequestDTO(
         @Size(max = 128, message = "OAuth租户标识不能超过128个字符")
         String oauthTenantId,
         @Size(max = 1024, message = "OAuth Scope不能超过1024个字符")
-        String oauthScope
+        String oauthScope,
+        @Min(value = 0, message = "单封发送间隔不能小于0秒")
+        @Max(value = 3600, message = "单封发送间隔不能超过3600秒")
+        Integer sendIntervalSeconds
 ) {
 }
