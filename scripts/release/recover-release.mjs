@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-const RETRYABLE_JOBS = new Set(['promote-test', 'publish-test-android', 'publish-android']);
+const RETRYABLE_JOBS = new Set(['promote-test', 'verify-test', 'publish-test-android', 'publish-android']);
 const RETRYABLE_CLIENT_JOB = /^(?:publish-test-android|publish-android) \/ (?:publish-apk \((?:NATIVE|LITE)\)|publish-ota)$/;
 
 export function planReleaseRecovery(run, jobs, repository) {

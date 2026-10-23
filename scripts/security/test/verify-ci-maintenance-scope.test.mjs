@@ -12,6 +12,9 @@ const request = {
 
 test('accepts explicitly scoped CI maintenance without allocating business artifacts', () => {
   assert.equal(verifyCiMaintenanceScope(request), true);
+  assert.equal(verifyCiMaintenanceScope({ ...request, changedFiles: [
+    'scripts/release/wait-for-test-deployment.mjs', 'scripts/release/wait-for-test-deployment.test.mjs',
+  ] }), true);
 });
 
 test('keeps ordinary pushes and pull requests on the complete candidate validation path', () => {
@@ -25,6 +28,7 @@ test('rejects runtime, dependency, version, database and arbitrary tooling chang
     'e-report-backen/build.gradle', 'e-report/package-lock.json',
     'e-report-backen/src/main/resources/db/changelog/075.xml',
     'scripts/verify-version-contract.mjs', '.github/workflows/../runtime.yml',
+    'scripts/release/arbitrary-runtime-change.mjs',
   ]) {
     assert.throws(() => verifyCiMaintenanceScope({ ...request, changedFiles: [...request.changedFiles, file] }),
       /requiring a new business candidate/);

@@ -14,6 +14,7 @@ test('retries APK publishing and lets test image pulls settle before test recove
   assert.equal(planReleaseRecovery(run, [job('collect', 'success'), job('publish-android')], repository).delaySeconds, 60);
   assert.equal(planReleaseRecovery(run, [job('promote-test')], repository).delaySeconds, 900);
   assert.equal(planReleaseRecovery(run, [job('publish-test-android')], repository).retry, true);
+  assert.equal(planReleaseRecovery(run, [job('collect', 'success'), job('verify-test')], repository).delaySeconds, 60);
   assert.equal(planReleaseRecovery(run, [job('publish-test-android / publish-apk (LITE)')], repository).retry, true);
   assert.equal(planReleaseRecovery(run, [job('publish-android / publish-ota')], repository).retry, true);
 });

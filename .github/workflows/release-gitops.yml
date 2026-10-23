@@ -68,7 +68,7 @@ jobs:
       group: e-report-config-main
       cancel-in-progress: false
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 10
     env:
       GH_TOKEN: ${{ github.token }}
       SOURCE_SHA: ${{ needs.collect.outputs.source_sha }}
@@ -85,7 +85,7 @@ jobs:
           ref: main
           path: config
           ssh-key: ${{ secrets.CONFIG_REPO_DEPLOY_KEY }}
-      - name: 更新测试环境并验证
+      - name: 更新测试环境 GitOps
         run: |
           set -Eeuo pipefail
           git -C config config user.name 'e-report release bot'
@@ -106,36 +106,35 @@ jobs:
             fi
           }
 
-          wait_for_release() {
-            local base_url="$1"
-            local observed_sha csrf_status native_edition lite_edition
-            for attempt in {1..40}; do
-              observed_sha=$(curl -fsS --max-time 8 -H 'Cache-Control: no-cache' \
-                "$base_url/release.json?source=$SOURCE_SHA" 2>/dev/null | jq -r '.sourceSha // empty' 2>/dev/null || true)
-              csrf_status=$(curl -ksS --max-time 8 -o /dev/null -w '%{http_code}' \
-                "$base_url/api/auth/csrf" || true)
-              native_edition=$(curl -fsS --max-time 8 "$base_url/api/app-updates/latest?edition=NATIVE" | jq -r '.edition // empty' || true)
-              lite_edition=$(curl -fsS --max-time 8 "$base_url/api/app-updates/latest?edition=LITE" | jq -r '.edition // empty' || true)
-              if [[ "$observed_sha" == "$SOURCE_SHA" && "$csrf_status" == '200' && "$native_edition" == NATIVE && "$lite_edition" == LITE ]]; then
-                echo "RELEASE_SMOKE_OK base=$base_url sha=$SOURCE_SHA"
-                return 0
-              fi
-              echo "RELEASE_SMOKE_WAIT base=$base_url attempt=$attempt observed=$observed_sha csrf=$csrf_status"
-              sleep 10
-            done
-            echo "RELEASE_SMOKE_FAILED base=$base_url expected=$SOURCE_SHA observed=$observed_sha csrf=$csrf_status" >&2
-            return 1
-          }
-
           if [[ "$GITHUB_EVENT_NAME" == workflow_run ]]; then
             test "$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)" = "$SOURCE_SHA"
           fi
           update_config test
-          wait_for_release 'https://e-report-test.fantong.eu.org:60443'
 
-  publish-test-android:
+  verify-test:
     needs: [collect, promote-test]
     if: needs.collect.outputs.ready == 'true' && (github.event_name == 'workflow_run' || inputs.environment == 'test')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    outputs:
+      ready: ${{ steps.verify.outputs.ready }}
+    env:
+      SOURCE_SHA: ${{ needs.collect.outputs.source_sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.19.0
+      - name: 等待 Argo CD 部署及测试站真实就绪
+        id: verify
+        run: node scripts/release/wait-for-test-deployment.mjs
+
+  publish-test-android:
+    needs: [collect, verify-test]
+    if: needs.collect.outputs.ready == 'true' && needs.verify-test.outputs.ready == 'true' && (github.event_name == 'workflow_run' || inputs.environment == 'test')
     uses: ./.github/workflows/release-clients.yml
     with:
       environment: test

@@ -8,6 +8,8 @@ const CI_FILES = new Set([
   'scripts/security/test/verify-ci-maintenance-scope.test.mjs',
   'scripts/release/recover-release.mjs',
   'scripts/release/recover-release.test.mjs',
+  'scripts/release/wait-for-test-deployment.mjs',
+  'scripts/release/wait-for-test-deployment.test.mjs',
   'scripts/release/publish-app-release.test.mjs',
   'e-report-app/scripts/publish-app-release.ps1',
   'docs/decisions/2026-09-24-github-actions-argocd-gitops.md',
