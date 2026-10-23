@@ -72,6 +72,7 @@ const STATUS_PRESENTATION = {
 
 const EMPTY_UPLOAD_DRAFT = Object.freeze({
     versionName: '',
+    runtimeVersion: '',
     channel: 'stable',
     minSupportedVersionCode: '0',
     forceUpdate: false,
@@ -307,7 +308,8 @@ function AdminAppReleasePage() {
         }
         let metadata;
         try {
-            metadata = deriveAndroidVersionMetadata(uploadDraft.versionName, edition);
+            if (edition === 'NATIVE' && !uploadDraft.runtimeVersion.trim()) throw new Error('请填写 APK 构建清单中的原生兼容运行时。');
+            metadata = deriveAndroidVersionMetadata(uploadDraft.versionName, edition, uploadDraft.runtimeVersion);
         } catch (validationError) {
             setUploadError(validationError.message);
             return;
@@ -647,11 +649,20 @@ function AdminAppReleasePage() {
                             placeholder="例如 2.4.3"
                             value={uploadDraft.versionName}
                             onChange={event => setUploadDraft(current => ({ ...current, versionName: event.target.value }))}
-                            helperText="系统会自动计算 Android 构建号和运行时版本"
+                            helperText="版本号与 APK 内置业务版本一致，Android 构建号自动计算"
                             disabled={uploading}
                             required
                             fullWidth
                         />
+                        {edition === 'NATIVE' && <TextField
+                            label="原生兼容运行时"
+                            value={uploadDraft.runtimeVersion}
+                            onChange={event => setUploadDraft(current => ({ ...current, runtimeVersion: event.target.value }))}
+                            helperText="填写构建清单中的 runtimeVersion；兼容的业务更新共用同一运行时"
+                            disabled={uploading}
+                            required
+                            fullWidth
+                        />}
                         <TextField
                             select
                             label="发布通道"

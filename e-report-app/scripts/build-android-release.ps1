@@ -249,6 +249,8 @@ try {
   if ($LASTEXITCODE -ne 0) {
     throw "Expo Doctor failed with exit code $LASTEXITCODE."
   }
+  node scripts/write-embedded-release.mjs
+  if ($LASTEXITCODE -ne 0) { throw 'Android embedded release metadata generation failed.' }
   Push-Location (Join-Path $appRoot 'android')
   try {
     $gradleArguments = @(

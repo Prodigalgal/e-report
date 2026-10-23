@@ -1,8 +1,9 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { verifyOtaEndpoint } from './verify-ota-endpoint.mjs';
+import { verifyEmbeddedApkUpdatePolicy, verifyOtaEndpoint } from './verify-ota-endpoint.mjs';
 import { verifyPublishedApk } from './verify-client-distribution.mjs';
+import { readNativeApkContract } from '../../e-report-app/scripts/verify-version-contract.mjs';
 
 export function validateCandidateApk(published, contract, checksum, edition) {
   if (!/^[a-f0-9]{64}$/.test(checksum || '') || published.edition !== edition || published.versionCode !== contract.versionCode
@@ -27,14 +28,17 @@ async function main() {
   for (const [edition, directory, checksum] of [
     ['NATIVE', 'e-report-app', process.env.ANDROID_SHA256], ['LITE', 'e-report-lite', process.env.LITE_SHA256],
   ]) {
-    const contract = JSON.parse(readFileSync(`${directory}/native-release.json`, 'utf8'));
+    const contract = edition === 'NATIVE' ? readNativeApkContract(directory)
+      : JSON.parse(readFileSync(`${directory}/native-release.json`, 'utf8'));
     const published = await json(`${api}/app-updates/latest?edition=${edition}&platform=ANDROID&channel=stable`);
     validateCandidateApk(published, contract, checksum, edition);
     await verifyPublishedApk(published);
   }
-  await verifyOtaEndpoint({ apiBaseUrl: api, expected: { kind: 'UPDATE', environment: 'test', sourceSha,
-    runtimeVersion: JSON.parse(readFileSync('e-report-app/native-release.json', 'utf8')).runtimeVersion,
-    version: JSON.parse(readFileSync('e-report/package.json', 'utf8')).version } });
+  const expectedOta = { kind: 'UPDATE', environment: 'test', sourceSha,
+    runtimeVersion: JSON.parse(readFileSync('e-report-app/native-runtime.json', 'utf8')).runtimeVersion,
+    version: JSON.parse(readFileSync('e-report/package.json', 'utf8')).version };
+  await verifyOtaEndpoint({ apiBaseUrl: api, expected: expectedOta });
+  await verifyEmbeddedApkUpdatePolicy({ apiBaseUrl: api, expected: expectedOta });
   console.log(`TEST_CANDIDATE_VERIFIED source=${sourceSha}`);
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();

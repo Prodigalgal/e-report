@@ -68,10 +68,13 @@ public class ExpoUpdateService {
         try { extracted.close(); }
         catch (IOException exception) { log.warn("Unable to remove OTA staging directory. id={}", extracted.update().getId(), exception); }
     }
-    public Optional<ExpoUpdate> latest(String runtime) {
+    public Optional<ExpoUpdate> latest(String runtime, String embeddedVersion) {
         ExpoUpdateArchive.requireRuntime(runtime);
+        Integer embeddedCode = embeddedVersion == null ? null : AppVersionContract.androidVersionCode(embeddedVersion);
         if (!configuration.enabled()) return Optional.empty();
-        return repository.findFirstByEnvironmentAndRuntimeVersionAndStatusOrderByCreatedAtDescPublishedAtDesc(configuration.environment(), runtime, "PUBLISHED");
+        return repository.findFirstByEnvironmentAndRuntimeVersionAndStatusOrderByCreatedAtDescPublishedAtDesc(configuration.environment(), runtime, "PUBLISHED")
+                .filter(update -> !"UPDATE".equals(update.getKind()) || embeddedCode == null
+                        || AppVersionContract.androidVersionCode(update.getVersionName()) > embeddedCode);
     }
     public Page<ExpoUpdateDTO> list(Pageable pageable) {
         return repository.findByEnvironment(configuration.environment(), pageable).map(ExpoUpdateDTO::from);

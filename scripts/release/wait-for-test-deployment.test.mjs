@@ -91,4 +91,6 @@ test('requires deployment verification before client publishing without holding 
   assert.match(publish, /needs: \[collect, verify-test\]/);
   assert.match(publish, /needs.verify-test.outputs.ready == 'true'/);
   assert.match(job('promote-production'), /github.event_name == 'workflow_dispatch' && inputs.environment == 'production'/);
+  const clients = readFileSync(new URL('../../.github/workflows/release-clients.yml', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
+  assert.match(clients, /\n  publish-ota:\n    needs: publish-apk\n/);
 });

@@ -14,6 +14,19 @@ export function validateOtaIdentity(manifest, expected) {
     : manifest.id !== metadata.id || manifest.runtimeVersion !== expected.runtimeVersion) throw new Error('OTA 类型或运行时无效。');
 }
 
+export async function verifyEmbeddedApkUpdatePolicy({ apiBaseUrl, expected, fetchImpl = fetch }) {
+  if (expected.kind === 'ROLLBACK') return;
+  const response = await fetchImpl(`${apiBaseUrl.replace(/\/+$/, '')}/app-updates/ota`, {
+    headers: { 'expo-protocol-version': '1', 'expo-platform': 'android', 'expo-runtime-version': expected.runtimeVersion,
+      'e-report-environment': expected.environment, 'e-report-embedded-version': expected.version, Accept: 'multipart/mixed' },
+    signal: AbortSignal.timeout(30000),
+  });
+  if (response.status !== 204 || response.headers.get('expo-protocol-version') !== '1') {
+    throw new Error('最新 APK 被重复下发同版本 OTA，停止发布验收。');
+  }
+  console.log(`EMBEDDED_APK_CURRENT version=${expected.version} environment=${expected.environment}`);
+}
+
 export async function verifyOtaEndpoint({ apiBaseUrl, expected: descriptor, expectedPayload, fetchImpl = fetch }) {
   const publicKey = new X509Certificate(readFileSync(new URL('../../e-report-app/ota/certificate.crt', import.meta.url))).publicKey;
   const api = apiBaseUrl.replace(/\/+$/, '');
@@ -67,7 +80,8 @@ async function main() {
   const { unzipSync } = appRequire('fflate');
   const options = Object.fromEntries(Array.from({ length: (process.argv.length - 2) / 2 }, (_, index) => process.argv.slice(2 + index * 2, 4 + index * 2)));
   const archive = unzipSync(readFileSync(options['--archive']));
-  await verifyOtaEndpoint({ apiBaseUrl: options['--api-base-url'], expected: JSON.parse(Buffer.from(archive['release.json']).toString('utf8')),
-    expectedPayload: Buffer.from(archive['manifest.json']) });
+  const expected = JSON.parse(Buffer.from(archive['release.json']).toString('utf8'));
+  await verifyOtaEndpoint({ apiBaseUrl: options['--api-base-url'], expected, expectedPayload: Buffer.from(archive['manifest.json']) });
+  await verifyEmbeddedApkUpdatePolicy({ apiBaseUrl: options['--api-base-url'], expected });
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await main();

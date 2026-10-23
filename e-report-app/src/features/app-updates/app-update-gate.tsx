@@ -12,6 +12,7 @@ import {
 import type { AppUpdateCheckResponse } from '@/types/api';
 import { AppButton } from '@/ui/app-button';
 import { colors, uiLayout } from '@/ui/theme';
+import { shouldPromptNativeUpgrade } from './app-update-policy';
 
 export function AppUpdateGate() {
   const [visibleUpdate, setVisibleUpdate] = useState<AppUpdateCheckResponse | null>(null);
@@ -45,7 +46,7 @@ export function AppUpdateGate() {
 
   useEffect(() => {
     const update = updateQuery.data;
-    if (!update?.updateAvailable || !update.versionCode) {
+    if (!shouldPromptNativeUpgrade(update) || !update) {
       return;
     }
     if (!update.forceUpdate && dismissedVersionCode === update.versionCode) {

@@ -2,7 +2,7 @@
   "expo": {
     "name": "网络运维管理",
     "slug": "e-report-app",
-    "version": "6.10.2",
+    "version": "6.11.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "runtimeVersion": "android-6.8.2-native5008002",
@@ -13,7 +13,7 @@
     },
     "android": {
       "package": "com.mnnu.ereport",
-      "versionCode": 5008002,
+      "versionCode": 5011000,
       "permissions": [
         "CAMERA",
         "ACCESS_COARSE_LOCATION",

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "nativeVersion": "6.8.2",
   "runtimeVersion": "android-6.8.2-native5008002",
-  "hash": "4fecd5e6bb0a10bdd2492844deb82f0e9d5b8911b3b9fff0ec7ce3fc5b4c9ebd",
+  "hash": "5f19fa9cfa7134a9ba98260a6966a9715944694eb759640b31a99a50011bcf20",
   "sources": [
     {
       "type": "file",
@@ -237,7 +237,7 @@
       "reasons": [
         "bareNativeDir"
       ],
-      "hash": "414086c99de6867ef4e44e95a423224cd636dd8d7e2b808da186dac2075bd71e"
+      "hash": "f3ae804f2ac524df7f78dbd64810ef1a0d42bad3321df9f1d4e2303c3de2ebf6"
     },
     {
       "type": "dir",

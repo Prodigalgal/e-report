@@ -8,7 +8,7 @@ export function describeOtaExport(exportRoot, appRoot, sourceSha) {
   const root = path.resolve(exportRoot);
   const metadata = JSON.parse(readFileSync(path.join(root, 'metadata.json'), 'utf8'));
   const platform = metadata.fileMetadata?.android;
-  const native = JSON.parse(readFileSync(path.join(appRoot, 'native-release.json'), 'utf8'));
+  const native = JSON.parse(readFileSync(path.join(appRoot, 'native-runtime.json'), 'utf8'));
   const businessVersion = JSON.parse(readFileSync(path.join(appRoot, 'package.json'), 'utf8')).version;
   if (!platform?.bundle || !Array.isArray(platform.assets)) throw new Error('OTA Android 导出缺少资源清单。');
   const paths = new Set(['metadata.json', 'expoConfig.json', platform.bundle, ...platform.assets.map(asset => asset.path)]);

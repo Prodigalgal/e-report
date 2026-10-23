@@ -179,11 +179,11 @@ Always respond in Chinese (Simplified).
 - `x`（major）仅在存在不向后兼容的系统级变更时递增，例如破坏性 API/数据契约、不可兼容的权限或组织模型重构、必须同步升级客户端的协议变更。递增 `x` 时 `y`、`z` 归零，并必须具备迁移、回滚和升级策略。
 - `y`（minor）在新增向后兼容的业务能力或明显扩展既有能力时递增，例如新增完整功能、可选 API、可回滚数据结构、主要业务流程或管理能力。递增 `y` 时 `z` 归零。
 - `z`（patch）只用于不改变既有契约和能力边界的修复，例如 bug、安全补丁、性能优化、文案和 UI 细节、兼容性索引或精确数据修复。只要新增用户可感知能力，就不能只递增 `z`。
-- 同一业务版本的 Backend、WEB、APP JS、数据库迁移、镜像 tag、SBOM 和发布记录使用同一个 `x.y.z`。原生版与 Lite 的 APK 基础包身份分别由各自 `native-release.json` 管理；原生指纹不变时可复用同一 APK，业务更新通过 OTA 或远程 WEB 生效。
-- 每个包含新代码、配置或迁移的可部署测试候选和可安装 APP 都必须先占用新的正式三段式 `x.y.z`，不得沿用上一个已部署候选的版本号、仅修改 `test.N`/镜像 tag，或将不同 APK 复用同一 Android `versionCode`；纯 JS/WEB 候选可以引用同一不可变原生基础包。候选验收通过时直接提升同一不可变制品；验收后只要再修改源码，就必须按最高影响级别继续递增 `x`、`y` 或 `z`。允许未通过候选形成版本空档，禁止回收版本号。
+- 同一业务版本的 Backend、WEB、APP、数据库迁移、镜像 tag、SBOM 和发布记录使用同一个 `x.y.z`。Native APK 必须内置当前业务版本，版本和源码均相同才可复用；原生兼容身份由 `e-report-app/native-runtime.json` 管理。Lite 壳身份由自身 `native-release.json` 管理，远程 WEB 更新不强制重打壳。
+- 每个包含新代码、配置或迁移的可部署测试候选和可安装 APP 都必须先占用新的正式三段式 `x.y.z`，不得沿用上一个已部署候选的版本号、仅修改 `test.N`/镜像 tag，或将不同 APK 复用同一 Android `versionCode`。新业务候选重新构建完整 Native APK，兼容更新同时提供 OTA 给已安装的较早版本。候选验收通过时直接提升同一不可变制品；验收后只要再修改源码，就必须按最高影响级别继续递增 `x`、`y` 或 `z`。允许未通过候选形成版本空档，禁止回收版本号。
 - `test.N`、`rc.N` 仅作为 Git tag、镜像 tag、部署注解和发布记录的候选轮次，例如 `v2.0.1-test.1`、`20260816-v2.0.1-performance-test-1`；运行时 Backend、WEB、APP 与 Android `versionName` 仍统一使用该候选已占用的 `x.y.z`。镜像 tag 必须包含日期、版本和用途，且生成后不可覆盖。
 - Android `versionCode` 必须在各 `applicationId` 内唯一且严格递增，统一按 `(x - 1) * 1_000_000 + y * 1_000 + z` 计算，约束 `x >= 1`、`0 <= y,z < 1000`。历史生产基线 `1.0.47 -> code47` 与该公式一致；例如 `1.1.0 -> code1000`、`2.0.0 -> code1000000`。
-- Android `versionName` 使用该原生基础包已占用的 `x.y.z`；验收包可追加既有的 `-acceptance` 后缀。Expo `version`、NPM package/lockfile 与 WEB 使用业务版本；Gradle `versionName`、`versionCode`、发布中心 APK 登记和 `runtimeVersion` 必须与该应用的 `native-release.json` 一致。原生版运行时为 `android-x.y.z-native<versionCode>`，Lite 为 `android-lite-x.y.z-native<versionCode>`；原生指纹变化必须提升基础包身份，禁止将不兼容代码发布给已有运行时。
+- Native Android `versionName`、Expo `version`、NPM package/lockfile、WEB 与发布中心 APK 登记统一使用业务版本，`versionCode` 按上述公式计算；验收包可追加既有的 `-acceptance` 后缀。`runtimeVersion` 表示原生 API 兼容边界，由 `native-runtime.json` 固定，不随兼容业务版本重打包而递增。原生依赖、权限或接口变化必须审查兼容性并更新指纹，不兼容时分配新的运行时。Lite 的 APK 身份和运行时继续与自身 `native-release.json` 一致。下载中心当前 Native APK 必须先发布成功，才能激活同候选 OTA；最新 APK 必须能离线首次启动当前功能，同版本或更高内置版本不接收重复 OTA。
 - 已发布的正式版本、`versionCode`、APK、R2 对象和镜像不可覆盖或复用。回滚 Backend/WEB 使用上一不可变镜像；APP 出现问题时发布更高版本修复，不能降级或复用旧 `versionCode`。
 - 数据库迁移编号独立连续递增，但迁移文档和 Liquibase tag 必须记录所属业务版本。破坏性迁移至少递增 `x`；纯向后兼容新增结构随 `y`；只修复索引、约束或数据可随 `z`。
 - 发版前必须运行版本契约校验，并核对源码、构建产物、APK 元数据、镜像 tag、迁移 tag、下载中心和发布说明；任一处不一致都必须阻断发布。

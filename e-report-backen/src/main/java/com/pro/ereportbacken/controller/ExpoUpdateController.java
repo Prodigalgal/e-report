@@ -37,10 +37,11 @@ public class ExpoUpdateController {
             @RequestHeader(value = "Accept", defaultValue = "*/*") String accept,
             @RequestHeader(value = "expo-current-update-id", required = false) String currentId,
             @RequestHeader(value = "expo-embedded-update-id", required = false) String embeddedId,
-            @RequestHeader(value = "e-report-environment", required = false) String environment) {
+            @RequestHeader(value = "e-report-environment", required = false) String environment,
+            @RequestHeader(value = "e-report-embedded-version", required = false) String embeddedVersion) {
         if (!"1".equals(protocol) || !"android".equals(platform)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "不支持的 OTA 协议或平台。");
         if (environment != null && !configuration.environment().equals(environment)) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "OTA 环境不一致。");
-        var update = service.latest(runtime);
+        var update = service.latest(runtime, embeddedVersion);
         HttpHeaders headers = responseHeaders();
         if (update.isEmpty() || update.get().getId().toString().equals(currentId)
                 || ("ROLLBACK".equals(update.get().getKind()) && currentId != null && currentId.equals(embeddedId))) {
@@ -80,7 +81,8 @@ public class ExpoUpdateController {
         headers.set("expo-manifest-filters", "environment=\"" + configuration.environment() + "\"");
         headers.set("expo-server-defined-headers", "");
         headers.setCacheControl("private, no-store");
-        headers.setVary(java.util.List.of("expo-runtime-version", "expo-platform", "expo-current-update-id", "Accept", "e-report-environment"));
+        headers.setVary(java.util.List.of("expo-runtime-version", "expo-platform", "expo-current-update-id",
+                "expo-embedded-update-id", "Accept", "e-report-environment", "e-report-embedded-version"));
         return headers;
     }
 }

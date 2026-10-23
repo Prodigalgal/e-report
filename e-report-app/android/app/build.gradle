@@ -99,8 +99,8 @@ android {
         applicationId 'com.mnnu.ereport'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 5008002
-        versionName "6.8.2"
+        versionCode 5011000
+        versionName "6.11.0"
 
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
         manifestPlaceholders["AMAP_LOCATION_API_KEY"] = amapLocationApiKey

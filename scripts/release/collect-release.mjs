@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readNativeApkContract } from '../../e-report-app/scripts/verify-version-contract.mjs';
 
 const json = file => JSON.parse(readFileSync(file, 'utf8'));
 export function validateNativeArtifact(manifest, contract, fingerprint, sourceSha, businessVersion, bytes) {
@@ -10,6 +11,8 @@ export function validateNativeArtifact(manifest, contract, fingerprint, sourceSh
       || manifest.version !== contract.version || manifest.versionCode !== contract.versionCode
       || manifest.runtimeVersion !== contract.runtimeVersion || manifest.applicationId !== contract.applicationId
       || manifest.nativeFingerprint !== fingerprint || !/^[a-f0-9]{40}$/.test(manifest.artifactSourceSha)
+      || manifest.edition !== (contract.applicationId === 'com.mnnu.ereport' ? 'NATIVE' : 'LITE')
+      || (contract.applicationId === 'com.mnnu.ereport' && (manifest.artifactSourceSha !== sourceSha || manifest.version !== businessVersion))
       || manifest.size !== bytes.length || manifest.sha256 !== createHash('sha256').update(bytes).digest('hex')) {
     throw new Error('APK 与源码、业务版本、原生基础包或摘要契约不一致。');
   }
@@ -59,12 +62,13 @@ async function main() {
       images[component] = manifest.image;
     } else if (component !== 'ota') {
       const app = component === 'android' ? 'e-report-app' : 'e-report-lite';
-      const native = json(`${app}/native-release.json`); const fingerprint = json(`${app}/native-fingerprint.json`).hash;
+      const native = component === 'android' ? readNativeApkContract(app) : json(`${app}/native-release.json`);
+      const fingerprint = json(`${app}/native-fingerprint.json`).hash;
       validateNativeArtifact(manifest, native, fingerprint, sourceSha, version, readFileSync(path.join(directory, 'app-release.apk')));
       if (manifest.edition !== (component === 'android' ? 'NATIVE' : 'LITE')) throw new Error('APK 客户端身份不一致。');
       checksums[component] = manifest.sha256;
     } else {
-      if (manifest.version !== version || manifest.runtimeVersion !== json('e-report-app/native-release.json').runtimeVersion || !Array.isArray(manifest.files)) throw new Error('OTA 导出版本或运行时不一致。');
+      if (manifest.version !== version || manifest.runtimeVersion !== json('e-report-app/native-runtime.json').runtimeVersion || !Array.isArray(manifest.files)) throw new Error('OTA 导出版本或运行时不一致。');
       for (const file of manifest.files) {
         const root = path.resolve(directory); const resource = path.resolve(root, file.path);
         if (!resource.startsWith(`${root}${path.sep}`)) throw new Error('OTA 导出资源路径越界。');

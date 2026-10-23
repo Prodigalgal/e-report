@@ -9,12 +9,20 @@ param(
 $ErrorActionPreference='Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../..')).Path
 $appRoot = Join-Path $repoRoot $(if ($Edition -eq 'NATIVE') { 'e-report-app' } else { 'e-report-lite' })
-$contract = Get-Content -LiteralPath (Join-Path $appRoot 'native-release.json') -Raw | ConvertFrom-Json
+$contract = if ($Edition -eq 'NATIVE') {
+    $sourceContract = & node (Join-Path $appRoot 'scripts/verify-version-contract.mjs') --app-root $appRoot
+    if ($LASTEXITCODE -ne 0) { throw 'Native 源码版本契约校验失败。' }
+    $verified = ($sourceContract -replace '^VERSION_CONTRACT=', '') | ConvertFrom-Json
+    [pscustomobject]@{ version=$verified.versionName; versionCode=$verified.versionCode; runtimeVersion=$verified.runtimeVersion }
+} else { Get-Content -LiteralPath (Join-Path $appRoot 'native-release.json') -Raw | ConvertFrom-Json }
 $manifest = Get-Content -LiteralPath (Join-Path $ArtifactDirectory 'release-manifest.json') -Raw | ConvertFrom-Json
 $apk = Join-Path $ArtifactDirectory 'app-release.apk'
 $checksum = (Get-FileHash -LiteralPath $apk -Algorithm SHA256).Hash.ToLowerInvariant()
 if ($manifest.sourceSha -ne $SourceSha -or $manifest.version -ne $contract.version -or
     $manifest.versionCode -ne $contract.versionCode -or $manifest.sha256 -ne $checksum -or $manifest.edition -ne $Edition) { throw 'APK 与本次源码及客户端契约不一致。' }
+if ($Edition -eq 'NATIVE' -and ($manifest.artifactSourceSha -ne $SourceSha -or $manifest.businessVersion -ne $contract.version)) {
+    throw 'Native APK 未包含当前候选的完整业务代码，停止发布。'
+}
 $origin = if ($Environment -eq 'test') { 'https://e-report-test.fantong.eu.org:60443' } else { 'https://e-report.fantong.eu.org:60443' }
 $api = "$origin/api"
 $query = "edition=$Edition&platform=ANDROID&channel=stable"
@@ -42,7 +50,7 @@ $minimum = if ($null -ne $previous.minSupportedVersionCode) { [int]$previous.min
     -AppRoot $appRoot -Edition $Edition -Username $Username -Password $Password -BaseUrl $api -TransferBaseUrl $api `
     -ApkPath $apk -VersionCode ([int]$contract.versionCode) -VersionName $contract.version -RuntimeVersion $contract.runtimeVersion `
     -MinSupportedVersionCode $minimum -ForceUpdate:([bool]$previous.forceUpdate) `
-    -ReleaseNotes $(if ($Edition -eq 'NATIVE') { '支持签名 OTA 功能更新、独立原生基础包和测试/生产环境隔离。' } else { '独立 Lite 客户端，网页功能自动更新；支持附件、定位、环境设置和壳升级。' })
+    -ReleaseNotes $(if ($Edition -eq 'NATIVE') { '完整安装包，内置本次发布的业务功能；兼容的已安装版本通过签名 OTA 更新。' } else { '独立 Lite 客户端，网页功能自动更新；支持附件、定位、环境设置和壳升级。' })
 $published = Invoke-RestMethod -Uri "$api/app-updates/latest?$query" -TimeoutSec 30
 if ($published.edition -ne $Edition -or $published.versionCode -ne $contract.versionCode -or $published.sha256 -ne $checksum) { throw '发布中心未返回目标客户端的正确 APK。' }
 Assert-PublicDistribution

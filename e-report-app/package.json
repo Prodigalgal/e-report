@@ -1,6 +1,6 @@
 {
   "name": "e-report-app",
-  "version": "6.10.2",
+  "version": "6.11.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@react-native-community/datetimepicker": "9.1.0",
@@ -67,7 +67,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "test": "node --experimental-strip-types --test tests/admin-access.test.mjs tests/api-token-workflow.test.mjs tests/app-release-policy.test.mjs tests/attachment-media.test.mjs tests/attachment-image-transform.test.mjs tests/attachment-policy.test.mjs tests/auth-refresh-policy.test.mjs tests/auth-return-path.test.mjs tests/authorization-editor-workflow.test.mjs tests/build-asset-policy.test.mjs tests/multi-select.test.mjs tests/native-module-locks.test.mjs tests/operation-sampling.test.mjs tests/organization-move-workflow.test.mjs tests/password-policy.test.mjs tests/proof-of-work.test.mjs tests/public-endpoints.test.mjs tests/release-publisher-contract.test.mjs tests/request-signature-body.test.mjs tests/request-signature-canonical.test.mjs tests/resource-attributes.test.mjs tests/telemetry-api-policy.test.mjs tests/telemetry-delivery-policy.test.mjs tests/telemetry-sanitizer.test.mjs tests/timezone-format.test.mjs tests/trace-context.test.mjs tests/version-contract.test.mjs tests/work-order-presentation.test.mjs tests/work-order-timeline.test.mjs tests/ota-archive.test.mjs",
+    "test": "node --experimental-strip-types --test tests/admin-access.test.mjs tests/api-token-workflow.test.mjs tests/app-release-policy.test.mjs tests/attachment-media.test.mjs tests/attachment-image-transform.test.mjs tests/attachment-policy.test.mjs tests/auth-refresh-policy.test.mjs tests/auth-return-path.test.mjs tests/authorization-editor-workflow.test.mjs tests/build-asset-policy.test.mjs tests/multi-select.test.mjs tests/native-module-locks.test.mjs tests/operation-sampling.test.mjs tests/organization-move-workflow.test.mjs tests/password-policy.test.mjs tests/proof-of-work.test.mjs tests/public-endpoints.test.mjs tests/release-publisher-contract.test.mjs tests/request-signature-body.test.mjs tests/request-signature-canonical.test.mjs tests/resource-attributes.test.mjs tests/telemetry-api-policy.test.mjs tests/telemetry-delivery-policy.test.mjs tests/telemetry-sanitizer.test.mjs tests/timezone-format.test.mjs tests/trace-context.test.mjs tests/version-contract.test.mjs tests/work-order-presentation.test.mjs tests/work-order-timeline.test.mjs tests/ota-archive.test.mjs tests/app-update-policy.test.mjs",
     "native:contract": "node scripts/verify-native-module-locks.mjs",
     "security:assets": "node scripts/verify-build-assets.mjs",
     "version:contract": "node scripts/verify-version-contract.mjs",

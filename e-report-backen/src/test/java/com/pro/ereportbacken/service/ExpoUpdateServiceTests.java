@@ -18,6 +18,30 @@ class ExpoUpdateServiceTests {
     @TempDir Path directory;
 
     @Test
+    void onlyOlderCompatibleApksReceiveBusinessUpdates() {
+        ExpoUpdateConfiguration configuration = mock(ExpoUpdateConfiguration.class);
+        ExpoUpdateRepository repository = mock(ExpoUpdateRepository.class);
+        when(configuration.enabled()).thenReturn(true);
+        when(configuration.environment()).thenReturn("test");
+        String runtime = "android-6.8.2-native5008002";
+        ExpoUpdate update = new ExpoUpdate();
+        update.setKind("UPDATE"); update.setVersionName("6.11.0");
+        when(repository.findFirstByEnvironmentAndRuntimeVersionAndStatusOrderByCreatedAtDescPublishedAtDesc("test", runtime, "PUBLISHED"))
+                .thenReturn(java.util.Optional.of(update));
+        var service = new ExpoUpdateService(configuration, mock(ExpoUpdateArchive.class), repository,
+                mock(ExpoUpdateRegistry.class), mock(CloudflareR2AppReleaseService.class), new SyncTaskExecutor());
+        assertThat(service.latest(runtime, null)).contains(update);
+        assertThat(service.latest(runtime, "6.8.2")).contains(update);
+        assertThat(service.latest(runtime, "6.11.0")).isEmpty();
+        assertThat(service.latest(runtime, "6.12.0")).isEmpty();
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> service.latest(runtime, "6.011.0"))
+                .isInstanceOf(IllegalArgumentException.class);
+        update.setKind("ROLLBACK");
+        assertThat(service.latest(runtime, "6.11.0")).contains(update);
+        assertThat(service.latest(runtime, "6.12.0")).contains(update);
+    }
+
+    @Test
     void failedAssetDistributionDoesNotActivateTheManifestAndRemovesStagingFiles() throws Exception {
         ExpoUpdateConfiguration configuration = mock(ExpoUpdateConfiguration.class);
         ExpoUpdateArchive archive = mock(ExpoUpdateArchive.class);

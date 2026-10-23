@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Log
+import com.mnnu.ereport.BuildConfig
 import expo.modules.updates.UpdatesController
 import expo.modules.updates.UpdatesUtils
 import java.net.URI
@@ -36,7 +37,10 @@ object EReportUpdateEnvironment {
         UpdatesController.overrideConfiguration(application, mapOf(
             "updateUrl" to Uri.parse("$startupApiBaseUrl/app-updates/ota"),
             "scopeKey" to scopeKey,
-            "requestHeaders" to mapOf("e-report-environment" to startupEnvironment)
+            "requestHeaders" to mapOf(
+                "e-report-environment" to startupEnvironment,
+                "e-report-embedded-version" to BuildConfig.VERSION_NAME.removeSuffix("-acceptance")
+            )
         ))
     }
 

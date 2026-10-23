@@ -16,7 +16,7 @@
 ## 版本与契约
 
 - Backend、WEB 与 JS 业务候选继续使用统一三段式业务版本；首次原生基础包及 Lite 为 `6.8.0` / `5008000`。
-- APK 的 `versionName`、`versionCode`、原生 `runtimeVersion` 由各客户端的原生基础包契约记录。原生能力不变时，业务版本可继续递增、原生基础包身份保持不变；只有原生兼容指纹变化并占用新基础包身份后才发布新 APK。
+- Native APK 的 `versionName`、`versionCode` 与本次业务版本一致，必须内置本次完整功能；新业务源码不得复用此前 APK。原生运行时由独立 `native-runtime.json` 表示兼容边界，兼容更新同时提供 OTA 给已有安装。Lite 的 APK 身份继续由自身壳契约记录。完整规则见 `2026-10-23-native-complete-apk.md`。
 - `versionCode` 的唯一、递增与不可复用约束按 `applicationId` 分别成立；各应用仍使用既有 SemVer 公式。APK/OTA 制品不可覆盖，业务版本、源码 SHA、基础包身份和资源摘要均可追溯。
 - 原生兼容检测必须覆盖原生依赖、Gradle/锁/校验、权限、插件、原生资源与 Kotlin/Java 代码；只改 JS 或业务版本不能误判为需要安装。
 - OTA 资源先完成分发和摘要核对，再以短事务激活 manifest。失败不改变生效版本；重复发布同一不可变制品幂等，冲突内容拒绝。

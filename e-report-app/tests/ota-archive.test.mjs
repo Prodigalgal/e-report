@@ -20,11 +20,11 @@ function fixture(t) {
   execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-keyout', privateKeyFile, '-out', certificate,
     '-nodes', '-config', configuration, '-days', '2'], { stdio: 'ignore' });
   const native = { version: '6.8.0', versionCode: 5008000, runtimeVersion: 'android-6.8.0-native5008000', applicationId: 'com.mnnu.ereport' };
-  const config = { version: '6.8.1', runtimeVersion: native.runtimeVersion, android: { versionCode: native.versionCode, package: native.applicationId } };
+  const config = { version: '6.8.1', runtimeVersion: native.runtimeVersion, android: { versionCode: 5008001, package: native.applicationId } };
   const json = (file, body) => writeFileSync(path.join(appRoot, file), JSON.stringify(body));
-  json('native-release.json', native); json('app.json', { expo: config });
+  json('native-runtime.json', native); json('app.json', { expo: config });
   json('package.json', { version: '6.8.1' }); json('package-lock.json', { version: '6.8.1', packages: { '': { version: '6.8.1' } } });
-  writeFileSync(path.join(appRoot, 'android/app/build.gradle'), 'versionCode 5008000\nversionName "6.8.0"\n');
+  writeFileSync(path.join(appRoot, 'android/app/build.gradle'), 'versionCode 5008001\nversionName "6.8.1"\n');
   const exportRoot = path.join(appRoot, 'export');
   json('export/expoConfig.json', config);
   json('export/metadata.json', { fileMetadata: { android: { bundle: 'app.hbc', assets: [{ path: 'assets/image', ext: 'png' }] } } });

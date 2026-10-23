@@ -52,7 +52,7 @@ export default function AboutScreen() {
       <Card style={{ gap: 12 }}>
         <Text style={{ color: colors.text, fontSize: 20, fontWeight: '900' }}>版本信息</Text>
         <InfoRow label="业务版本" value={APP_BUSINESS_VERSION} />
-        <InfoRow label="原生基础包" value={`${APP_VERSION_NAME} (${APP_VERSION_CODE})`} />
+        <InfoRow label="安装包版本" value={`${APP_VERSION_NAME} (${APP_VERSION_CODE})`} />
         <InfoRow label="运行时版本" value={APP_RUNTIME_VERSION} />
         <InfoRow label="应用包名" value={APP_PACKAGE_ID} />
         <InfoRow label="更新通道" value={formatUpdateChannel(process.env.EXPO_PUBLIC_APP_UPDATE_CHANNEL)} />

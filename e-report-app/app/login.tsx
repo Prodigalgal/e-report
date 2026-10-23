@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ActivityIndicator, Pressable, Text, View, useWindowDimensions } from 'react-native';
 
 import { formatApiErrorMessage } from '@/api/http';
+import { APP_BUSINESS_VERSION } from '@/api/app-update-api';
 import { getCurrentApiEnvironment } from '@/config/api-environment';
 import { apiEndpointsFor, type ApiEnvironment } from '@/config/public-endpoints';
 import { fetchAuthChallenge } from '@/auth/auth-api';
@@ -249,7 +250,7 @@ export default function LoginScreen() {
       </View>
 
       <Text selectable style={{ textAlign: 'center', color: colors.placeholder, fontSize: 13 }}>
-        仅限已授权账号访问
+        版本 {APP_BUSINESS_VERSION} · 仅限已授权账号访问
       </Text>
 
       <LoginEnvironmentSettings
