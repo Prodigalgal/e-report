@@ -223,3 +223,9 @@ databaseChangeLog:
       changes:
         - tagDatabase:
             tag: e-report-6.10.1
+  - changeSet:
+      id: 2026-10-23-tag-6.10.2
+      author: e-report
+      changes:
+        - tagDatabase:
+            tag: e-report-6.10.2

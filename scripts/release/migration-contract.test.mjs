@@ -37,5 +37,7 @@ test('both database paths persist recipient checkpoints before the 6.10.0 tag', 
       && changelog.indexOf('tag: e-report-6.10.0') > checkpoints, `${root} must include mail delivery control`);
     assert.ok(changelog.indexOf('tag: e-report-6.10.1') > changelog.indexOf('tag: e-report-6.10.0'),
       `${root} must expose the corrected candidate migration target`);
+    assert.ok(changelog.indexOf('tag: e-report-6.10.2') > changelog.indexOf('tag: e-report-6.10.1'),
+      `${root} must expose the runtime security patch migration target`);
   }
 });
