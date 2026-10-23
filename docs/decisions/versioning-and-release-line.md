@@ -49,7 +49,7 @@ versionCode = (x - 1) * 1,000,000 + y * 1,000 + z
 - Native APK 每个业务候选构建完整功能，APK 版本与业务版本一致；`e-report-app/native-runtime.json` 仅表示 OTA 的原生兼容边界。兼容 JS 更新不改变该运行时，不将安装包版本等同于运行时。
 - 同一版本、同一源码的不可变 APK 可重用；跨源码的 Native APK 不得作为新候选。Lite 保留远程 WEB 与独立壳身份。
 - APK 封存验证 Android 元数据、APK 内 `app.config`、JS bundle、发布元数据与源码 SHA；最新 APK 断网首启必须为当前版本。发布先完成 APK，再激活 OTA；同版本或更高内置版本返回 OTA 204。
-- `6.11.0` 的版本读取和可选请求头不改变 Expo SDK、原生模块接口或权限，继续兼容 `android-6.8.2-native5008002`。此次指纹重录包含构建身份分离、请求头和生成元数据的排除；后续仅 APK 版本变化不会改变兼容指纹，其余原生变更继续由门禁检查。
+- `6.11.0` 的版本读取和可选请求头不改变原生模块接口或权限，继续兼容 `android-6.8.2-native5008002`。SDK 57 同步 Expo `57.0.31`、Location `57.0.22`、Router `57.0.29` 及对应原生依赖锁；Location 修复撤销权限后的后台回调崩溃，Core 修复布局，均未增加业务 JS 所需的原生接口。此次指纹重录包含这些兼容补丁、构建身份分离、请求头和生成元数据的排除；后续仅 APK 版本变化不会改变兼容指纹，其余原生变更继续由门禁检查。补丁说明见 [Location](https://github.com/expo/expo/blob/sdk-57/packages/expo-location/CHANGELOG.md) 与 [Core](https://github.com/expo/expo/blob/sdk-57/packages/expo-modules-core/CHANGELOG.md)。
 
 ## 2.1.3 发布线
 

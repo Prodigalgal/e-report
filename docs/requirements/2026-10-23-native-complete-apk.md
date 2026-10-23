@@ -14,6 +14,7 @@
 - APK 内置清单、真实 Android 版本、源码 SHA、业务版本、签名与摘要共同验证。工作流仍使用 GitHub Actions 构建和发布、私有 GitOps、Argo CD 自动同步。
 - APK job 最长 180 分钟、上传与分发步骤最长 160 分钟，保留现有分片重试与 20 分钟对象同步上限。该预算覆盖已观测到约三分钟一个 2MB 分片的网络条件；不把慢速传输视为已发布成功。
 - 沿用既有安装包升级、OTA 签名/环境隔离、权限、原生 API 与 Lite 构建，不增加发布组件或手动集群操作。
+- 供应链复验发现 `GHSA-mrhx-c7xc-m3w5` 后，仅将 Expo CLI 的 Zod 解析依赖固定到修复版 `4.6.6`；保留安全门禁，通过 CLI 插件/MCP schema、doctor 与实际导出验证 API 兼容性。参考 https://github.com/advisories/GHSA-mrhx-c7xc-m3w5 。
 
 ## 验收与测试
 
