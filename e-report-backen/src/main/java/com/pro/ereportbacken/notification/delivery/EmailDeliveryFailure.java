@@ -37,17 +37,24 @@ public enum EmailDeliveryFailure {
         var pending = new ArrayDeque<Throwable>();
         pending.add(failure);
         boolean connectionInterrupted = false;
+        boolean confirmedRejection = false;
+        EmailDeliveryFailure transportFailure = null;
         while (!pending.isEmpty()) {
             Throwable cause = pending.removeFirst();
             if (!visited.add(cause)) continue;
-            if (cause instanceof MailAuthenticationException) return AUTHENTICATION;
-            if (cause instanceof SocketTimeoutException) return TIMEOUT;
-            if (cause instanceof ConnectException || cause instanceof UnknownHostException) return CONNECTION;
+            if (transportFailure == null) {
+                if (cause instanceof MailAuthenticationException) transportFailure = AUTHENTICATION;
+                else if (cause instanceof SocketTimeoutException) transportFailure = TIMEOUT;
+                else if (cause instanceof ConnectException || cause instanceof UnknownHostException) transportFailure = CONNECTION;
+            }
+            confirmedRejection |= MailFailurePolicy.hasRejectionResponse(cause);
             if (cause instanceof SocketException || cause instanceof EOFException) connectionInterrupted = true;
             if (cause.getCause() != null) pending.add(cause.getCause());
             if (cause instanceof MessagingException messaging && messaging.getNextException() != null) pending.add(messaging.getNextException());
             if (cause instanceof MailSendException sendFailure) pending.addAll(sendFailure.getFailedMessages().values());
         }
+        if (confirmedRejection && transportFailure != AUTHENTICATION) return DELIVERY;
+        if (transportFailure != null) return transportFailure;
         return connectionInterrupted ? INCOMPLETE : DELIVERY;
     }
 }

@@ -160,7 +160,7 @@ class EmailDeliverySmtpIntegrationTests {
                         } else if (line.startsWith("QUIT")) {
                             output.print("221 goodbye\r\n"); output.flush(); break;
                         } else if (line.startsWith("RCPT") && !acceptsRecipient) {
-                            output.print("550 recipient rejected\r\n"); output.flush(); break;
+                            output.print("550 recipient rejected\r\n");
                         } else { output.print("250 OK\r\n"); }
                         output.flush();
                     }

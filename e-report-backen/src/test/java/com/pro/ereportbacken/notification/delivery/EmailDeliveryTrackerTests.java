@@ -71,6 +71,19 @@ class EmailDeliveryTrackerTests {
     }
 
     @Test
+    void confirmedRecipientRejectionTakesPrecedenceOverConnectionCleanupFailure() throws Exception {
+        var rejection = new org.eclipse.angus.mail.smtp.SMTPAddressFailedException(
+                new jakarta.mail.internet.InternetAddress("recipient@example.test"), "RCPT TO", 550, "recipient rejected");
+        for (var interruption : java.util.List.of(new java.net.SocketException("connection reset"),
+                new java.io.EOFException("closed"), new SocketTimeoutException("cleanup timeout"))) {
+            var failure = new MailSendException("connection cleanup failed", interruption, Map.of("mail", rejection));
+            assertThat(EmailDeliveryFailure.classify(failure)).isEqualTo(EmailDeliveryFailure.DELIVERY);
+            assertThat(MailFailurePolicy.classify(failure).failureCode()).isEqualTo("RECIPIENT_REJECTED");
+            assertThat(MailFailurePolicy.classify(failure).retryable()).isFalse();
+        }
+    }
+
+    @Test
     void unavailableDurableStartPreventsAnUnrecordedSmtpSend() {
         when(store.start(context, null)).thenThrow(new IllegalStateException("database unavailable"));
         AtomicInteger calls = new AtomicInteger();

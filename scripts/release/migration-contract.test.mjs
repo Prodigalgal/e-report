@@ -35,5 +35,7 @@ test('both database paths persist recipient checkpoints before the 6.10.0 tag', 
     const checkpoints = changelog.indexOf('2026-10-23-079-mail-delivery-control.sql');
     assert.ok(checkpoints > changelog.indexOf('2026-10-22-078-email-delivery-status.sql')
       && changelog.indexOf('tag: e-report-6.10.0') > checkpoints, `${root} must include mail delivery control`);
+    assert.ok(changelog.indexOf('tag: e-report-6.10.1') > changelog.indexOf('tag: e-report-6.10.0'),
+      `${root} must expose the corrected candidate migration target`);
   }
 });
