@@ -5,12 +5,14 @@
 - 目标：最新 APK 内置当前业务版本；仅较早的兼容安装接收 OTA，APK 发布完成后再发布同版本 OTA。
 - 范围：版本/运行时分离、APK 内置源码及版本验证、禁止跨源码复用、可选内置版本协议头、兼容安装升级策略与发布顺序；详见 `docs/requirements/2026-10-23-native-complete-apk.md`。
 - 验证：版本和制品拒绝用例、服务端 OTA 204/旧安装更新/回退、APK 安装提示策略、构建/安全契约、模拟器离线首启和旧安装 OTA。
-- 状态：2026-10-24完成6.11.0 Native/OTA测试环境专项验收；生产未提升。
+- 状态：2026-10-24完成6.11.0 Native/OTA测试环境专项验收，并按用户授权提升生产；生产服务、完整APK和签名OTA核验通过。
 - 本地结果：后端573项中570项通过、3项需外部Redis的测试跳过，bootJar成功；WEB 97项及lint/build通过；APP 85项、typecheck、Expo doctor 19项、实际Android导出及资产检查通过；发布/安全工具57项、版本契约、actionlint及Gitleaks通过。首次CI被Zod新公告拦截，已升级到修复版并验证CLI schema兼容；SDK补丁的17组应用配置、三个原生组件及版本锁/校验摘要已通过Gradle同步。
 - 发布修复：首次Native发布job缺少APK解析所需的fflate；ba7266a为该job增加锁定依赖安装。使用196f265的不可变制品恢复测试发布，未重打包或增加业务版本；GitHub发布run 40052865721已成功，Backend/WEB、Native下载中心与签名OTA均为6.11.0，Lite独立壳为6.8.1。
 - 实包验收：6.11.0/code5011000 APK签名、内置Expo配置及196f265源码SHA通过校验，APK SHA256为373899d3ab4227b380a557a0fe252d61edace018d0e5d457df85f14519311863。Pixel_9保留旧OTA缓存升级、清空数据首次安装均断网进入登录页并显示6.11.0。
 - OTA设备验收：Native仍为6.8.2时，已验证并启动6.11.0 OTA（df042425-c481-5a47-b413-f67de9383d34），成功启动1次、失败0次且无重新安装提示；随后覆盖安装完整6.11.0，确认启动其内置更新。最新APK联网记录CheckCompleteUnavailable，无重复下载、启动失败或检查错误。
 - 链路验收：verify-test-candidate通过Native/Lite实际完整下载、HEAD/Range、摘要、签名OTA全部29个资源（5914829字节）及最新APK 204校验；兼容旧安装、不兼容旧安装、当前安装三类升级策略通过；真实管理接口未登录401，错误参数/媒体协商边界按HTTP拒绝。数据库e-report-6.11.0标签已EXECUTED，测试Argo Synced/Healthy。
+- 生产发布：run 40054703656自动恢复至第3次后成功；对象存储状态查询的504由既有恢复流程处理，未变更业务代码或重建制品。生产GitOps revision为5d2ef993618d1adb4b2bf3ed9c300a0618a0a2ac，Argo Synced/Healthy，Backend/WEB各1/1，镜像分别为sha256:1fee543e71149de451811bb5b771ce9a508d446d73fefd97be32cedc708243c2及sha256:64c4c7f63ba7beba70ffb45f9fa0fc49d688077a5c2dbc13ccbcff61bf867038，源码均为196f265。
+- 生产核验：Native 6.11.0/code5011000与测试APK摘要一致，Lite壳6.8.1；两款APK完整下载、HEAD/Range通过。生产OTA 93ccd24c-4e2d-5236-90d5-2e3ddfb8bf0c签名及29个资源通过，当前APK请求204；Pixel_9连接生产后显示6.11.0并CheckCompleteUnavailable，无重复下载或启动/检查错误。数据库e-report-6.11.0已EXECUTED，错误测试环境请求400，旧6.7.2要求APK升级、兼容6.8.2可OTA，当前6.11.0无升级提示。
 - 验收边界：本次覆盖安装、更新及发布链路，不等同全部业务页面回归。夜间基础镜像库存扫描run 40043602739存在过期豁免和未审核条目，尚待处理；本轮未改基础镜像或相关安全策略。Backend/WEB回退使用上一不可变镜像，APK修复使用更高版本。
 
 ## 自动测试部署修复（2026-10-23）
