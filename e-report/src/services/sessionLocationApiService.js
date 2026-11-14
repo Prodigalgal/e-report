@@ -2,8 +2,18 @@ import apiClient from './apiClient';
 
 /**
  * 登录态态势地图：在线用户点位与授权范围内工单故障点，坐标已由服务端转为 GCJ-02。
+ *
+ * 需要 `user:session-location:view` 权限，仅管理员持有。
  */
 export const fetchSessionSituationMap = () => apiClient.get('/admin/session-situation/map');
+
+/**
+ * 坐标提取器所需的地图渲染凭据。
+ *
+ * 与管理员地图接口分开：报单人员不持有地点查看权限，若复用上面那条会 403，
+ * 导致提取器里不依赖地图的粘贴识别路径也一并失效。此接口只返回地图密钥，不含任何位置数据。
+ */
+export const fetchMapConfig = () => apiClient.get('/location/map-config');
 
 /**
  * 识别粘贴文本中的经纬度并转换为系统契约。

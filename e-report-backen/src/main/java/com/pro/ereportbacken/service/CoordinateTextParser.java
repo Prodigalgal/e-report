@@ -71,10 +71,42 @@ public class CoordinateTextParser {
                 return CoordinateParseResultDTO.unparsed("识别到的数值无法解析为有效坐标。");
             }
             // 裸数字对存在两种约定，交由范围推断；两者都合法时提示用户核对。
-            return inferBareOrder(first, second);
+            CoordinateParseResultDTO inferred = inferBareOrder(first, second);
+            if (!inferred.parsed()) {
+                return inferred;
+            }
+            // 日期、时间与电话号码的数字段同样落在经纬度数值范围内，必须再要求形态可信，
+            // 否则用户会拿到"识别成功"的离谱坐标。
+            if (!isPlausibleBarePair(inferred.longitude(), inferred.latitude())) {
+                return CoordinateParseResultDTO.unparsed(
+                        "识别到的数字不像经纬度（可能是日期或电话号码），请检查后重试。");
+            }
+            return inferred;
         }
 
         return CoordinateParseResultDTO.unparsed("未能从文本中识别出经纬度，请检查格式，例如「117.647,24.513」。");
+    }
+
+    /**
+     * 裸数字对的可信度判定。
+     *
+     * <p>日期、时间与电话号码的数字段同样落在经纬度的数值范围内（`138 0013 8000` 可读作
+     * 经度 138 / 纬度 13，`2026-11-14 15:30` 可读作经度 14 / 纬度 15），单靠范围无法区分。
+     * 地图应用复制出来的坐标几乎总带小数位，因此要求裸数字对至少一方带小数，
+     * 借此排除这些数字形态。带标签、WKT 与度分秒等形式不受此限。</p>
+     */
+    private boolean isPlausibleBarePair(Double longitude, Double latitude) {
+        if (longitude == null || latitude == null) {
+            return false;
+        }
+        if (Math.abs(longitude) > 180.0 || Math.abs(latitude) > 90.0) {
+            return false;
+        }
+        return hasFractionalPart(longitude) || hasFractionalPart(latitude);
+    }
+
+    private boolean hasFractionalPart(Double value) {
+        return value != null && Math.abs(value - Math.rint(value)) > 1e-9;
     }
 
     private CoordinateParseResultDTO fromLabelled(Double longitude, Double latitude) {

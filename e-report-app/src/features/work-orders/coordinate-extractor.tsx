@@ -32,13 +32,6 @@ type CoordinateExtractorProps = {
 };
 
 export function CoordinateExtractor({ onApply }: CoordinateExtractorProps) {
-  const operation = startAppTelemetryOperation({
-    category: 'LOCATION',
-    eventName: 'COORDINATE_EXTRACT',
-    operationName: '坐标提取',
-    forceCapture: true,
-  });
-
   const [pasteText, setPasteText] = useState('');
   const [standard, setStandard] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -57,6 +50,13 @@ export function CoordinateExtractor({ onApply }: CoordinateExtractorProps) {
       setMessage('请先粘贴从其他地图复制的坐标。');
       return;
     }
+    // 每次操作单独建遥测：在渲染体内创建会随每次渲染重复产生事件。
+    const operation = startAppTelemetryOperation({
+      category: 'LOCATION',
+      eventName: 'COORDINATE_RECOGNIZE',
+      operationName: '粘贴坐标识别',
+      forceCapture: true,
+    });
     setBusy(true);
     setMessage('');
     setCandidates([]);
@@ -86,6 +86,7 @@ export function CoordinateExtractor({ onApply }: CoordinateExtractorProps) {
         if (only) {
           applyCandidate(only);
         }
+        operation.success({ candidateCount: options.length, autoApplied: true });
         return;
       }
 
@@ -98,6 +99,7 @@ export function CoordinateExtractor({ onApply }: CoordinateExtractorProps) {
           preferred: true,
           note: '',
         });
+        operation.success({ candidateCount: options.length, confident: true });
         return;
       }
 
@@ -117,6 +119,12 @@ export function CoordinateExtractor({ onApply }: CoordinateExtractorProps) {
       setMessage('请先输入地址或地点名称。');
       return;
     }
+    const operation = startAppTelemetryOperation({
+      category: 'LOCATION',
+      eventName: 'COORDINATE_GEOCODE',
+      operationName: '地址解析取点',
+      forceCapture: true,
+    });
     setBusy(true);
     setMessage('');
     setCandidates([]);

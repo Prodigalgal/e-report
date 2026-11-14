@@ -114,6 +114,35 @@ class CoordinateTextParserTests {
     }
 
     @Test
+    void rejectsDateAndPhoneShapedText() {
+        // 日期与电话号码的数字对在数值范围内也"合法"，但显然不是坐标；
+        // 误判会让用户拿到一个境外坐标却以为识别成功。
+        assertThat(parser.parse("2026-11-14 15:30").parsed()).isFalse();
+        assertThat(parser.parse("138 0013 8000").parsed()).isFalse();
+        assertThat(parser.parse("2026/11/14").parsed()).isFalse();
+    }
+
+    @Test
+    void acceptsIntegerPairWhenOrderIsLabelled() {
+        // 带标签时数值本身即为用户明确表达，不因缺少小数位而拒绝。
+        CoordinateParseResultDTO result = parser.parse("lng: 117 lat: 24");
+
+        assertThat(result.parsed()).isTrue();
+        assertThat(result.longitude()).isEqualTo(117.0);
+        assertThat(result.latitude()).isEqualTo(24.0);
+    }
+
+    @Test
+    void acceptsPlainNumbersInsideMainlandChinaRange() {
+        // 中国大陆范围内、且至少一方带小数的裸数字对仍应识别。
+        CoordinateParseResultDTO result = parser.parse("117.647 24.513");
+
+        assertThat(result.parsed()).isTrue();
+        assertThat(result.longitude()).isEqualTo(117.647);
+        assertThat(result.latitude()).isEqualTo(24.513);
+    }
+
+    @Test
     void rejectsOutOfRangeValues() {
         assertThat(parser.parse("200.0,100.0").parsed()).isFalse();
     }

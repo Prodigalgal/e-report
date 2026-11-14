@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -48,8 +49,6 @@ import java.util.stream.Collectors;
 @Service
 public class SessionSituationMapService {
 
-    /** 位置超过该时长未更新时仍展示，但由前端标注为“位置可能已过期”。 */
-    private static final Duration LOCATION_STALE_AFTER = Duration.ofMinutes(30);
     /** 活跃会话的判定窗口，与登录会话的最后活跃时间口径一致。 */
     private static final Duration ACTIVE_SESSION_WINDOW = Duration.ofHours(24);
     private static final int MAX_FAULT_POINTS = 500;
@@ -122,7 +121,13 @@ public class SessionSituationMapService {
         );
     }
 
-    private SessionSituationMapDTO.MapClientConfigDTO mapClientConfig() {
+    /**
+     * 地图渲染所需的前端凭据。
+     *
+     * 报单页的坐标提取器同样需要它，而报单人员并不持有登录态地图查看权限，
+     * 因此该配置必须能单独下发，不能只挂在管理员地图接口上。
+     */
+    public SessionSituationMapDTO.MapClientConfigDTO mapClientConfig() {
         String jsApiKey = appConfigService.getConfigValue(AppConfigConstant.AMAP_WEB_JS_API_KEY, "");
         String securityCode = appConfigService.getConfigValue(AppConfigConstant.AMAP_WEB_JS_SECURITY_CODE, "");
         return new SessionSituationMapDTO.MapClientConfigDTO(
@@ -142,10 +147,9 @@ public class SessionSituationMapService {
         if (access.orgUnitIds().isEmpty()) {
             return List.of();
         }
-        Set<UUID> scopedMemberIds = userRepository.findByTenantId(tenantId).stream()
-                .filter(user -> user.getOrgUnitId() != null && access.orgUnitIds().contains(user.getOrgUnitId()))
-                .map(User::getId)
-                .collect(Collectors.toSet());
+        // 由数据库按组织范围裁剪成员，避免把整个租户的用户载入内存后再过滤。
+        Set<UUID> scopedMemberIds = new LinkedHashSet<>(
+                userRepository.findIdsByTenantIdAndOrgUnitIdIn(tenantId, access.orgUnitIds()));
         if (scopedMemberIds.isEmpty()) {
             return List.of();
         }
@@ -352,10 +356,7 @@ public class SessionSituationMapService {
         return new SessionSituationMapDTO.SituationMapBoundsDTO(minLongitude, minLatitude, maxLongitude, maxLatitude);
     }
 
-    /** 位置超过阈值未更新时，前端据此提示“位置可能已过期”。 */
-    public static boolean isStale(LocalDateTime locationReportedAt, LocalDateTime now) {
-        return locationReportedAt == null || locationReportedAt.isBefore(now.minus(LOCATION_STALE_AFTER));
-    }
+
 
     private record Coordinates(double longitude, double latitude) {
     }

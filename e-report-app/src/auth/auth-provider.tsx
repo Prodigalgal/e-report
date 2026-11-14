@@ -1,7 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { startLocationTracking, stopLocationTracking } from '@/location/location-tracking';
 
-import { ApiError, setApiAuthCredentials } from '@/api/http';
+import { ApiError, AUTH_EXPIRED_EVENT, setApiAuthCredentials } from '@/api/http';
+import { DeviceEventEmitter } from 'react-native';
 import {
   fetchCurrentUser,
   fetchPasswordPolicy,
@@ -117,6 +118,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshCurrentUser().finally(() => setIsLoading(false));
   }, [refreshCurrentUser]);
+
+  // 会话被动失效（refresh 失败被清理）不会经过 logout，订阅事件以确保停止位置采集。
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(AUTH_EXPIRED_EVENT, () => {
+      setCurrentUser(null);
+      setToken(null);
+      void stopLocationTracking();
+    });
+    return () => subscription.remove();
+  }, []);
 
   const login = useCallback(async (
     username: string,

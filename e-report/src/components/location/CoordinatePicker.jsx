@@ -301,9 +301,10 @@ function CoordinatePicker({ mapConfig, onChange, initialCenter = null, height = 
         });
     };
 
-    if (status === 'failed') {
-        return <Alert severity="warning">{errorMessage || '地图不可用，请手动填写经纬度与地址。'}</Alert>;
-    }
+    // 地图不可用时只降级地图区域：粘贴坐标识别与手动填写不依赖地图，
+    // 直接整个组件早退会让用户连这条可用路径也失去。
+    const mapUnavailable = status === 'failed';
+    const canUseMap = status === 'ready';
 
     const candidates = recognition?.candidates || [];
     const resolvedContract = selection?.wgs84Longitude && selection?.wgs84Latitude
@@ -321,18 +322,26 @@ function CoordinatePicker({ mapConfig, onChange, initialCenter = null, height = 
 
     return (
         <Stack spacing={2}>
-            <Box sx={{ position: 'relative', height, borderRadius: 1, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
-                <Box ref={containerRef} sx={{ height, width: '100%' }} />
-                {status === 'loading' && (
-                    <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ position: 'absolute', inset: 0, bgcolor: 'background.paper' }}>
-                        <CircularProgress size={26} />
-                        <Typography variant="body2" color="text.secondary">正在加载地图</Typography>
-                    </Stack>
-                )}
-            </Box>
-            <Typography variant="caption" color="text.secondary">
-                在地图上点击取点、拖动标记微调，也可以搜索地址，或粘贴其他地图复制来的坐标。
-            </Typography>
+            {mapUnavailable ? (
+                <Alert severity="warning">
+                    {errorMessage || '地图暂不可用。你仍可粘贴坐标识别，或手动填写经纬度与地址。'}
+                </Alert>
+            ) : (
+                <>
+                    <Box sx={{ position: 'relative', height, borderRadius: 1, overflow: 'hidden', border: 1, borderColor: 'divider' }}>
+                        <Box ref={containerRef} sx={{ height, width: '100%' }} />
+                        {status === 'loading' && (
+                            <Stack alignItems="center" justifyContent="center" spacing={1} sx={{ position: 'absolute', inset: 0, bgcolor: 'background.paper' }}>
+                                <CircularProgress size={26} />
+                                <Typography variant="body2" color="text.secondary">正在加载地图</Typography>
+                            </Stack>
+                        )}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary">
+                        在地图上点击取点、拖动标记微调，也可以搜索地址，或粘贴其他地图复制来的坐标。
+                    </Typography>
+                </>
+            )}
 
             <Stack direction="row" spacing={1} alignItems="flex-start">
                 <TextField
@@ -346,7 +355,7 @@ function CoordinatePicker({ mapConfig, onChange, initialCenter = null, height = 
                 />
                 <Button
                     onClick={runSearch}
-                    disabled={searching || !searchKeyword.trim()}
+                    disabled={searching || !searchKeyword.trim() || !canUseMap}
                     variant="outlined"
                     sx={{ minWidth: 96, height: 40, flexShrink: 0 }}
                 >

@@ -79,15 +79,6 @@ export const loadAmap = (config) => {
     return loadPromise;
 };
 
-/**
- * 确保指定插件可用。
- */
-export const loadAmapPlugins = async (plugins) => {
-    const AMap = await loadAmap({ jsApiKey: configuredKey });
-    return new Promise((resolve) => {
-        AMap.plugin(plugins, () => resolve(AMap));
-    });
-};
 
 export const resetAmapLoaderForTests = () => {
     loadPromise = null;

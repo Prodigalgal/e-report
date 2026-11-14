@@ -12,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import jakarta.persistence.LockModeType;
@@ -109,6 +110,13 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     long countMissingNameSearchKeys();
 
     List<User> findByTenantIdAndIdIn(UUID tenantId, List<UUID> ids);
+
+    /**
+     * 只取授权组织范围内的成员 ID，避免把整个租户的用户载入内存后再过滤。
+     */
+    @Query("SELECT member.id FROM User member WHERE member.tenantId = :tenantId AND member.orgUnitId IN :orgUnitIds")
+    List<UUID> findIdsByTenantIdAndOrgUnitIdIn(@Param("tenantId") UUID tenantId,
+                                               @Param("orgUnitIds") Collection<UUID> orgUnitIds);
 
     @Query("""
             SELECT u.id AS membershipId, u.orgUnitId AS orgUnitId

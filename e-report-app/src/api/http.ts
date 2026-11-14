@@ -1,4 +1,5 @@
 import Constants from 'expo-constants';
+import { DeviceEventEmitter } from 'react-native';
 
 import {
   clearStoredSession,
@@ -32,6 +33,8 @@ export { FALLBACK_API_BASE_URL, PRIMARY_API_BASE_URL } from '@/config/public-end
 let cachedCredentials: StoredCredentials | null | undefined;
 let refreshPromise: Promise<StoredCredentials> | null = null;
 let fallbackUntil = 0;
+
+export const AUTH_EXPIRED_EVENT = 'ereport-auth-expired';
 
 type QueryValue = string | number | boolean | undefined | null;
 
@@ -291,8 +294,19 @@ async function performRefresh(current: StoredCredentials): Promise<StoredCredent
     if (rotationMayHaveCompleted || shouldClearSessionAfterRefreshFailure(error)) {
       cachedCredentials = null;
       await clearStoredSession();
+      // 会话被动失效时不会经过 AuthProvider.logout，必须显式广播，
+      // 否则登录态位置采集会在用户已登出后继续运行。
+      notifyAuthenticationExpired();
     }
     throw error;
+  }
+}
+
+function notifyAuthenticationExpired() {
+  try {
+    DeviceEventEmitter.emit(AUTH_EXPIRED_EVENT);
+  } catch {
+    // 广播失败不影响清理结果。
   }
 }
 

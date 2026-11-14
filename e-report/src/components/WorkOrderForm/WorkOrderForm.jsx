@@ -7,7 +7,7 @@ import FileUploadWithPreview from '../FileUploadWithPreview/FileUploadWithPrevie
 import { WORK_ORDER_TYPE_CODES, REPORT_PAGE_CONFIGS } from '../../constants/workOrderCatalog';
 import { fetchReverseGeocode } from '../../services/locationApiService';
 import CoordinatePicker from '../location/CoordinatePicker';
-import { fetchSessionSituationMap } from '../../services/sessionLocationApiService';
+import { fetchMapConfig } from '../../services/sessionLocationApiService';
 import { formatApiErrorMessage } from '../../utils/formatApiErrorMessage';
 import { WORK_ORDER_PRIORITIES } from '../../constants/workOrderSla';
 import { priorityPresentation } from '../../constants/workOrderPresentation';
@@ -53,8 +53,8 @@ function WorkOrderForm({
         setPickerOpen(true);
         if (mapConfig) return;
         try {
-            const response = await fetchSessionSituationMap();
-            setMapConfig(response.data?.mapConfig || null);
+            const response = await fetchMapConfig();
+            setMapConfig(response.data || null);
         } catch {
             setMapConfig(null);
         }

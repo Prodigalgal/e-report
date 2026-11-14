@@ -72,6 +72,14 @@ class EReportLocationTrackingService : Service() {
       return START_NOT_STICKY
     }
 
+    // Android 14 起，调用 startForeground(type=location) 时若尚未获得定位运行时权限会抛
+    // SecurityException。登录即启动服务时用户可能还没授权，因此必须先检查再进入前台状态，
+    // 否则崩溃会发生在登录瞬间。
+    if (!hasFineLocationPermission()) {
+      stopSelf()
+      return START_NOT_STICKY
+    }
+
     startForegroundNotification()
     if (!started) {
       started = true

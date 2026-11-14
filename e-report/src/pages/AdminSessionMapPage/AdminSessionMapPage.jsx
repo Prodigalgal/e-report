@@ -31,7 +31,7 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 import AmapMapCanvas from '../../components/map/AmapMapCanvas';
 import { fetchSessionSituationMap } from '../../services/sessionLocationApiService';
 import { formatApiErrorMessage } from '../../utils/formatApiErrorMessage';
-import { formatDateTime } from '../../utils/formatDate.js';
+import { formatDateTime, parseApiDateTime } from '../../utils/formatDate.js';
 import { formatContractCoordinates } from '../../utils/coordinateStandards';
 
 /** 位置超过该时长未更新时标注为可能过期，与后端 LOCATION_STALE_AFTER 保持一致。 */
@@ -105,9 +105,14 @@ export default function AdminSessionMapPage() {
 
     const isStale = useCallback((locationReportedAt) => {
         if (!locationReportedAt) return true;
-        const reportedAt = new Date(`${locationReportedAt}Z`);
-        return !Number.isNaN(reportedAt.getTime()) && reportedAt < staleThreshold;
+        // 用项目统一的解析器：接口的 LocalDateTime 无时区后缀但语义为 UTC，
+        // 且可能带 6 位小数秒，手写 new Date(...+'Z') 在部分浏览器上会解析失败。
+        const reportedAt = parseApiDateTime(locationReportedAt);
+        if (!reportedAt) return true;
+        return reportedAt < staleThreshold;
     }, [staleThreshold]);
+
+    const handleMarkerClick = useCallback(marker => setDetailTarget(marker), []);
 
     const markers = useMemo(() => {
         const result = [];
@@ -232,7 +237,7 @@ export default function AdminSessionMapPage() {
                         markers={markers}
                         fitToMarkers
                         height={520}
-                        onMarkerClick={marker => setDetailTarget(marker)}
+                        onMarkerClick={handleMarkerClick}
                     />
                 )}
 
