@@ -65,6 +65,33 @@ public class AuthSession extends UuidV7Entity {
     @Column(name = "ip_hash", nullable = false, length = 64)
     private String ipHash;
 
+    /**
+     * 明文来源 IP，仅用于管理员排障与归属核对；会话劫持比对仍以 ipHash 为准。
+     */
+    @Column(name = "client_ip", length = 64)
+    private String clientIp;
+
+    @Column(name = "location_latitude")
+    private Double locationLatitude;
+
+    @Column(name = "location_longitude")
+    private Double locationLongitude;
+
+    @Column(name = "location_coordinate_system", length = 20)
+    private String locationCoordinateSystem;
+
+    @Column(name = "location_accuracy_meters")
+    private Double locationAccuracyMeters;
+
+    @Column(name = "location_provider", length = 40)
+    private String locationProvider;
+
+    @Column(name = "location_fixed_at")
+    private LocalDateTime locationFixedAt;
+
+    @Column(name = "location_reported_at")
+    private LocalDateTime locationReportedAt;
+
     @Column(name = "user_agent_hash", nullable = false, length = 64)
     private String userAgentHash;
 

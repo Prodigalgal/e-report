@@ -2,6 +2,7 @@ package com.pro.ereportbacken.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pro.ereportbacken.model.dto.GeocodeSearchResponseDTO;
 import com.pro.ereportbacken.model.dto.ReverseGeocodeCandidateDTO;
 import com.pro.ereportbacken.model.dto.ReverseGeocodeResolutionStatus;
 import com.pro.ereportbacken.model.dto.ReverseGeocodeResponseDTO;
@@ -30,6 +31,8 @@ import java.util.regex.Pattern;
 public class LocationService {
 
     private static final String AMAP_REVERSE_GEOCODE_URL = "https://restapi.amap.com/v3/geocode/regeo";
+    private static final String AMAP_GEOCODE_URL = "https://restapi.amap.com/v3/geocode/geo";
+    private static final String AMAP_PLACE_TEXT_URL = "https://restapi.amap.com/v5/place/text";
     private static final String AMAP_AROUND_SEARCH_URL = "https://restapi.amap.com/v5/place/around";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(8);
     private static final int ADMINISTRATIVE_POI_SEARCH_RADIUS_METERS = 3000;
@@ -81,6 +84,159 @@ public class LocationService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new IllegalStateException("高德逆地理接口请求被中断。", e);
+        }
+    }
+
+    /**
+     * 地址正向地理编码：把用户输入的地址或 POI 名称解析为坐标。
+     *
+     * <p>优先走结构化地理编码，无结果时回退到 POI 关键字搜索——用户在小城市报单时
+     * 更常输入「某某小区」「某某医院」这类地点名而非标准地址，只做结构化编码会大量空手而归。</p>
+     */
+    public GeocodeSearchResponseDTO geocode(String keyword) {
+        if (!StringUtils.hasText(keyword)) {
+            return GeocodeSearchResponseDTO.notFound("请输入要定位的地址或地点名称。");
+        }
+        String amapKey = mapKeyPoolService.nextAmapKey();
+        if (!StringUtils.hasText(amapKey)) {
+            throw new IllegalStateException("高德Web服务API Key池未配置。");
+        }
+
+        String trimmed = keyword.trim();
+        try {
+            List<GeocodeSearchResponseDTO.GeocodeCandidateDTO> candidates =
+                    new ArrayList<>(geocodeStructured(trimmed, amapKey));
+            if (candidates.isEmpty()) {
+                candidates.addAll(searchPlacesByKeyword(trimmed, amapKey));
+            }
+            if (candidates.isEmpty()) {
+                return GeocodeSearchResponseDTO.notFound("没有找到匹配的地点，请补充更完整的地址后重试。");
+            }
+            GeocodeSearchResponseDTO.GeocodeCandidateDTO preferred = candidates.get(0);
+            return new GeocodeSearchResponseDTO(
+                    true,
+                    preferred.gpsCoordinates(),
+                    preferred.wgs84Longitude(),
+                    preferred.wgs84Latitude(),
+                    preferred.gcj02Longitude(),
+                    preferred.gcj02Latitude(),
+                    preferred.address(),
+                    candidates,
+                    null
+            );
+        } catch (IOException | IllegalStateException e) {
+            log.warn("高德正向地理编码请求失败: {}", e.getMessage());
+            throw new IllegalStateException("地址解析服务暂时不可用，请稍后重试。", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException("地址解析请求被中断。", e);
+        }
+    }
+
+    private List<GeocodeSearchResponseDTO.GeocodeCandidateDTO> geocodeStructured(
+            String keyword, String amapKey) throws IOException, InterruptedException {
+        String query = "address=" + encode(keyword)
+                + "&key=" + encode(amapKey)
+                + "&output=json";
+        JsonNode root = objectMapper.readTree(sendGet(URI.create(AMAP_GEOCODE_URL + "?" + query), "高德地理编码接口"));
+        if (!"1".equals(root.path("status").asText())) {
+            log.warn("高德地理编码返回失败: {}", root.path("info").asText("未知错误"));
+            return List.of();
+        }
+
+        List<GeocodeSearchResponseDTO.GeocodeCandidateDTO> candidates = new ArrayList<>();
+        for (JsonNode geocode : root.path("geocodes")) {
+            String location = textOf(geocode.path("location"));
+            MapService.Point amapPoint = parseAmapLocation(location);
+            if (amapPoint == null) {
+                continue;
+            }
+            candidates.add(toCandidate(
+                    textOf(geocode.path("formatted_address")),
+                    textOf(geocode.path("formatted_address")),
+                    textOf(geocode.path("district")),
+                    textOf(geocode.path("city")),
+                    textOf(geocode.path("adcode")),
+                    amapPoint
+            ));
+        }
+        return candidates;
+    }
+
+    private List<GeocodeSearchResponseDTO.GeocodeCandidateDTO> searchPlacesByKeyword(
+            String keyword, String amapKey) throws IOException, InterruptedException {
+        String query = "keywords=" + encode(keyword)
+                + "&key=" + encode(amapKey)
+                + "&page_size=10&show_fields=business,address";
+        JsonNode root = objectMapper.readTree(sendGet(URI.create(AMAP_PLACE_TEXT_URL + "?" + query), "高德关键字搜索接口"));
+        if (!"1".equals(root.path("status").asText())) {
+            log.warn("高德关键字搜索返回失败: {}", root.path("info").asText("未知错误"));
+            return List.of();
+        }
+
+        List<GeocodeSearchResponseDTO.GeocodeCandidateDTO> candidates = new ArrayList<>();
+        for (JsonNode poi : root.path("pois")) {
+            MapService.Point amapPoint = parseAmapLocation(textOf(poi.path("location")));
+            if (amapPoint == null) {
+                continue;
+            }
+            String name = textOf(poi.path("name"));
+            String address = textOf(poi.path("address"));
+            candidates.add(toCandidate(
+                    name,
+                    StringUtils.hasText(address) ? address : name,
+                    textOf(poi.path("adname")),
+                    textOf(poi.path("cityname")),
+                    textOf(poi.path("adcode")),
+                    amapPoint
+            ));
+        }
+        return candidates;
+    }
+
+    /**
+     * 高德返回的是 GCJ-02，换算回 WGS84 后作为系统存储契约，并保留 GCJ-02 供地图渲染核对。
+     */
+    private GeocodeSearchResponseDTO.GeocodeCandidateDTO toCandidate(String name,
+                                                                    String address,
+                                                                    String district,
+                                                                    String city,
+                                                                    String adcode,
+                                                                    MapService.Point amapPoint) {
+        MapService.Point wgs84Point = mapService.gcj02ToWgs84(amapPoint.lat, amapPoint.lon);
+        String gpsCoordinates = String.format(Locale.ROOT, "%.6f,%.6f", wgs84Point.lon, wgs84Point.lat);
+        return new GeocodeSearchResponseDTO.GeocodeCandidateDTO(
+                name,
+                address,
+                district,
+                city,
+                adcode,
+                gpsCoordinates,
+                wgs84Point.lon,
+                wgs84Point.lat,
+                amapPoint.lon,
+                amapPoint.lat
+        );
+    }
+
+    private MapService.Point parseAmapLocation(String location) {
+        if (!StringUtils.hasText(location)) {
+            return null;
+        }
+        String[] parts = location.split(",");
+        if (parts.length != 2) {
+            return null;
+        }
+        try {
+            double longitude = Double.parseDouble(parts[0].trim());
+            double latitude = Double.parseDouble(parts[1].trim());
+            if (!Double.isFinite(longitude) || !Double.isFinite(latitude)
+                    || Math.abs(longitude) > 180 || Math.abs(latitude) > 90) {
+                return null;
+            }
+            return new MapService.Point(latitude, longitude);
+        } catch (NumberFormatException exception) {
+            return null;
         }
     }
 

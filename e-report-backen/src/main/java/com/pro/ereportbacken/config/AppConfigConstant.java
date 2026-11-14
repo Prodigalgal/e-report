@@ -5,6 +5,12 @@ import java.util.Set;
 public class AppConfigConstant {
     public static final String AMAP_API_KEY = "amap.webservice.apikey";
     public static final String AMAP_API_KEY_POOL = "map.amap.webservice.api-key-pool";
+    /**
+     * 高德 Web 端 JS API 的 key 与安全密钥，供后台地图渲染使用。
+     * 与 AMAP_API_KEY（服务端 Web 服务接口）是两套不同凭据，不可混用。
+     */
+    public static final String AMAP_WEB_JS_API_KEY = "map.amap.web.js-api-key";
+    public static final String AMAP_WEB_JS_SECURITY_CODE = "map.amap.web.js-security-code";
     public static final String OBSERVABILITY_CLIENT_ENABLED = "observability.client.enabled";
     public static final String OBSERVABILITY_WARNING_ENABLED = "observability.client.warning-enabled";
     public static final String OBSERVABILITY_OPERATION_ENABLED = "observability.client.operation-enabled";

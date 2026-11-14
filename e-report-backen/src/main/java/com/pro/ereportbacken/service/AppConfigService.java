@@ -61,6 +61,8 @@ public class AppConfigService {
 
         ensureDefaultConfig(AMAP_API_KEY, defaultAmapApiKey, "高德网页服务接口密钥（用于静态地图等）");
         ensureDefaultConfig(AMAP_API_KEY_POOL, defaultAmapApiKeyPool, "高德网页服务接口密钥池，支持逗号、分号、换行分隔");
+        ensureDefaultConfig(AppConfigConstant.AMAP_WEB_JS_API_KEY, defaultAmapWebJsApiKey, "高德 Web 端 JS API 密钥（后台地图渲染，与网页服务接口密钥不同）");
+        ensureDefaultConfig(AppConfigConstant.AMAP_WEB_JS_SECURITY_CODE, defaultAmapWebJsSecurityCode, "高德 Web 端 JS API 安全密钥");
         ensureDefaultConfig(AppConfigConstant.OBSERVABILITY_CLIENT_ENABLED, "true", "是否启用客户端运行诊断采集");
         ensureDefaultConfig(AppConfigConstant.OBSERVABILITY_WARNING_ENABLED, "true", "是否采集客户端警告事件");
         ensureDefaultConfig(AppConfigConstant.OBSERVABILITY_OPERATION_ENABLED, "true", "是否采集用户操作与关键写操作事件");
@@ -170,6 +172,10 @@ public class AppConfigService {
     private String defaultAmapApiKey;
     @Value("${map.amap.api-key-pool:${appconfig.initial.amap_key:}}")
     private String defaultAmapApiKeyPool;
+    @Value("${map.amap.web.js-api-key:}")
+    private String defaultAmapWebJsApiKey;
+    @Value("${map.amap.web.js-security-code:}")
+    private String defaultAmapWebJsSecurityCode;
 
     public AppConfigService(AppConfigRepository appConfigRepository,
                             TenantAppConfigRepository tenantAppConfigRepository,

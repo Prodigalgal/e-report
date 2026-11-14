@@ -22,6 +22,7 @@ import {
 } from '@/location/device-location';
 import { recordAppTelemetryOperation, startAppTelemetryOperation } from '@/observability/telemetry';
 import { AppButton } from '@/ui/app-button';
+import { CoordinateExtractor } from '@/features/work-orders/coordinate-extractor';
 import { Card } from '@/ui/card';
 import { PageHeader, SectionHeader } from '@/ui/page-header';
 import { Screen } from '@/ui/screen';
@@ -75,6 +76,21 @@ export default function ReportWorkOrderScreen() {
       setPhone(currentUser.phone.trim());
     }
   }, [contactPerson, contactPersonCustomized, currentUser?.name, currentUser?.phone, phone, phoneCustomized]);
+
+  /**
+   * 采纳坐标提取器的结果：写入坐标并回填地点，同时清除对应校验错误。
+   */
+  const handleCoordinateApply = ({ gpsCoordinates: coordinates, location: extractedLocation }: { gpsCoordinates: string; location: string }) => {
+    if (coordinates) {
+      setGpsCoordinates(coordinates);
+      clearFormError('gpsCoordinates');
+    }
+    if (extractedLocation) {
+      setLocation(extractedLocation);
+      clearFormError('location');
+    }
+    setLocationHint('坐标已由提取器填入，请核对地点后提交。');
+  };
 
   const validateReport = () => {
     const errors: ReportFormErrors = {};
@@ -557,6 +573,8 @@ export default function ReportWorkOrderScreen() {
           loading={gpsLoading}
           disabled={gpsLoading}
         />
+        {/* 提取器：无法到达现场时按已有坐标或地址报单 */}
+        <CoordinateExtractor onApply={handleCoordinateApply} />
         {!!locationHint && (
           <Text style={{ color: colors.muted, lineHeight: 20 }}>
             {locationHint}

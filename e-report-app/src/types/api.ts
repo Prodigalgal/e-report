@@ -904,3 +904,70 @@ export type ApiTokenCreated = {
   tokenInfo: ApiTokenView;
   token: string;
 };
+
+export type CoordinateRecognitionCandidate = {
+  standard: string;
+  standardDisplayName: string;
+  sourceLongitude: number;
+  sourceLatitude: number;
+  wgs84Longitude: number;
+  wgs84Latitude: number;
+  gcj02Longitude: number;
+  gcj02Latitude: number;
+  gpsCoordinates: string;
+  offsetFromPreferredMeters?: number;
+  address?: string;
+  township?: string;
+  preferred: boolean;
+  addressResolved: boolean;
+};
+
+/**
+ * 坐标识别结果。WGS84 与 GCJ-02 在中国大陆相差数百米，可能返回多个候选供用户确认。
+ */
+export type CoordinateRecognitionResponse = {
+  recognized: boolean;
+  standard?: string;
+  standardDisplayName?: string;
+  confident: boolean;
+  wgs84Longitude?: number;
+  wgs84Latitude?: number;
+  gpsCoordinates?: string;
+  gcj02Longitude?: number;
+  gcj02Latitude?: number;
+  sourceLongitude?: number;
+  sourceLatitude?: number;
+  address?: string;
+  township?: string;
+  candidates: CoordinateRecognitionCandidate[];
+  notes: string[];
+  message?: string;
+};
+
+export type GeocodeCandidate = {
+  name: string;
+  address: string;
+  district?: string;
+  city?: string;
+  adcode?: string;
+  gpsCoordinates: string;
+  wgs84Longitude: number;
+  wgs84Latitude: number;
+  gcj02Longitude?: number;
+  gcj02Latitude?: number;
+};
+
+/**
+ * 地址正向地理编码结果（地址 → 坐标）。
+ */
+export type GeocodeSearchResponse = {
+  found: boolean;
+  gpsCoordinates?: string;
+  wgs84Longitude?: number;
+  wgs84Latitude?: number;
+  gcj02Longitude?: number;
+  gcj02Latitude?: number;
+  formattedAddress?: string;
+  candidates: GeocodeCandidate[];
+  message?: string;
+};

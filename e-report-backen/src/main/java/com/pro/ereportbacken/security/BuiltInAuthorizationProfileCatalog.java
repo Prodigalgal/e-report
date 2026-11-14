@@ -38,6 +38,7 @@ public final class BuiltInAuthorizationProfileCatalog {
     public static final String SLA_EDITOR = "PROFILE_SLA_EDITOR";
     public static final String DASHBOARD_VIEWER = "PROFILE_DASHBOARD_VIEWER";
     public static final String OBSERVABILITY_VIEWER = "PROFILE_OBSERVABILITY_VIEWER";
+    public static final String SESSION_LOCATION_VIEWER = "PROFILE_SESSION_LOCATION_VIEWER";
     public static final String API_TOKEN_MANAGER = "PROFILE_API_TOKEN_MANAGER";
     public static final String TENANT_VIEWER = "PROFILE_TENANT_VIEWER";
     public static final String TENANT_PROVISIONER = "PROFILE_TENANT_PROVISIONER";
@@ -193,6 +194,9 @@ public final class BuiltInAuthorizationProfileCatalog {
                 PermissionCatalog.DASHBOARD_STATISTICS_VIEW);
         addProfile(templates, order, OBSERVABILITY_VIEWER, "运行诊断查看员", "查看运行诊断和 Redis 状态。",
                 PermissionCatalog.OBSERVABILITY_VIEW, PermissionCatalog.REDIS_DIAGNOSTICS_VIEW);
+        addProfile(templates, order, SESSION_LOCATION_VIEWER, "登录态位置查看员",
+                "查看授权组织范围内已登录用户的位置、设备与会话详情，用于运行态势地图与派单调度。",
+                PermissionCatalog.USER_SESSION_LOCATION_VIEW);
     }
 
     private static void addWorkOrderProfiles(Map<String, Template> templates,
@@ -254,7 +258,7 @@ public final class BuiltInAuthorizationProfileCatalog {
                 USER_ORGANIZATION_MANAGER, USER_LIFECYCLE_MANAGER, USER_CREDENTIAL_MANAGER,
                 USER_AUTHORIZATION_MANAGER, AUTHORIZATION_PROFILE_EDITOR, ORGANIZATION_EDITOR, DEPARTMENT_EDITOR,
                 SYSTEM_CONFIG_EDITOR, NOTIFICATION_CONFIG_EDITOR, SLA_EDITOR,
-                DASHBOARD_VIEWER, OBSERVABILITY_VIEWER, API_TOKEN_MANAGER));
+                DASHBOARD_VIEWER, OBSERVABILITY_VIEWER, SESSION_LOCATION_VIEWER, API_TOKEN_MANAGER));
         keys.addAll(allWorkOrderProfileKeys());
         return Set.copyOf(keys);
     }

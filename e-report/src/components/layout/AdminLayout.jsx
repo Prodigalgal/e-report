@@ -19,6 +19,7 @@ import BusinessIcon from '@mui/icons-material/Business';
 import TimerIcon from '@mui/icons-material/Timer';
 import TroubleshootIcon from '@mui/icons-material/Troubleshoot';
 import MailOutlineIcon from '@mui/icons-material/MailOutlined';
+import MapIcon from '@mui/icons-material/Map';
 
 import BrandLogo from '../Brand/BrandLogo';
 import { useAuth } from '../../hooks/useAuth';
@@ -37,6 +38,7 @@ const adminNavGroups = [
             { text: '仪表盘', icon: <SpeedIcon />, path: '/admin/dashboard', requiredAnyPermissions: DASHBOARD_STATISTICS_PERMISSIONS },
             { text: '运行诊断', icon: <TroubleshootIcon />, path: '/admin/observability', requiredPermission: PERMISSIONS.OBSERVABILITY_VIEW },
             { text: '邮件发送台账', icon: <MailOutlineIcon />, path: '/admin/email-deliveries', requiredPermission: PERMISSIONS.EMAIL_DELIVERY_VIEW },
+            { text: '态势地图', icon: <MapIcon />, path: '/admin/session-map', requiredPermission: PERMISSIONS.USER_SESSION_LOCATION_VIEW },
         ],
     },
     {

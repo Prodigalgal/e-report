@@ -15,6 +15,7 @@ import {
     TENANT_MANAGEMENT_VIEW_PERMISSIONS,
     SLA_POLICY_VIEW_PERMISSIONS,
     OBSERVABILITY_VIEW_PERMISSIONS,
+    SESSION_LOCATION_VIEW_PERMISSIONS,
     MANAGEMENT_ENTRY_PERMISSIONS,
     WORK_ORDER_MANAGEMENT_PERMISSIONS,
     WORK_ORDER_PERMISSIONS_BY_TYPE,
@@ -45,6 +46,7 @@ const AdminTenantPage = lazy(routeModuleLoaders.adminTenants);
 const AdminSlaPolicyPage = lazy(routeModuleLoaders.adminSlaPolicies);
 const AdminObservabilityPage = lazy(routeModuleLoaders.adminObservability);
 const AdminEmailDeliveryPage = lazy(routeModuleLoaders.adminEmailDeliveries);
+const AdminSessionMapPage = lazy(routeModuleLoaders.adminSessionMap);
 
 function LazyRoute({ children }) {
     return (
@@ -157,6 +159,21 @@ function AppRoutes() {
                         </LazyRoute>
                     </ProtectedRoute>
                 } />
+                <Route path="session-map" element={
+                    <ProtectedRoute requiredAnyPermissions={SESSION_LOCATION_VIEW_PERMISSIONS}>
+                        <LazyRoute>
+                            <AdminSessionMapPage />
+                        </LazyRoute>
+                    </ProtectedRoute>
+                } />
+                {WORK_ORDER_TYPES.map(item => (
+                    <Route key={`${item.reportType}-admin`} path={item.adminPath.replace('/admin/', '')} element={
+                        <LegacyWorkOrderSearchRedirect
+                            reportType={item.reportType}
+                            basePath="/admin/work-orders/search"
+                        />
+                    } />
+                ))}
                 <Route path="work-orders/:workOrderId" element={
                     <ProtectedRoute requiredAnyPermissions={WORK_ORDER_MANAGEMENT_PERMISSIONS}>
                         <LazyRoute>

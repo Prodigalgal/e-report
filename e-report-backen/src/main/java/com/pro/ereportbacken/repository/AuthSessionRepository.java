@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -30,6 +31,19 @@ public interface AuthSessionRepository extends JpaRepository<AuthSession, UUID> 
             AuthSessionStatus status,
             UUID excludedSessionId
     );
+
+    @Query("""
+            SELECT session FROM AuthSession session
+            WHERE session.tenantId = :tenantId
+              AND session.status = com.pro.ereportbacken.model.pojo.AuthSessionStatus.ACTIVE
+              AND session.locationReportedAt IS NOT NULL
+              AND session.locationReportedAt >= :reportedAfter
+              AND (:membershipIds IS NULL OR session.membershipId IN :membershipIds)
+            ORDER BY session.locationReportedAt DESC
+            """)
+    List<AuthSession> findActiveLocatedSessions(@Param("tenantId") UUID tenantId,
+                                                @Param("reportedAfter") LocalDateTime reportedAfter,
+                                                @Param("membershipIds") Collection<UUID> membershipIds);
 
     List<AuthSession> findTop500ByStatusNotAndRevokedAtBeforeOrderByRevokedAtAsc(
             AuthSessionStatus status,

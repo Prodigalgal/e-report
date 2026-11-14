@@ -8,7 +8,10 @@ import com.facebook.react.uimanager.ViewManager
 class EReportLocationPackage : ReactPackage {
   @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-    return listOf(EReportLocationModule(reactContext))
+    return listOf(
+      EReportLocationModule(reactContext),
+      EReportLocationTrackerModule(reactContext)
+    )
   }
 
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<in Nothing, in Nothing>> {

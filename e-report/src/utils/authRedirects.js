@@ -4,6 +4,7 @@ import {
     OBSERVABILITY_VIEW_PERMISSIONS,
     ORG_MANAGEMENT_VIEW_PERMISSIONS,
     PERMISSIONS,
+    SESSION_LOCATION_VIEW_PERMISSIONS,
     AUTHORIZATION_PROFILE_VIEW_PERMISSIONS,
     SLA_POLICY_VIEW_PERMISSIONS,
     TENANT_MANAGEMENT_VIEW_PERMISSIONS,
@@ -21,6 +22,7 @@ export const ADMIN_ROUTE_ACCESS_RULES = [
     { path: '/admin/work-orders/search', requiredAnyPermissions: WORK_ORDER_MANAGEMENT_PERMISSIONS },
     { path: '/admin/observability', requiredAnyPermissions: OBSERVABILITY_VIEW_PERMISSIONS },
     { path: '/admin/email-deliveries', requiredAnyPermissions: [PERMISSIONS.EMAIL_DELIVERY_VIEW] },
+    { path: '/admin/session-map', requiredAnyPermissions: SESSION_LOCATION_VIEW_PERMISSIONS },
     { path: '/admin/user-management', requiredAnyPermissions: [PERMISSIONS.USER_MANAGE_VIEW] },
     { path: '/admin/settings/configs', requiredAnyPermissions: [
         PERMISSIONS.SYSTEM_CONFIG_VIEW,

@@ -2,12 +2,14 @@
 import React, { useState } from 'react';
 import { TextField, Button, Box, CircularProgress, FormControl, FormLabel, FormHelperText } from '@mui/material';
 import MyLocationIcon from '@mui/icons-material/MyLocation';
+import MapIcon from '@mui/icons-material/Map';
 import { captureTelemetryError, startTelemetryOperation } from '../../observability/telemetry.js';
 
 function LocationInput({
                            initialGpsCoordinates = '',
                            onLocationChange, // (gpsCoordsString, errorMsgOrNull)
                            onManualGpsChange,
+                           onOpenCoordinatePicker,
                            disabled = false,
                            error = null, // Error from parent form validation
                            label = "定位坐标（经度,纬度）*",
@@ -150,6 +152,22 @@ function LocationInput({
                 >
                     {isGettingLocation ? '正在定位并解析' : buttonLabel}
                 </Button>
+                {onOpenCoordinatePicker && (
+                    <Button
+                        variant="outlined"
+                        onClick={onOpenCoordinatePicker}
+                        disabled={disabled || isGettingLocation}
+                        startIcon={<MapIcon />}
+                        sx={{
+                            whiteSpace: 'nowrap',
+                            height: 56,
+                            width: { xs: '100%', sm: 'auto' },
+                            flexShrink: 0,
+                        }}
+                    >
+                        地图选点
+                    </Button>
+                )}
             </Box>
             {displayError && <FormHelperText>{displayError}</FormHelperText>}
         </FormControl>

@@ -9,6 +9,7 @@ import com.pro.ereportbacken.model.dto.LoginResponseDTO;
 import com.pro.ereportbacken.model.dto.PasswordChangeRequestDTO;
 import com.pro.ereportbacken.model.dto.PasswordPolicyDTO;
 import com.pro.ereportbacken.model.dto.RefreshTokenRequestDTO;
+import com.pro.ereportbacken.model.dto.SessionLocationReportRequestDTO;
 import com.pro.ereportbacken.model.dto.TokenRefreshResponseDTO;
 import com.pro.ereportbacken.model.pojo.AuthChallengeMode;
 import com.pro.ereportbacken.model.pojo.AuthClientType;
@@ -29,6 +30,7 @@ import com.pro.ereportbacken.service.AuthSessionQueryService;
 import com.pro.ereportbacken.service.AuthSessionService;
 import com.pro.ereportbacken.service.AuthenticationRateLimitService;
 import com.pro.ereportbacken.service.PasswordPolicy;
+import com.pro.ereportbacken.service.SessionLocationService;
 import com.pro.ereportbacken.service.TrustedDeviceService;
 import com.pro.ereportbacken.service.UserService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -75,6 +77,7 @@ public class AuthController {
     private final AuthRiskService authRiskService;
     private final AuthSessionService authSessionService;
     private final AuthSessionQueryService authSessionQueryService;
+    private final SessionLocationService sessionLocationService;
     private final TrustedDeviceService trustedDeviceService;
     private final DeviceProofService deviceProofService;
     private final ClientRequestMetadataService requestMetadataService;
@@ -91,6 +94,7 @@ public class AuthController {
                           AuthRiskService authRiskService,
                           AuthSessionService authSessionService,
                           AuthSessionQueryService authSessionQueryService,
+                          SessionLocationService sessionLocationService,
                           TrustedDeviceService trustedDeviceService,
                           DeviceProofService deviceProofService,
                           ClientRequestMetadataService requestMetadataService,
@@ -106,6 +110,7 @@ public class AuthController {
         this.authRiskService = authRiskService;
         this.authSessionService = authSessionService;
         this.authSessionQueryService = authSessionQueryService;
+        this.sessionLocationService = sessionLocationService;
         this.trustedDeviceService = trustedDeviceService;
         this.deviceProofService = deviceProofService;
         this.requestMetadataService = requestMetadataService;
@@ -299,6 +304,19 @@ public class AuthController {
                 AuthSessionRequestContext.requireSessionId(request),
                 pageable
         ));
+    }
+
+    @PostMapping("/sessions/location")
+    public ResponseEntity<Void> reportSessionLocation(@Valid @RequestBody SessionLocationReportRequestDTO locationRequest,
+                                                      Authentication authentication,
+                                                      HttpServletRequest request) {
+        requireAuthenticated(authentication);
+        sessionLocationService.report(
+                AuthSessionRequestContext.requireSessionId(request),
+                request.getRemoteAddr(),
+                locationRequest
+        );
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/sessions/{sessionId}")

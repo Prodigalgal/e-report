@@ -38,6 +38,7 @@ public final class PermissionCatalog {
     public static final String USER_MANAGE_RESET_PASSWORD = "user:manage:password:reset";
     public static final String USER_MANAGE_SESSION_VIEW = "user:manage:session:view";
     public static final String USER_MANAGE_SESSION_REVOKE = "user:manage:session:revoke";
+    public static final String USER_SESSION_LOCATION_VIEW = "user:session-location:view";
     public static final String USER_MANAGE_TRUSTED_DEVICE_VIEW = "user:manage:trusted-device:view";
     public static final String USER_MANAGE_TRUSTED_DEVICE_REVOKE = "user:manage:trusted-device:revoke";
     public static final String USER_AUTHORIZATION_VIEW = "user:authorization:view";
@@ -355,6 +356,7 @@ public final class PermissionCatalog {
         entries.add(writeEntry(USER_MANAGE_SESSION_REVOKE, "用户会话撤销", "撤销授权用户的登录会话", PermissionRiskLevel.CRITICAL));
         entries.add(readEntry(USER_MANAGE_TRUSTED_DEVICE_VIEW, "用户受信设备查看", "查看授权用户的受信设备"));
         entries.add(writeEntry(USER_MANAGE_TRUSTED_DEVICE_REVOKE, "用户受信设备撤销", "撤销授权用户的受信设备", PermissionRiskLevel.CRITICAL));
+        entries.add(readEntry(USER_SESSION_LOCATION_VIEW, "登录态位置查看", "查看授权组织范围内已登录用户的位置、设备与会话详情"));
         entries.add(readEntry(USER_AUTHORIZATION_VIEW, "用户授权查看", "查看当前操作者可管理的用户授权及最终权限摘要"));
         entries.add(writeEntry(USER_AUTHORIZATION_GRANT, "用户授权授予", "新增不超过自身委派边界的权限授权", PermissionRiskLevel.CRITICAL));
         entries.add(writeEntry(USER_AUTHORIZATION_ADJUST, "用户授权调整", "缩放自身可管理授权的范围、关系或有效期", PermissionRiskLevel.CRITICAL));

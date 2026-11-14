@@ -4,6 +4,7 @@ import { AuthContext } from './AuthContext.jsx';
 import { clearAuthStorage, storeRememberLoginPreference, webClientInstanceId } from '../constants/authStorage.js';
 import { fetchCurrentUserAPI, fetchPasswordPolicyAPI, initializeCsrfAPI, logoutAPI, updateCurrentUserProfileAPI } from '../services/authApiService.js';
 import { DEFAULT_PASSWORD_POLICY, normalizePasswordPolicy } from '../utils/passwordPolicy.js';
+import { startSessionLocationReporting, stopSessionLocationReporting } from '../services/sessionLocationReporting.js';
 
 const toUserData = responseData => ({
     username: responseData.username,
@@ -76,6 +77,16 @@ export const AuthProvider = ({ children }) => {
         window.addEventListener('ereport-auth-expired', expire);
         return () => window.removeEventListener('ereport-auth-expired', expire);
     }, []);
+
+    // 登录期间周期性上报浏览器定位，供后台态势地图展示在岗人员分布；退出登录立即停止。
+    useEffect(() => {
+        if (currentUser) {
+            startSessionLocationReporting();
+        } else {
+            stopSessionLocationReporting();
+        }
+        return () => stopSessionLocationReporting();
+    }, [currentUser]);
 
     const login = useCallback(async (username, password, challengeProof, rememberMe) => {
         try {

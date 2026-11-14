@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { startLocationTracking, stopLocationTracking } from '@/location/location-tracking';
 
 import { ApiError, setApiAuthCredentials } from '@/api/http';
 import {
@@ -73,6 +74,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setCurrentUser(user);
     setToken(user.token);
     void loadPasswordPolicy();
+    // 登录成功后启动前台位置服务；失败不阻断登录，地图上仅表现为该用户暂无位置。
+    void startLocationTracking();
   }, [loadPasswordPolicy]);
 
   const refreshCurrentUser = useCallback(async () => {
@@ -82,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!storedCredentials) {
       setCurrentUser(null);
       setPasswordPolicy(DEFAULT_PASSWORD_POLICY);
+      void stopLocationTracking();
       return;
     }
     if (storedUser) setCurrentUser(storedUser);
@@ -103,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(null);
         setCurrentUser(null);
         setPasswordPolicy(DEFAULT_PASSWORD_POLICY);
+        void stopLocationTracking();
         return;
       }
       if (!storedUser) setCurrentUser(null);
@@ -135,6 +140,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await clearStoredSession();
       setApiAuthCredentials(null);
       setExplicitlyLoggedOut(true);
+      // 退出登录立即停止采集。
+      void stopLocationTracking();
       setCurrentUser(null);
       setToken(null);
       setPasswordPolicy(DEFAULT_PASSWORD_POLICY);

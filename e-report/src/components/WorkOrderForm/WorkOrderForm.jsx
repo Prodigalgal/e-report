@@ -1,11 +1,13 @@
 // src/components/WorkOrderForm/WorkOrderForm.jsx
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Paper, Typography, CircularProgress, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, Button, Paper, Typography, CircularProgress, ToggleButton, ToggleButtonGroup, Dialog, DialogContent, DialogTitle, DialogActions } from '@mui/material';
 import FormField from '../FormField/FormField';
 import LocationInput from '../LocationInput/LocationInput';
 import FileUploadWithPreview from '../FileUploadWithPreview/FileUploadWithPreview';
 import { WORK_ORDER_TYPE_CODES, REPORT_PAGE_CONFIGS } from '../../constants/workOrderCatalog';
 import { fetchReverseGeocode } from '../../services/locationApiService';
+import CoordinatePicker from '../location/CoordinatePicker';
+import { fetchSessionSituationMap } from '../../services/sessionLocationApiService';
 import { formatApiErrorMessage } from '../../utils/formatApiErrorMessage';
 import { WORK_ORDER_PRIORITIES } from '../../constants/workOrderSla';
 import { priorityPresentation } from '../../constants/workOrderPresentation';
@@ -43,7 +45,31 @@ function WorkOrderForm({
     const { currentUser } = useAuth();
     const [contactPersonCustomized, setContactPersonCustomized] = useState(false);
     const [phoneCustomized, setPhoneCustomized] = useState(false);
+    const [pickerOpen, setPickerOpen] = useState(false);
+    const [mapConfig, setMapConfig] = useState(null);
 
+    // 地图配置按需加载：只有用户打开坐标提取器时才请求，避免报单页多做一次无用请求。
+    const handleOpenCoordinatePicker = async () => {
+        setPickerOpen(true);
+        if (mapConfig) return;
+        try {
+            const response = await fetchSessionSituationMap();
+            setMapConfig(response.data?.mapConfig || null);
+        } catch {
+            setMapConfig(null);
+        }
+    };
+
+    const handlePickerChange = ({ gpsCoordinates, location }) => {
+        if (gpsCoordinates) {
+            setFormData(prev => ({ ...prev, gpsCoordinates }));
+            setErrors(prev => ({ ...prev, gpsCoordinates: null }));
+        }
+        if (location) {
+            setFormData(prev => ({ ...prev, location }));
+            setErrors(prev => ({ ...prev, location: null }));
+        }
+    };
     useEffect(() => {
         if (submissionResult && submissionResult.success) {
             setFormData(createInitialFormState(reportType));
@@ -263,6 +289,7 @@ function WorkOrderForm({
                     error={errors.gpsCoordinates}
                     label="定位坐标（经度,纬度） *"
                     buttonLabel="定位并填写地址"
+                    onOpenCoordinatePicker={handleOpenCoordinatePicker}
                 />
                 {(areaLookupState.loading || areaLookupState.message) && (
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mt: -0.5, mb: 1 }}>
@@ -356,6 +383,18 @@ function WorkOrderForm({
                     {isLoading ? '提交中...' : (config.submitButtonText || '提交报单')}
                 </Button>
             </Box>
+            <Dialog open={pickerOpen} onClose={() => setPickerOpen(false)} maxWidth="md" fullWidth>
+                <DialogTitle>地图选点与坐标识别</DialogTitle>
+                <DialogContent dividers>
+                    <CoordinatePicker
+                        mapConfig={mapConfig}
+                        onChange={handlePickerChange}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setPickerOpen(false)}>完成</Button>
+                </DialogActions>
+            </Dialog>
         </Paper>
     );
 }
