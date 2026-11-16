@@ -185,7 +185,7 @@ dependencies {
     // AMap 11.2.100 invokes FastMath directly but does not declare it in the published POM.
     implementation("net.jafama:jafama:2.3.2")
     constraints {
-        implementation("com.google.code.gson:gson:2.14.0") {
+        implementation("com.google.code.gson:gson:2.15.0") {
             because("Expo LogBox otherwise selects the vulnerable Gson 2.8.6 runtime")
         }
         implementation("commons-io:commons-io:2.22.0") {
